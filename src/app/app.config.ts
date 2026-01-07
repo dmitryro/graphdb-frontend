@@ -1,29 +1,21 @@
-import { Actions, EffectsModule } from "@ngrx/effects";
-import {
-  HttpClient,
-  provideHttpClient,
-  withInterceptors,
-} from "@angular/common/http";
-import {
-  ApplicationConfig,
-  importProvidersFrom,
-  inject,
-  provideAppInitializer,
-} from "@angular/core";
-import { provideAnimationsAsync } from "@angular/platform-browser/animations/async";
-import {
-  provideRouter,
-  withComponentInputBinding,
-  withInMemoryScrolling,
-} from "@angular/router";
+// src/app/app.config.ts
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { ApplicationConfig, importProvidersFrom, inject } from '@angular/core';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+import { Actions } from '@ngrx/effects';
 
-import { MAT_CARD_CONFIG } from "@angular/material/card";
-import { MAT_DATE_LOCALE } from "@angular/material/core";
-import { MatPaginatorIntl } from "@angular/material/paginator";
-import { provideTranslateService, TranslateLoader } from "@ngx-translate/core";
-import { provideToastr } from "ngx-toastr";
-import { TranslateHttpLoader } from "@ngx-translate/http-loader";
+import { MAT_CARD_CONFIG } from '@angular/material/card';
+import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { provideTranslateService, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { provideToastr } from 'ngx-toastr';
 
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import {
   apiInterceptor,
   BASE_URL,
@@ -34,23 +26,18 @@ import {
   settingsInterceptor,
   SettingsService,
   tokenInterceptor,
-} from "@core";
-import { environment } from "@env/environment";
-import { PaginatorI18nService } from "@shared";
-import { routes } from "./app.routes";
-import { NgxPermissionsModule } from "ngx-permissions";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { StoreModule } from "@ngrx/store";
-import { EventModule } from "@modules/events/event.module";
-import { reducers, metaReducers } from "./reducers";
-import { eventReducer } from "@modules/events/reducers/event.reducer";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatInputModule } from "@angular/material/input";
-import { MatIconModule } from "@angular/material/icon";
-import { SharedModule } from "@shared/shared.module";
+} from '@core';
+import { environment } from '@env/environment';
+import { EventModule } from '@modules/events/event.module';
+import { eventReducer } from '@modules/events/reducers/event.reducer';
+import { StoreModule } from '@ngrx/store';
+import { PaginatorI18nService } from '@shared';
+import { SharedModule } from '@shared/shared.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { routes } from './app.routes';
 // Required for AOT compilation
 function TranslateHttpLoaderFactory(http: HttpClient) {
-  return new TranslateHttpLoader(http, "i18n/", ".json");
+  return new TranslateHttpLoader(http, 'i18n/', '.json');
 }
 
 // Http interceptor providers in outside-in order
@@ -84,8 +71,8 @@ export const appConfig: ApplicationConfig = {
     provideRouter(
       routes,
       withInMemoryScrolling({
-        scrollPositionRestoration: "enabled",
-        anchorScrolling: "enabled",
+        scrollPositionRestoration: 'enabled',
+        anchorScrolling: 'enabled',
       }),
       withComponentInputBinding(),
     ),
@@ -99,8 +86,7 @@ export const appConfig: ApplicationConfig = {
     }),
     {
       provide: MatPaginatorIntl,
-      useFactory: (paginatorI18nSrv: PaginatorI18nService) =>
-        paginatorI18nSrv.getPaginatorIntl(),
+      useFactory: (paginatorI18nSrv: PaginatorI18nService) => paginatorI18nSrv.getPaginatorIntl(),
       deps: [PaginatorI18nService],
     },
     {
@@ -110,7 +96,7 @@ export const appConfig: ApplicationConfig = {
     {
       provide: MAT_CARD_CONFIG,
       useValue: {
-        appearance: "outlined",
+        appearance: 'outlined',
       },
     },
   ],

@@ -7,33 +7,31 @@ const angularTemplateParser = require("@angular-eslint/template-parser");
 const prettierPlugin = require("eslint-plugin-prettier");
 const prettierConfig = require("eslint-config-prettier");
 
-module.exports = [
+module.exports = tseslint.config(
   {
-    ignores: ["dist/**", ".angular/**", "coverage/**", ".yarn/**"],
+    // Global ignores
+    ignores: ["dist/**", ".angular/**", "coverage/**", ".yarn/**", "node_modules/**"],
   },
-  
-  // Apply base configs only to TypeScript files
-  {
-    files: ["**/*.ts"],
-    ...eslint.configs.recommended,
-  },
-  
-  // Apply TypeScript configs only to .ts files
-  ...tseslint.configs.recommended.map(config => ({
-    ...config,
-    files: ["**/*.ts"],
-  })),
-  ...tseslint.configs.stylistic.map(config => ({
-    ...config,
-    files: ["**/*.ts"],
-  })),
-  
-  // Angular and Prettier rules for TypeScript
+
+  // Base ESLint recommended
+  eslint.configs.recommended,
+
+  // TypeScript recommended & stylistic
+  ...tseslint.configs.recommended,
+  ...tseslint.configs.stylistic,
+
+  // Configuration for TypeScript files
   {
     files: ["**/*.ts"],
     plugins: {
       "@angular-eslint": angular,
       prettier: prettierPlugin,
+    },
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: true,
+      },
     },
     rules: {
       "prettier/prettier": "error",
@@ -46,9 +44,11 @@ module.exports = [
         { type: "element", prefix: "app", style: "kebab-case" },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
+      // Custom MPI Rule Placeholder: 
+      // You can add rules here to enforce use of execute_merge_query_with_context
     },
   },
-  
+
   // HTML template files
   {
     files: ["**/*.html"],
@@ -60,10 +60,11 @@ module.exports = [
       prettier: prettierPlugin,
     },
     rules: {
+      ...angularTemplate.configs.recommended.rules,
       "prettier/prettier": ["error", { parser: "angular" }],
     },
   },
-  
-  // Prettier config last
-  prettierConfig,
-];
+
+  // Disable rules that conflict with Prettier (must be last)
+  prettierConfig
+);
