@@ -7,19 +7,28 @@ const angularTemplateParser = require("@angular-eslint/template-parser");
 const prettierPlugin = require("eslint-plugin-prettier");
 const prettierConfig = require("eslint-config-prettier");
 
-module.exports = tseslint.config(
+module.exports = [
   {
     // Global ignores
     ignores: ["dist/**", ".angular/**", "coverage/**", ".yarn/**", "node_modules/**"],
   },
-
-  // Base ESLint recommended
-  eslint.configs.recommended,
-
-  // TypeScript recommended & stylistic
-  ...tseslint.configs.recommended,
-  ...tseslint.configs.stylistic,
-
+  
+  // Base ESLint recommended for TypeScript files only
+  {
+    files: ["**/*.ts"],
+    ...eslint.configs.recommended,
+  },
+  
+  // TypeScript configs - only for .ts files
+  ...tseslint.configs.recommended.map(config => ({
+    ...config,
+    files: ["**/*.ts"],
+  })),
+  ...tseslint.configs.stylistic.map(config => ({
+    ...config,
+    files: ["**/*.ts"],
+  })),
+  
   // Configuration for TypeScript files
   {
     files: ["**/*.ts"],
@@ -44,11 +53,9 @@ module.exports = tseslint.config(
         { type: "element", prefix: "app", style: "kebab-case" },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
-      // Custom MPI Rule Placeholder: 
-      // You can add rules here to enforce use of execute_merge_query_with_context
     },
   },
-
+  
   // HTML template files
   {
     files: ["**/*.html"],
@@ -62,9 +69,10 @@ module.exports = tseslint.config(
     rules: {
       ...angularTemplate.configs.recommended.rules,
       "prettier/prettier": ["error", { parser: "angular" }],
+      "@angular-eslint/template/prefer-control-flow": "off",
     },
   },
-
+  
   // Disable rules that conflict with Prettier (must be last)
-  prettierConfig
-);
+  prettierConfig,
+];

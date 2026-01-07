@@ -1,0 +1,15 @@
+<div class="timeline-wrapper">
+  <div class="label-row">
+    @for (s of ['A', 'B', 'C', 'D']; track s) {
+      <div class="label-item">Snapshot {{ s }}</div>
+    }
+  </div>
+  <div class="main-line"></div>
+  <div class="node-row">
+    @for (s of ['A', 'B', 'C', 'D']; track s; let i = $index) {
+      <div class="node-item">
+        <div class="circle" [class.active]="i === 1"></div>
+      </div>
+    }
+  </div>
+</div>

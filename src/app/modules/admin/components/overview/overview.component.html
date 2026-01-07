@@ -1,1 +1,61 @@
-<p>overview works!</p>
+<div class="overview-main-container">
+  <header class="dashboard-header">
+    <div class="title-area">
+      <div class="title-row">
+        <h1>Overview</h1>
+        <button mat-flat-button class="reset-btn" (click)="resetLayout()">
+          <mat-icon>restart_alt</mat-icon> Reset Layout
+        </button>
+      </div>
+      <p class="subtitle">Summary of system status and key metrics</p>
+    </div>
+
+    <div class="workspace-area">
+      <mat-form-field appearance="outline" class="workspace-select">
+        <mat-select [(value)]="selectedWorkspace">
+          @for (ws of workspaces; track ws) {
+            <mat-option [value]="ws">{{ ws }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </header>
+  <div class="grid-wrapper">
+    <gridster [options]="options">
+      @for (item of dashboard; track item) {
+        <gridster-item [item]="item">
+          <div class="panel-card">
+            @if (item.type === 'stat') {
+              <app-stat-card [title]="item.title" [icon]="item.icon" [metrics]="item.metrics">
+              </app-stat-card>
+            }
+            @if (item.type === 'list') {
+              <h3 class="panel-title">{{ item.title }}</h3>
+              <mat-list>
+                @for (i of [1, 2]; track i) {
+                  <mat-list-item>
+                    <div class="list-placeholder-icon" matListItemIcon></div>
+                    <div matListItemTitle class="list-placeholder-text">
+                      {{
+                        item.title === 'Recent Activity' ? 'Event details...' : 'Issue details...'
+                      }}
+                    </div>
+                  </mat-list-item>
+                }
+              </mat-list>
+            }
+            @if (item.type === 'timeline') {
+              <div class="timeline-header">
+                <h3 class="panel-title">{{ item.title }}</h3>
+                <button mat-button class="view-all-link">View All ></button>
+              </div>
+              <div class="timeline-body-canvas">
+                <app-snapshot-timeline class="timeline-component-fix"></app-snapshot-timeline>
+              </div>
+            }
+          </div>
+        </gridster-item>
+      }
+    </gridster>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<mat-card class="stat-card">
+  <div class="header">
+    <div class="icon-bg">
+      <mat-icon>{{ icon }}</mat-icon>
+    </div>
+    <span class="title">{{ title }}</span>
+  </div>
+  <div class="content">
+    @for (m of metrics; track m) {
+      <div class="row">
+        <span class="label">{{ m.label }}</span>
+        <span class="value">{{ m.value }}</span>
+      </div>
+    }
+  </div>
+</mat-card>
