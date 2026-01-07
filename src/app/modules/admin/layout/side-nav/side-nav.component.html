@@ -1,0 +1,11 @@
+<mat-nav-list class="lintyl-side-nav">
+  @for (item of navItems; track item.title) {
+    <a
+      mat-list-item
+      [routerLink]="item.path"
+      routerLinkActive="active"
+      class="nav-item">
+      <span class="nav-label">{{ item.title }}</span>
+    </a>
+  }
+</mat-nav-list>

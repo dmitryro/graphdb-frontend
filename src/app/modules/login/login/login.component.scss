@@ -1,0 +1,78 @@
+@use 'src/scss/variables' as *;
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #F0F0F5; // Consistent with sidebar
+  position: relative;
+
+  .content {
+    z-index: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+
+    .logo-container {
+      margin-bottom: 35px;
+      display: flex;
+      justify-content: center;
+
+      // Brand Styling
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #436D9D;
+        font-weight: 700;
+        font-size: 28px;
+        letter-spacing: 1px;
+
+        .brand-logo-icon {
+          font-size: 32px;
+          height: 32px;
+          width: 32px;
+          transform: rotate(-15deg); // Slight tilt to match LINTYL style
+        }
+      }
+    }
+
+    .login-form {
+      padding: 40px 50px;
+      background: #FFFFFF;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+      .forgot-password {
+        color: #5493D1;
+        text-decoration: none;
+        font-size: 14px;
+        &:hover { text-decoration: underline; }
+      }
+
+      .login-button {
+        background-color: #436D9D !important;
+        color: white !important;
+        height: 52px;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        border-radius: 4px;
+      }
+
+      .signup-prompt {
+        text-align: center;
+        font-size: 14px;
+        color: #5F6368;
+        a {
+          color: #436D9D;
+          font-weight: 600;
+          text-decoration: none;
+        }
+      }
+    }
+  }
+}

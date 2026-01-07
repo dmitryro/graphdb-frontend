@@ -1,0 +1,61 @@
+@use 'src/scss/variables' as *;
+
+:host {
+  display: block;
+  height: 100%;
+  background-color: #F0F0F5; 
+  // Removed border-right to keep the left panel clean
+}
+
+.lintyl-side-nav {
+  padding: 0 !important;
+  background-color: #F0F0F5 !important;
+
+  .nav-item {
+    height: 52px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    color: #5F6368;
+    /* REMOVED border-bottom to eliminate bordering between sections */
+    border-bottom: none !important; 
+    transition: all 0.15s ease-in-out;
+    display: flex;
+    align-items: center;
+
+    .nav-label {
+      font-size: 16px; 
+      font-weight: 500;
+      padding-left: 20px;
+    }
+
+    // Hover State: Background #E1E6EB, Text #5493D1
+    &:hover {
+      background-color: #E1E6EB !important;
+      .nav-label {
+        color: #5493D1;
+      }
+    }
+
+    // Active State (Selected)
+    &.active {
+      background-color: #E8EDF2 !important;
+      /* Only the left indicator bar remains */
+      border-left: 4px solid #436D9D; 
+      .nav-label {
+        color: #436D9D;
+        font-weight: 600;
+        padding-left: 16px; 
+      }
+    }
+  }
+}
+
+/* Ensure no Material default borders or outlines appear */
+::ng-deep {
+  .mat-mdc-nav-list .mat-mdc-list-item {
+    border-bottom: none !important;
+  }
+  .mat-mdc-list-item-interactive-wrapper {
+    padding: 0 !important;
+  }
+}

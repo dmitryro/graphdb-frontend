@@ -1,0 +1,31 @@
+@use 'src/scss/variables' as *;
+
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  .sidenav-container {
+    flex: 1;
+    background: $main-background-color;
+
+    .sidenav {
+      /* REMOVED padding: 12px; to allow menu items to be edge-to-edge */
+      padding: 0; 
+      width: 260px;
+      /* Changed background from $white to match the LINTYL side-nav exactly */
+      background: #F0F0F5; 
+      /* Removed all internal borders to match the clean sidebar look */
+      border: none;
+    }
+
+    .main-container {
+      /* Kept original padding for content section */
+      padding: 16px; 
+    }
+  }
+}

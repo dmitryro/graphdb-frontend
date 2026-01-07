@@ -1,0 +1,63 @@
+<mat-toolbar class="fix-nav">
+  <div class="brand-container">
+    <button type="button" mat-icon-button class="visible-md" (click)="toggleSidebar()">
+      <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+    </button>
+    <div class="nav-brand">
+      <mat-icon class="brand-logo-icon">share</mat-icon>
+      <span>LINTYL</span>
+    </div>
+  </div>
+
+  <span class="nav-spacer"></span>
+
+  <div class="search-wrapper">
+    <div class="search-box" [class.focused]="isSearchFocused">
+      <mat-icon class="search-icon-leading">search</mat-icon>
+      <input 
+        #searchInput
+        type="text" 
+        placeholder="Search entities, IDs, rules, snapshots..." 
+        class="lintyl-search-input"
+        (focus)="onFocus()"
+        (blur)="onBlur()"
+        (input)="onInput()"
+        (keyup.enter)="onSearchClick()">
+    </div>
+  </div>
+
+  <span class="nav-spacer"></span>
+
+  <div class="right-actions-container">
+    <button mat-icon-button class="lintyl-icon-btn">
+      <mat-icon>help</mat-icon>
+    </button>
+    
+    <button mat-icon-button class="lintyl-icon-btn">
+      <mat-icon matBadge="1" matBadgeColor="warn" matBadgeSize="small">notifications</mat-icon>
+    </button>
+
+    <div class="profile-unit" [matMenuTriggerFor]="profile">
+      <div class="avatar-circle">
+        <mat-icon>person</mat-icon>
+      </div>
+      <mat-icon class="expand-icon">expand_more</mat-icon>
+    </div>
+  </div>
+  
+  <mat-menu #profile="matMenu" [overlapTrigger]="false">
+    <button mat-menu-item>
+      <mat-icon>person</mat-icon>
+      <span>Profile</span>
+    </button>
+    <button mat-menu-item>
+      <mat-icon>settings</mat-icon>
+      <span>Settings</span>
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="onLoggedout()">
+      <mat-icon>exit_to_app</mat-icon>
+      <span>Sign Out</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>
