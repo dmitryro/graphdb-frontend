@@ -14,43 +14,109 @@
     height: 52px !important;
     margin: 0 !important;
     border-radius: 0 !important;
-    color: var(--text-main); // This will be #e0e0e0 in dark mode
+    color: var(--text-main) !important;
     border-bottom: none !important;
     transition: all 0.15s ease-in-out;
     display: flex;
     align-items: center;
 
+    .nav-item-content {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
     .nav-label {
       font-size: 16px;
       font-weight: 500;
       padding-left: 20px;
-      color: var(--text-main); // Explicitly set on label too
+      color: var(--text-main) !important; // Explicitly set for visibility
     }
 
-    // Hover State
+    .expand-icon {
+      margin-left: auto;
+      margin-right: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main) !important;
+      opacity: 0.7;
+    }
+
     &:hover {
       background-color: rgba(128, 128, 128, 0.1) !important;
 
       .nav-label {
-        color: var(--brand-blue);
+        color: var(--brand-blue) !important;
+      }
+
+      .expand-icon {
+        color: var(--brand-blue) !important;
       }
     }
 
-    // Active State (Selected)
     &.active {
       background-color: rgba(67, 109, 157, 0.1) !important;
       border-left: 4px solid var(--brand-blue);
 
       .nav-label {
-        color: var(--brand-blue);
+        color: var(--brand-blue) !important;
         font-weight: 600;
         padding-left: 16px;
+      }
+
+      .expand-icon {
+        color: var(--brand-blue) !important;
+        opacity: 1;
+      }
+    }
+  }
+
+  // Submenu styling
+  .sub-menu {
+    background-color: rgba(0, 0, 0, 0.04);
+
+    .child-item {
+      height: 48px !important;
+
+      .nav-label {
+        font-size: 15px;
+        font-weight: 400;
+        padding-left: 44px;
+        color: var(--text-main) !important;
+        opacity: 0.8; // Slightly dimmed for hierarchy
+      }
+
+      &:hover {
+        background-color: rgba(128, 128, 128, 0.08) !important;
+
+        .nav-label {
+          opacity: 1;
+          color: var(--brand-blue) !important;
+        }
+      }
+
+      &.active-child {
+        background-color: rgba(67, 109, 157, 0.08) !important;
+
+        .nav-label {
+          color: var(--brand-blue) !important;
+          font-weight: 600;
+          opacity: 1;
+        }
       }
     }
   }
 }
 
-/* Ensure no Material default borders or outlines appear */
+// Dark mode adjustments
+body.dark-theme {
+  .sub-menu {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+}
+
 ::ng-deep {
   .mat-mdc-nav-list .mat-mdc-list-item {
     border-bottom: none !important;

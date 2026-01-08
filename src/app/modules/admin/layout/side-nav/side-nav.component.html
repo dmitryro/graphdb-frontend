@@ -1,11 +1,36 @@
 <mat-nav-list class="lintyl-side-nav">
   @for (item of navItems; track item.title) {
-    <a
-      mat-list-item
-      [routerLink]="item.path"
-      routerLinkActive="active"
-      class="nav-item">
-      <span class="nav-label">{{ item.title }}</span>
-    </a>
+    <div class="nav-group">
+      <a
+        mat-list-item
+        [routerLink]="item.path"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: !item.children }"
+        (click)="toggleExpand(item)"
+        class="nav-item">
+        <div class="nav-item-content">
+          <span class="nav-label">{{ item.title }}</span>
+          @if (item.children) {
+            <mat-icon class="expand-icon">
+              {{ item.expanded ? 'expand_more' : 'chevron_right' }}
+            </mat-icon>
+          }
+        </div>
+      </a>
+
+      @if (item.children && item.expanded) {
+        <div class="sub-menu">
+          @for (child of item.children; track child.title) {
+            <a
+              mat-list-item
+              [routerLink]="child.path"
+              routerLinkActive="active-child"
+              class="nav-item child-item">
+              <span class="nav-label">{{ child.title }}</span>
+            </a>
+          }
+        </div>
+      }
+    </div>
   }
 </mat-nav-list>
