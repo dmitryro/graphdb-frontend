@@ -1,14 +1,82 @@
-/* You can add global styles to this file, and also import other style files */
-
 @use './scss/material';
 @use './scss/utils';
 @use './scss/responsive';
 @use './scss/variables';
 @use './scss/theme';
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+:root {
+  --bg-color: #f0f0f5;
+  --surface-color: #ffffff;
+  --text-main: #3c4043;
+  --border-color: #e0e0e7;
 
+  /* FIXED: Brand Identity Blue */
+  --brand-blue: #436d9d;
 
+  /* Snapshot Timeline Variables */
+  --timeline-axis: #546e7a;
+  --timeline-label: #455a64;
+  --timeline-circle-border: #cfd8dc;
+}
 
+body.dark-theme {
+  --bg-color: #121212;
+  --surface-color: #1e1e1e;
+  --text-main: #e0e0e0;
+  --border-color: #333333;
 
+  /* FIXED: Lighter Blue for Branding in Dark Mode */
+  --brand-blue: #8ab4f8;
+
+  --timeline-axis: #90a4ae;
+  --timeline-label: #b0bec5;
+  --timeline-circle-border: #455a64;
+
+  background-color: var(--bg-color);
+  color: var(--text-main);
+
+  // FIXED: All functional icons (Hamburger, Notifs, Help) flip to White
+  .mat-toolbar .mat-icon:not(.brand-logo-icon),
+  .right-actions-container .mat-icon {
+    color: #ffffff !important;
+  }
+
+  // Profile Dropdown Menu Fix
+  .mat-mdc-menu-panel {
+    background-color: var(--surface-color) !important;
+    .mat-mdc-menu-item {
+      color: var(--text-main) !important;
+      .mat-icon {
+        color: var(--text-main) !important;
+      }
+    }
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background-color: var(--bg-color);
+}
+
+// FIXED: Only Branding (LINTYL text and Share icon) uses Brand Blue
+.brand-logo-icon,
+.brand-text,
+.nav-brand {
+  color: var(--brand-blue) !important;
+}
+
+// Global UI Layout (Ensuring no grey frame)
+.mat-toolbar {
+  background: transparent !important;
+}
+.mat-card,
+.panel-card {
+  background-color: var(--surface-color) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-color) !important;
+}

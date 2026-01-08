@@ -3,17 +3,20 @@
 :host {
   display: block;
   position: fixed;
-  left: 0; right: 0; top: 0;
+  left: 0;
+  right: 0;
+  top: 0;
   z-index: 1000;
 }
 
 .fix-nav {
-  background-color: #F0F0F5 !important;
+  // Utilizing CSS variables for theme reactivity
+  background-color: var(--bg-color) !important;
   height: 64px;
   display: flex;
   align-items: center;
   padding: 0 16px;
-  border-bottom: 1px solid #E0E0E7;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .brand-container {
@@ -24,8 +27,10 @@
     align-items: center;
     font-size: 1.5em;
     font-weight: 700;
-    color: #436D9D;
-    .brand-logo-icon { margin-right: 8px; }
+    color: var(--brand-primary); // Reactive brand color
+    .brand-logo-icon {
+      margin-right: 8px;
+    }
   }
 }
 
@@ -35,41 +40,60 @@
   .search-box {
     display: flex;
     align-items: center;
-    background: #FFFFFF;
-    border: 1px solid #E0E0E7;
+    background: var(--surface-color); // Changes based on Light/Dark mode
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 0 12px;
     height: 38px;
-    &.focused { border-color: #436D9D; }
-    .search-icon-leading { color: #5F6368; margin-right: 8px; }
+    transition: border-color 0.2s ease;
+
+    &.focused {
+      border-color: var(--brand-primary);
+    }
+
+    .search-icon-leading {
+      color: var(--text-muted);
+      margin-right: 8px;
+    }
+
     .lintyl-search-input {
-      border: none; outline: none; width: 100%;
-      background: transparent; color: #3C4043;
-      &::placeholder { color: #80868B; }
+      border: none;
+      outline: none;
+      width: 100%;
+      background: transparent;
+      color: var(--text-main);
+
+      &::placeholder {
+        color: var(--text-muted);
+      }
     }
   }
 }
 
-.nav-spacer { flex: 1 1 auto; }
+.nav-spacer {
+  flex: 1 1 auto;
+}
 
 /* Right Actions Styling - Unified Hover States */
 .right-actions-container {
   display: flex;
   align-items: center;
-  gap: 8px; 
+  gap: 8px;
 
-  .lintyl-icon-btn, .profile-unit {
-    color: #5F6368;
+  .lintyl-icon-btn,
+  .profile-unit {
+    color: var(--text-muted);
     transition: all 0.2s ease;
-    
+
     &:hover {
-      color: #202124; 
-      background-color: rgba(0,0,0,0.05);
+      color: var(--text-main);
+      // Subtle background shift that works in both modes
+      background-color: rgba(128, 128, 128, 0.15);
     }
   }
 
   .lintyl-icon-btn {
-    mat-icon { 
+    mat-icon {
       font-size: 24px;
       width: 24px;
       height: 24px;
@@ -81,20 +105,20 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 6px 8px; // Balanced padding to match button circular hits
+  padding: 6px 8px;
   border-radius: 24px;
 
   .avatar-circle {
     width: 32px;
     height: 32px;
-    background-color: #D1D4D9;
+    // Maintains visibility across themes
+    background-color: var(--border-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
 
     mat-icon {
-      /* Inherits color from .profile-unit parent */
       font-size: 22px;
       width: 22px;
       height: 22px;
@@ -102,7 +126,6 @@
   }
 
   .expand-icon {
-    /* Inherits color from .profile-unit parent */
     font-size: 20px;
     width: 20px;
     height: 20px;

@@ -2,10 +2,9 @@
   padding: 0;
   position: relative;
   width: 100%;
-  height: 100px; // Fixed height container for stable calculation
+  height: 100px;
   margin: 20px 0;
 
-  // LAYER 1: Labels
   .label-row {
     position: absolute;
     top: 0;
@@ -20,31 +19,25 @@
       text-align: center;
       font-weight: 600;
       font-size: 14px;
-      color: #455a64;
+      color: var(--timeline-label); // Themed Label
       white-space: nowrap;
     }
   }
 
-  // LAYER 2: The Axis Line
   .main-line {
     position: absolute;
-    /* CALCULATION: Circle-Row-Top(40px) + Half-Circle(12px) = 52px */
     top: 52px;
-
-    /* CALCULATION: (100% / 4 items) / 2 = 12.5% */
     left: 12.5%;
     right: 12.5%;
-
     height: 4px;
-    background: #546e7a;
+    background: var(--timeline-axis); // Themed Axis Line
     z-index: 1;
     border-radius: 2px;
   }
 
-  // LAYER 3: The Nodes
   .node-row {
     position: absolute;
-    top: 40px; // Distance from top of container to top of circles
+    top: 40px;
     left: 0;
     right: 0;
     display: flex;
@@ -59,17 +52,17 @@
       .circle {
         width: 20px;
         height: 20px;
-        background: white;
-        border: 4px solid #cfd8dc;
+        background: var(--surface-color); // Themed Circle Fill
+        border: 4px solid var(--timeline-circle-border); // Themed Circle Border
         border-radius: 50%;
-        box-sizing: content-box; // Ensures 28px total height (20 + 4 + 4)
+        box-sizing: content-box;
         transition: transform 0.2s ease;
 
         &.active {
-          border-color: #546e7a;
+          border-color: var(--timeline-axis);
           transform: scale(1.15);
-          background: white;
-          box-shadow: 0 0 0 4px rgba(84, 110, 122, 0.1);
+          background: var(--surface-color);
+          box-shadow: 0 0 0 4px rgba(128, 128, 128, 0.1);
         }
       }
     }

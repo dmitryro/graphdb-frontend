@@ -8,24 +8,22 @@
   bottom: 0;
   left: 0;
   right: 0;
+  background-color: var(--bg-color);
 
   .sidenav-container {
     flex: 1;
-    background: $main-background-color;
+    background: transparent !important; // Removes the grey frame
 
     .sidenav {
-      /* REMOVED padding: 12px; to allow menu items to be edge-to-edge */
-      padding: 0; 
+      padding: 0;
       width: 260px;
-      /* Changed background from $white to match the LINTYL side-nav exactly */
-      background: #F0F0F5; 
-      /* Removed all internal borders to match the clean sidebar look */
+      background: var(--bg-color);
       border: none;
     }
 
     .main-container {
-      /* Kept original padding for content section */
-      padding: 16px; 
+      padding: 16px;
+      background: transparent !important;
     }
   }
 }

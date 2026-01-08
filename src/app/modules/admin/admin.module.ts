@@ -13,12 +13,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip'; // Recommended for the switch
 import { SharedModule } from '@shared/shared.module';
 import { Gridster, GridsterItem } from 'angular-gridster2';
 import { AdminRoutingModule } from './admin-routing.module';
 import * as fromComponents from './components';
 import { LayoutComponent } from './layout/layout.component';
 import { SideNavComponent } from './layout/side-nav/side-nav.component';
+import { ThemeSwitchComponent } from './layout/top-nav/theme-switch/theme-switch.component';
 import { TopNavComponent } from './layout/top-nav/top-nav.component';
 
 @NgModule({
@@ -41,7 +43,10 @@ import { TopNavComponent } from './layout/top-nav/top-nav.component';
     MatInputModule,
     MatMenuModule,
     MatListModule,
+    MatTooltipModule, // Add this for the tooltip on the switch
     SharedModule,
+    // standalone component added
+    ThemeSwitchComponent,
   ],
   declarations: [...fromComponents.components, LayoutComponent, TopNavComponent, SideNavComponent],
   exports: [...fromComponents.components],

@@ -14,25 +14,26 @@
   <div class="search-wrapper">
     <div class="search-box" [class.focused]="isSearchFocused">
       <mat-icon class="search-icon-leading">search</mat-icon>
-      <input 
+      <input
         #searchInput
-        type="text" 
-        placeholder="Search entities, IDs, rules, snapshots..." 
+        type="text"
+        placeholder="Search entities, IDs, rules, snapshots..."
         class="lintyl-search-input"
         (focus)="onFocus()"
         (blur)="onBlur()"
         (input)="onInput()"
-        (keyup.enter)="onSearchClick()">
+        (keyup.enter)="onSearchClick()" />
     </div>
   </div>
 
   <span class="nav-spacer"></span>
 
   <div class="right-actions-container">
+    <app-theme-switch></app-theme-switch>
     <button mat-icon-button class="lintyl-icon-btn">
       <mat-icon>help</mat-icon>
     </button>
-    
+
     <button mat-icon-button class="lintyl-icon-btn">
       <mat-icon matBadge="1" matBadgeColor="warn" matBadgeSize="small">notifications</mat-icon>
     </button>
@@ -44,7 +45,7 @@
       <mat-icon class="expand-icon">expand_more</mat-icon>
     </div>
   </div>
-  
+
   <mat-menu #profile="matMenu" [overlapTrigger]="false">
     <button mat-menu-item>
       <mat-icon>person</mat-icon>
