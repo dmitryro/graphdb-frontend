@@ -5,15 +5,11 @@
 @use './scss/theme';
 
 :root {
-  --bg-color: #f0f0f5;
+  --bg-color: transparent; // Changed to transparent
   --surface-color: #ffffff;
   --text-main: #3c4043;
   --border-color: #e0e0e7;
-
-  /* FIXED: Brand Identity Blue */
   --brand-blue: #436d9d;
-
-  /* Snapshot Timeline Variables */
   --timeline-axis: #546e7a;
   --timeline-label: #455a64;
   --timeline-circle-border: #cfd8dc;
@@ -24,15 +20,12 @@ body.dark-theme {
   --surface-color: #1e1e1e;
   --text-main: #e0e0e0;
   --border-color: #333333;
-
-  /* FIXED: Lighter Blue for Branding in Dark Mode */
   --brand-blue: #8ab4f8;
-
   --timeline-axis: #90a4ae;
   --timeline-label: #b0bec5;
   --timeline-circle-border: #455a64;
 
-  background-color: var(--bg-color);
+  background-color: var(--bg-color) !important;
   color: var(--text-main);
 
   // FIXED: All functional icons (Hamburger, Notifs, Help) flip to White
@@ -57,10 +50,11 @@ html,
 body {
   height: 100%;
 }
+
 body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
-  background-color: var(--bg-color);
+  background-color: #ffffff; // Body itself is white
 }
 
 // FIXED: Only Branding (LINTYL text and Share icon) uses Brand Blue
@@ -74,6 +68,7 @@ body {
 .mat-toolbar {
   background: transparent !important;
 }
+
 .mat-card,
 .panel-card {
   background-color: var(--surface-color) !important;

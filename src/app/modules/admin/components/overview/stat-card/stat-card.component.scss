@@ -1,20 +1,24 @@
 .stat-card {
   height: 100%;
-  border: 1px solid #eef0f2;
+  border: 1px solid var(--border-color); // Changed from #eef0f2
   box-shadow: none !important;
   padding: 16px;
+  background-color: var(--surface-color); // Added
 
   .header {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 20px;
+
     .icon-bg {
-      color: #546e7a;
+      color: var(--text-main); // Changed from #546e7a
+      opacity: 0.7;
     }
+
     .title {
       font-weight: 600;
-      color: #263238;
+      color: var(--text-main); // Changed from #263238
     }
   }
 
@@ -22,13 +26,16 @@
     display: flex;
     justify-content: space-between;
     padding: 8px 0;
-    border-top: 1px solid #f5f7f9;
+    border-top: 1px solid var(--border-color); // Changed from #f5f7f9
+
     .label {
-      color: #90a4ae;
+      color: var(--text-main); // Changed from #90a4ae
+      opacity: 0.6;
       font-size: 13px;
     }
+
     .value {
-      color: #455a64;
+      color: var(--text-main); // Changed from #455a64
       font-weight: 500;
     }
   }

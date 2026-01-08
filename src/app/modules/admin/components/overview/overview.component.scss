@@ -3,7 +3,7 @@
   flex-direction: column;
   height: 100vh;
   width: 100%;
-  background-color: #ffffff;
+  background-color: var(--bg-color); // Changed from #ffffff
   overflow: hidden;
 
   .dashboard-header {
@@ -11,21 +11,24 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px 40px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-color); // Changed from #f0f0f0
 
     .title-row {
       display: flex;
       align-items: center;
       gap: 20px;
+
       h1 {
         margin: 0;
         font-size: 24px;
         font-weight: 600;
-        color: #333;
+        color: var(--text-main); // Changed from #333
       }
     }
+
     .subtitle {
-      color: #666;
+      color: var(--text-main); // Changed from #666
+      opacity: 0.7;
       font-size: 14px;
       margin: 4px 0 0;
     }
@@ -47,14 +50,17 @@
 
   ::ng-deep .workspace-select {
     width: 130px;
+
     .mat-mdc-text-field-wrapper {
       background-color: #e18840 !important;
       border-radius: 6px !important;
     }
+
     .mat-mdc-select-value-text,
     .mat-mdc-select-arrow {
       color: white !important;
     }
+
     .mdc-notched-outline {
       display: none !important;
     }
@@ -72,11 +78,11 @@ gridster-item {
 }
 
 .panel-card {
-  background: #ffffff;
+  background: var(--surface-color); // Changed from #ffffff
   height: 100%;
   width: 100%;
   border-radius: 8px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--border-color); // Changed from #e8e8e8
   box-shadow:
     0 10px 20px rgba(0, 0, 0, 0.08),
     0 4px 6px rgba(0, 0, 0, 0.05);
@@ -89,6 +95,7 @@ gridster-item {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-main); // Added
 }
 
 // Fixed Timeline Layout
@@ -97,6 +104,7 @@ gridster-item {
   justify-content: space-between;
   align-items: center;
   padding-right: 20px;
+
   .view-all-link {
     color: #e18840;
     font-weight: 600;
@@ -109,23 +117,20 @@ gridster-item {
   padding: 0 40px 20px;
   box-sizing: border-box;
   display: flex;
-  align-items: center; // Vertical centering of the entire component
+  align-items: center;
 }
 
 .timeline-component-fix {
   width: 100%;
   display: block;
 
-  // Targeting the internal axis line to nudge it down into the circle center
   ::ng-deep {
-    // This targets the line regardless of if it's an SVG line or a div
     svg line,
     .axis-line,
     .timeline-path {
-      transform: translateY(11px); /* Nudge value to hit circle center */
+      transform: translateY(11px);
     }
 
-    // Ensure the nodes and line span the full card width
     .snapshot-history-wrapper,
     .timeline-main-container {
       width: 100% !important;
@@ -138,10 +143,12 @@ gridster-item {
 .list-placeholder-icon {
   width: 20px;
   height: 14px;
-  background: #e0e0e0;
+  background: var(--border-color); // Changed from #e0e0e0
   margin-right: 12px;
   border-radius: 2px;
 }
+
 .list-placeholder-text {
-  color: #999;
+  color: var(--text-main); // Changed from #999
+  opacity: 0.6;
 }

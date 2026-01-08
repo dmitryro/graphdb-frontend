@@ -12,18 +12,29 @@
 
   .sidenav-container {
     flex: 1;
-    background: transparent !important; // Removes the grey frame
+    background-color: var(--bg-color) !important;
 
     .sidenav {
       padding: 0;
       width: 260px;
-      background: var(--bg-color);
-      border: none;
+      background-color: var(--surface-color) !important;
+      border-right: 1px solid var(--border-color) !important;
+      box-shadow: none !important;
     }
 
     .main-container {
       padding: 16px;
-      background: transparent !important;
+      background-color: var(--bg-color) !important;
     }
   }
+}
+
+// Ensure sidenav content area matches
+.mat-drawer-container {
+  background-color: var(--bg-color) !important;
+  color: var(--text-main) !important;
+}
+
+.mat-drawer-content {
+  background-color: var(--bg-color) !important;
 }
