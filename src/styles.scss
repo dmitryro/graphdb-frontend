@@ -5,7 +5,7 @@
 @use './scss/theme';
 
 :root {
-  --bg-color: transparent; // Changed to transparent
+  --bg-color: transparent;
   --surface-color: #ffffff;
   --text-main: #3c4043;
   --border-color: #e0e0e7;
@@ -44,6 +44,30 @@ body.dark-theme {
       }
     }
   }
+
+  // FIXED: Select Dropdown Panels (like workspace selector)
+  .mat-mdc-select-panel {
+    background-color: var(--surface-color) !important;
+
+    .mat-mdc-option {
+      color: #e0e0e0 !important; // Explicitly set light text
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+      }
+
+      &.mat-mdc-option-active,
+      &.mdc-list-item--selected {
+        background-color: rgba(67, 109, 157, 0.2) !important;
+        color: #e0e0e0 !important;
+      }
+    }
+
+    // Also target the text span directly
+    .mdc-list-item__primary-text {
+      color: #e0e0e0 !important;
+    }
+  }
 }
 
 html,
@@ -54,7 +78,7 @@ body {
 body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
-  background-color: #ffffff; // Body itself is white
+  background-color: #ffffff;
 }
 
 // FIXED: Only Branding (LINTYL text and Share icon) uses Brand Blue
