@@ -1,0 +1,28 @@
+@use 'src/scss/variables' as *;
+
+.settings-layout-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 120px); // Adjust based on your header/footer height
+
+  // Ensures child components (List, Drift, etc.) take up the full width
+  router-outlet + * {
+    display: block;
+    width: 100%;
+    animation: fadeIn 0.2s ease-in-out;
+  }
+}
+
+// Optional: Soft transition for switching between sub-menus
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

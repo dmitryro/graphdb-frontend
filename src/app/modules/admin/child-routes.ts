@@ -17,6 +17,22 @@ import { ListComponent } from '@modules/admin/components/sources/list/list.compo
 import { SyncComponent } from '@modules/admin/components/sources/sync/sync.component';
 import { ValidationComponent } from '@modules/admin/components/sources/validation/validation.component';
 
+import { RulesConflictsComponent } from '@modules/admin/components/rules/rules-conflicts/rules-conflicts.component';
+import { RulesHistoryComponent } from '@modules/admin/components/rules/rules-history/rules-history.component';
+import { RulesListComponent } from '@modules/admin/components/rules/rules-list/rules-list.component';
+import { RulesResolutionComponent } from '@modules/admin/components/rules/rules-resolution/rules-resolution.component';
+
+import { AuditComponent } from '@modules/admin/components/governance/audit/audit.component';
+import { ComplianceComponent } from '@modules/admin/components/governance/compliance/compliance.component';
+import { EvidenceComponent } from '@modules/admin/components/governance/evidence/evidence.component';
+import { LineageComponent } from '@modules/admin/components/governance/lineage/lineage.component';
+
+import { AdvancedSettingsComponent } from '@modules/admin/components/settings/advanced-settings/advanced-settings.component';
+import { ConfigurationComponent } from '@modules/admin/components/settings/configuration/configuration.component';
+import { EnvironmentsComponent } from '@modules/admin/components/settings/environments/environments.component';
+import { SecretsComponent } from '@modules/admin/components/settings/secrets/secrets.component';
+import { UsersComponent } from '@modules/admin/components/settings/users/users.component';
+
 export const childRoutes: Routes = [
   { path: '', redirectTo: 'overview', pathMatch: 'full' },
   { path: 'dashboard', redirectTo: 'overview', pathMatch: 'full' },
@@ -79,6 +95,30 @@ export const childRoutes: Routes = [
     path: 'rules',
     component: RulesComponent,
     data: { title: 'Rules & Conflicts', icon: 'gavel' },
+    children: [
+      // Default to the list view when clicking 'Sources & Ingest'
+      { path: '', redirectTo: 'list', pathMatch: 'full' },
+      {
+        path: 'list',
+        component: RulesListComponent,
+        data: { title: 'Rules' },
+      },
+      {
+        path: 'conflicts',
+        component: RulesConflictsComponent,
+        data: { title: 'Conflicts' },
+      },
+      {
+        path: 'resolution',
+        component: RulesResolutionComponent,
+        data: { title: 'Resolution' },
+      },
+      {
+        path: 'history',
+        component: RulesHistoryComponent,
+        data: { title: 'Rules History' },
+      },
+    ],
   },
   {
     path: 'history',
@@ -89,6 +129,30 @@ export const childRoutes: Routes = [
     path: 'governance',
     component: GovernanceComponent,
     data: { title: 'Governance & Audits', icon: 'admin_panel_settings' },
+    children: [
+      // Default to the list view when clicking 'Sources & Ingest'
+      { path: '', redirectTo: 'audit', pathMatch: 'full' },
+      {
+        path: 'evidence',
+        component: EvidenceComponent,
+        data: { title: 'Evidence Export' },
+      },
+      {
+        path: 'audit',
+        component: AuditComponent,
+        data: { title: 'Audit Log' },
+      },
+      {
+        path: 'compliance',
+        component: ComplianceComponent,
+        data: { title: 'Compliance' },
+      },
+      {
+        path: 'lineage',
+        component: LineageComponent,
+        data: { title: 'Lineage' },
+      },
+    ],
   },
   {
     path: 'integrations',
@@ -99,5 +163,34 @@ export const childRoutes: Routes = [
     path: 'settings',
     component: SettingsComponent,
     data: { title: 'Settings', icon: 'settings' },
+    children: [
+      // Default to the list view when clicking 'Sources & Ingest'
+      { path: '', redirectTo: 'users', pathMatch: 'full' },
+      {
+        path: 'users',
+        component: UsersComponent,
+        data: { title: 'Users & Access' },
+      },
+      {
+        path: 'environments',
+        component: EnvironmentsComponent,
+        data: { title: 'Environments' },
+      },
+      {
+        path: 'secrets',
+        component: SecretsComponent,
+        data: { title: 'Secrets & Keys' },
+      },
+      {
+        path: 'configuration',
+        component: ConfigurationComponent,
+        data: { title: 'Configuration' },
+      },
+      {
+        path: 'advanced',
+        component: AdvancedSettingsComponent,
+        data: { title: 'Advanced' },
+      },
+    ],
   },
 ];
