@@ -45,12 +45,12 @@ body.dark-theme {
     }
   }
 
-  // FIXED: Select Dropdown Panels (like workspace selector)
+  // FIXED: Select Dropdown Panels in Dark Mode
   .mat-mdc-select-panel {
     background-color: var(--surface-color) !important;
 
     .mat-mdc-option {
-      color: #e0e0e0 !important; // Explicitly set light text
+      color: #e0e0e0 !important;
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.08) !important;
@@ -63,8 +63,54 @@ body.dark-theme {
       }
     }
 
-    // Also target the text span directly
     .mdc-list-item__primary-text {
+      color: #e0e0e0 !important;
+    }
+  }
+
+  // SURGICAL FIX: Paginator controls & Dropdown Caret
+  .mat-mdc-paginator {
+    background-color: var(--surface-color) !important;
+    color: #e0e0e0 !important;
+
+    .mat-mdc-paginator-navigation-next,
+    .mat-mdc-paginator-navigation-previous,
+    .mat-mdc-paginator-navigation-first,
+    .mat-mdc-paginator-navigation-last {
+      color: #e0e0e0 !important;
+      svg {
+        fill: #e0e0e0 !important;
+      }
+    }
+
+    .mat-mdc-paginator-page-size-select {
+      .mat-mdc-select-value {
+        color: #e0e0e0 !important;
+      }
+
+      // Bright caret for dark mode
+      .mat-mdc-select-arrow {
+        color: #ffffff !important;
+      }
+
+      // REMOVED secondary border to fix double-framing
+      .mat-mdc-select-trigger {
+        border: none !important;
+        padding: 0 !important;
+      }
+    }
+
+    .mat-mdc-form-field .mdc-notched-outline {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #333333 !important;
+      }
+    }
+
+    // Make labels consistent
+    .mat-mdc-paginator-page-size-label,
+    .mat-mdc-paginator-range-label {
       color: #e0e0e0 !important;
     }
   }
@@ -81,14 +127,14 @@ body {
   background-color: #ffffff;
 }
 
-// FIXED: Only Branding (LINTYL text and Share icon) uses Brand Blue
+// FIXED: Branding uses Brand Blue
 .brand-logo-icon,
 .brand-text,
 .nav-brand {
   color: var(--brand-blue) !important;
 }
 
-// Global UI Layout (Ensuring no grey frame)
+// Global UI Layout
 .mat-toolbar {
   background: transparent !important;
 }
@@ -98,4 +144,95 @@ body {
   background-color: var(--surface-color) !important;
   color: var(--text-main) !important;
   border: 1px solid var(--border-color) !important;
+}
+
+// Default Light Caret
+.mat-mdc-select-arrow {
+  color: #3c4043 !important;
+}
+
+// ---------------------------------------------------------
+// FOCUSED BRAND FONT FIX: Prevents Material from overriding Roboto
+// ---------------------------------------------------------
+.mat-mdc-table,
+.mat-mdc-paginator,
+.mat-mdc-card,
+.mat-mdc-dialog-container,
+.mat-mdc-select-panel,
+.mat-mdc-menu-panel {
+  font-family: 'Roboto', sans-serif !important;
+
+  .mdc-data-table__cell,
+  .mdc-data-table__header-cell,
+  .mat-mdc-select-value-text,
+  .mdc-list-item__primary-text {
+    font-family: 'Roboto', sans-serif !important;
+  }
+}
+
+// ---------------------------------------------------------
+// AGGRESSIVE PAGINATOR FONT SIZE FIX: 14px everywhere
+// ---------------------------------------------------------
+.mat-mdc-paginator {
+  font-size: 14px !important;
+
+  // All text elements
+  .mat-mdc-paginator-page-size-label,
+  .mat-mdc-paginator-range-label {
+    font-size: 14px !important;
+    font-family: 'Roboto', sans-serif !important;
+    font-weight: 400 !important;
+  }
+
+  // Dropdown trigger and value
+  .mat-mdc-select-value,
+  .mat-mdc-select-value-text,
+  .mat-mdc-select-min-line {
+    font-size: 14px !important;
+    font-family: 'Roboto', sans-serif !important;
+    font-weight: 400 !important;
+  }
+
+  // Internal form field
+  .mat-mdc-form-field-infix,
+  .mat-mdc-text-field-wrapper {
+    font-size: 14px !important;
+  }
+
+  // Icon size
+  .mat-mdc-icon-button {
+    --mdc-icon-button-icon-size: 20px !important;
+  }
+
+  .mat-mdc-paginator-icon {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+// CRITICAL: Target the overlay dropdown options directly
+.mat-mdc-select-panel {
+  &.mat-undefined {
+    .mat-mdc-option {
+      font-size: 14px !important;
+      font-family: 'Roboto', sans-serif !important;
+      min-height: 40px !important;
+
+      .mdc-list-item__primary-text {
+        font-size: 14px !important;
+        font-family: 'Roboto', sans-serif !important;
+        line-height: 40px !important;
+      }
+    }
+  }
+}
+
+// Even more aggressive - target the CDK overlay directly
+.cdk-overlay-pane {
+  .mat-mdc-select-panel {
+    .mdc-list-item__primary-text {
+      font-size: 14px !important;
+      font-family: 'Roboto', sans-serif !important;
+    }
+  }
 }
