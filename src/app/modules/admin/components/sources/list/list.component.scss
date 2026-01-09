@@ -77,7 +77,7 @@
       font-size: 14px;
       color: var(--text-main);
       font-family: 'Roboto', sans-serif;
-      padding-right: 40px; // Space for clear button
+      padding-right: 40px;
 
       &::placeholder {
         color: var(--text-main);
@@ -166,15 +166,9 @@
   font-weight: 500;
   font-size: 13px;
 
-  &.status-healthy {
-    color: #4caf50;
-  }
-  &.status-warning {
-    color: #ff9800;
-  }
-  &.status-working {
-    color: #6fa3e0;
-  }
+  &.status-healthy { color: #4caf50; }
+  &.status-warning { color: #ff9800; }
+  &.status-working { color: #6fa3e0; }
 
   .status-dot {
     width: 8px;
@@ -193,14 +187,83 @@
 .action-btn {
   color: var(--text-main) !important;
   opacity: 0.7;
-  &:hover {
-    opacity: 1;
+  &:hover { opacity: 1; }
+}
+
+// Menu divider component
+.menu-divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 4px 0;
+  opacity: 0.5;
+
+  &.danger-divider {
+    background-color: rgba(244, 67, 54, 0.3);
+    margin: 8px 0;
   }
 }
 
 ::ng-deep {
   .mat-sort-header-arrow {
     color: var(--text-main) !important;
+  }
+
+  // FIXED: Compact action menu styling
+  .compact-list-menu.mat-mdc-menu-panel {
+    min-width: 180px !important;
+    max-width: 200px !important;
+    background-color: var(--surface-color) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+
+    .mat-mdc-menu-content {
+      padding: 4px 0 !important;
+    }
+
+    .mat-mdc-menu-item {
+      min-height: 36px !important;
+      height: 36px !important;
+      padding: 0 12px !important;
+      font-family: 'Roboto', sans-serif !important;
+      color: var(--text-main) !important;
+
+      &:hover {
+        background-color: rgba(128, 128, 128, 0.1) !important;
+      }
+
+      .mdc-list-item__primary-text {
+        font-size: 13px !important;
+        font-weight: 400 !important;
+        color: var(--text-main) !important;
+      }
+
+      mat-icon {
+        font-size: 18px !important;
+        width: 18px !important;
+        height: 18px !important;
+        margin-right: 12px !important;
+        color: var(--text-main) !important;
+        opacity: 0.7;
+      }
+
+      // Delete action styling
+      &.delete-action {
+        margin-top: 4px;
+
+        .mdc-list-item__primary-text {
+          color: #f44336 !important;
+        }
+
+        mat-icon {
+          color: #f44336 !important;
+          opacity: 1;
+        }
+
+        &:hover {
+          background-color: rgba(244, 67, 54, 0.08) !important;
+        }
+      }
+    }
   }
 
   .mat-mdc-paginator {
@@ -212,7 +275,7 @@
     .mat-mdc-paginator-page-size-label,
     .mat-mdc-paginator-range-label {
       color: var(--text-main) !important;
-      font-size: 13px !important;
+      font-size: 14px !important;
       margin: 0 8px !important;
     }
 
@@ -221,40 +284,25 @@
     .mat-mdc-paginator-navigation-first,
     .mat-mdc-paginator-navigation-last {
       color: var(--text-main) !important;
-      svg {
-        fill: var(--text-main) !important;
-      }
-      &:disabled {
-        opacity: 0.3 !important;
-      }
-      &:not(:disabled):hover {
-        background-color: rgba(255, 255, 255, 0.08) !important;
-      }
+      svg { fill: var(--text-main) !important; }
+      &:disabled { opacity: 0.3 !important; }
+      &:not(:disabled):hover { background-color: rgba(128, 128, 128, 0.1) !important; }
     }
 
     .mat-mdc-paginator-page-size-select {
       color: var(--text-main) !important;
       .mat-mdc-select-value {
         color: var(--text-main) !important;
+        font-size: 14px !important;
       }
-      .mat-mdc-select-trigger {
-        border: none !important;
-        padding: 0 !important;
-      }
+      .mat-mdc-select-trigger { border: none !important; padding: 0 !important; }
     }
 
-    .mat-mdc-paginator-container {
-      justify-content: flex-end;
-      padding: 0 !important;
-    }
+    .mat-mdc-paginator-container { justify-content: flex-end; padding: 0 !important; }
 
     .mat-mdc-form-field {
-      .mat-mdc-text-field-wrapper {
-        background-color: transparent !important;
-      }
-      .mdc-notched-outline > * {
-        border-color: var(--border-color) !important;
-      }
+      .mat-mdc-text-field-wrapper { background-color: transparent !important; }
+      .mdc-notched-outline > * { border-color: var(--border-color) !important; }
     }
   }
 }

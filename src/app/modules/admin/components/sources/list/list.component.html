@@ -71,9 +71,38 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let element">
-          <button mat-icon-button class="action-btn">
+          <button mat-icon-button class="action-btn" [matMenuTriggerFor]="itemMenu">
             <mat-icon>more_vert</mat-icon>
           </button>
+          
+          <mat-menu #itemMenu="matMenu" class="compact-list-menu" xPosition="before">
+            <button mat-menu-item (click)="editSource(element)">
+              <mat-icon>edit</mat-icon><span>Edit Source</span>
+            </button>
+            <button mat-menu-item (click)="inspectSource(element)">
+              <mat-icon>search</mat-icon><span>Inspect Source</span>
+            </button>
+            <button mat-menu-item (click)="viewLogs(element)">
+              <mat-icon>history</mat-icon><span>View Logs</span>
+            </button>
+            <button mat-menu-item (click)="syncNow(element)">
+              <mat-icon>sync</mat-icon><span>Sync Now</span>
+            </button>
+            <div class="menu-divider"></div>
+            <button mat-menu-item (click)="pauseIngestion(element)">
+              <mat-icon>pause_circle</mat-icon><span>Pause / Disable</span>
+            </button>
+            <button mat-menu-item (click)="downloadSchema(element)">
+              <mat-icon>description</mat-icon><span>Download Schema</span>
+            </button>
+            <button mat-menu-item (click)="clearCache(element)">
+              <mat-icon>refresh</mat-icon><span>Clear Cache</span>
+            </button>
+            <div class="menu-divider danger-divider"></div>
+            <button mat-menu-item (click)="removeSource(element)" class="delete-action">
+              <mat-icon>delete_forever</mat-icon><span>Remove Source</span>
+            </button>
+          </mat-menu>
         </td>
       </ng-container>
 

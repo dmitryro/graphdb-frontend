@@ -10,6 +10,7 @@ import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/mat
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatMenuModule } from '@angular/material/menu';
 
 export interface SourceData {
   name: string;
@@ -37,6 +38,7 @@ export interface SourceData {
     MatInputModule,
     MatFormFieldModule,
     FormsModule,
+    MatMenuModule,
   ],
   providers: [{ provide: MatPaginatorIntl, useClass: MatPaginatorIntl }],
   templateUrl: './list.component.html',
@@ -127,4 +129,14 @@ export class ListComponent implements AfterViewInit {
         return 'status-error';
     }
   }
+
+  // Action Handlers
+  editSource(s: SourceData) { console.log('Edit Source', s); }
+  inspectSource(s: SourceData) { console.log('Inspect Source', s); }
+  viewLogs(s: SourceData) { console.log('View Logs', s); }
+  syncNow(s: SourceData) { console.log('Syncing', s); }
+  pauseIngestion(s: SourceData) { console.log('Pause Ingestion', s); }
+  downloadSchema(s: SourceData) { console.log('Download Schema', s); }
+  clearCache(s: SourceData) { console.log('Clear Cache', s); }
+  removeSource(s: SourceData) { console.log('Remove Source', s); }
 }
