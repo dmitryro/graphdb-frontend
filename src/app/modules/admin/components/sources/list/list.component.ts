@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -13,7 +16,7 @@ export interface SourceData {
   type: string;
   status: 'Healthy' | 'Warning' | 'Working...' | 'Error';
   recordsIngested: string;
-  recordsIngestedValue: number; // For sorting
+  recordsIngestedValue: number;
   queueDepth: string;
   lastIngest: string;
   healthValue: number;
@@ -31,6 +34,9 @@ export interface SourceData {
     MatProgressBarModule,
     MatPaginatorModule,
     MatSortModule,
+    MatInputModule,
+    MatFormFieldModule,
+    FormsModule,
   ],
   providers: [{ provide: MatPaginatorIntl, useClass: MatPaginatorIntl }],
   templateUrl: './list.component.html',
@@ -39,6 +45,7 @@ export interface SourceData {
 export class ListComponent implements AfterViewInit {
   displayedColumns: string[] = ['name', 'status', 'records', 'queue', 'health', 'actions'];
   dataSource = new MatTableDataSource<SourceData>(this.generateMockData(35));
+  searchTerm = '';
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -58,6 +65,32 @@ export class ListComponent implements AfterViewInit {
           return (item as any)[property];
       }
     };
+
+    // Custom filter predicate for multi-field search
+    this.dataSource.filterPredicate = (data: SourceData, filter: string) => {
+      const searchStr = filter.toLowerCase();
+      return (
+        data.name.toLowerCase().includes(searchStr) ||
+        data.type.toLowerCase().includes(searchStr) ||
+        data.status.toLowerCase().includes(searchStr) ||
+        data.recordsIngested.toLowerCase().includes(searchStr) ||
+        data.queueDepth.toLowerCase().includes(searchStr)
+      );
+    };
+  }
+
+  applyFilter() {
+    this.dataSource.filter = this.searchTerm.trim().toLowerCase();
+
+    // Reset to first page when filtering
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+  }
+
+  clearSearch() {
+    this.searchTerm = '';
+    this.applyFilter();
   }
 
   private generateMockData(count: number): SourceData[] {

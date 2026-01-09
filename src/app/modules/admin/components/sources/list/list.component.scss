@@ -1,7 +1,7 @@
 @use 'src/scss/variables' as *;
 
 .list-container {
-  padding: 24px; // Reduced from 32px to save horizontal space
+  padding: 24px;
   background: transparent;
   font-family: 'Roboto', sans-serif !important;
 
@@ -12,7 +12,7 @@
     margin-bottom: 24px;
 
     h1 {
-      font-size: 26px; // Balanced size to prevent header wrap
+      font-size: 26px;
       font-weight: 500;
       margin: 0;
       color: var(--text-main);
@@ -31,7 +31,7 @@
     .add-source-btn {
       background-color: #6fa3e0 !important;
       color: white !important;
-      height: 40px; // Adjusted for better alignment
+      height: 40px;
       border-radius: 8px;
       font-weight: 600;
       padding: 0 20px;
@@ -56,21 +56,57 @@
   overflow: hidden;
 
   .search-bar {
-    padding: 12px 24px; // Snugger padding
+    padding: 12px 24px;
     display: flex;
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid var(--border-color);
+    position: relative;
 
-    mat-icon {
+    .search-icon {
       color: var(--text-main);
       opacity: 0.6;
+      flex-shrink: 0;
     }
 
-    .search-placeholder {
-      font-size: 14px; // Fixed truncation in Search
-      font-weight: 400;
+    .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
       color: var(--text-main);
+      font-family: 'Roboto', sans-serif;
+      padding-right: 40px; // Space for clear button
+
+      &::placeholder {
+        color: var(--text-main);
+        opacity: 0.5;
+      }
+    }
+
+    .clear-btn {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      padding: 0;
+      flex-shrink: 0;
+      color: var(--text-main);
+      opacity: 0.6;
+      position: absolute;
+      right: 24px;
+
+      &:hover {
+        opacity: 1;
+        background-color: rgba(128, 128, 128, 0.1);
+      }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+      }
     }
   }
 }
@@ -78,12 +114,12 @@
 .full-width-table {
   width: 100%;
   background: transparent !important;
-  table-layout: auto; // Allow dynamic column sizing to prevent truncation
+  table-layout: auto;
 
   th {
     color: var(--text-main) !important;
     opacity: 0.7;
-    font-size: 12px; // Professional table header size
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     padding: 16px 24px;
@@ -97,7 +133,6 @@
     font-size: 14px;
   }
 
-  // Ensure Actions column is never hidden or truncated
   .mat-column-actions {
     width: 60px;
     padding-right: 16px !important;

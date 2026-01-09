@@ -12,8 +12,19 @@
 
   <div class="table-card mat-elevation-z1">
     <div class="search-bar">
-      <mat-icon>search</mat-icon>
-      <span class="search-placeholder">Sources</span>
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search by name, type, status..."
+        [(ngModel)]="searchTerm"
+        (input)="applyFilter()"
+        (keyup.escape)="clearSearch()" />
+      @if (searchTerm) {
+        <button mat-icon-button class="clear-btn" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
     </div>
 
     <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
