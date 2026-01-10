@@ -1,0 +1,560 @@
+@use 'src/scss/variables' as *;
+
+// Main container setup
+.sync-main-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-color);
+
+  // Let the page scroll normally; Gridster will manage its own scroll.
+  overflow-x: hidden;
+
+  .sync-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 24px 40px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    background-color: var(--bg-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    .breadcrumb-area {
+      .breadcrumb {
+        color: var(--text-main);
+        opacity: 0.5;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .title-row {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+
+        h1 {
+          margin: 0;
+          font-size: 26px;
+          font-weight: 500;
+          color: var(--text-main);
+        }
+
+        .reset-btn {
+          background-color: #e18840 !important;
+          color: white !important;
+          border-radius: 4px;
+          height: 36px;
+          font-weight: 500;
+
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            margin-right: 4px;
+          }
+        }
+      }
+
+      .subtitle {
+        color: var(--text-main);
+        opacity: 0.6;
+        margin: 4px 0 0;
+        font-size: 14px;
+      }
+    }
+
+    .workspace-area {
+      .workspace-select {
+        width: 150px;
+
+        ::ng-deep .mat-mdc-text-field-wrapper {
+          background-color: #e18840 !important;
+          border-radius: 6px;
+        }
+
+        ::ng-deep .mat-mdc-select-value-text,
+        ::ng-deep .mat-mdc-select-arrow {
+          color: white !important;
+        }
+
+        ::ng-deep .mdc-notched-outline {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .grid-wrapper {
+    padding: 20px 40px; // align with table card horizontally
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    display: block;
+    position: relative;
+    overflow: visible;
+  }
+
+  .table-card {
+    margin: 0 40px 40px;
+    background: var(--surface-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+
+    .table-filters {
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+
+      .time-tabs {
+        flex: 1;
+
+        ::ng-deep {
+          .mat-mdc-tab-group {
+            --mdc-tab-indicator-active-indicator-color: #e18840;
+            --mat-tab-header-active-label-text-color: var(--text-main);
+            --mat-tab-header-inactive-label-text-color: var(--text-main);
+          }
+
+          .mat-mdc-tab-labels {
+            border: none;
+          }
+
+          .mat-mdc-tab .mdc-tab__text-label {
+            color: var(--text-main) !important;
+            opacity: 0.6;
+          }
+
+          .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+            opacity: 1 !important;
+          }
+
+          .mat-mdc-tab-header-pagination-controls-enabled .mat-mdc-tab-header-pagination {
+            display: none !important;
+          }
+        }
+      }
+
+      .filter-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .search-box {
+        display: flex;
+        align-items: center;
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        padding: 0 12px;
+        border-radius: 6px;
+        min-width: 250px;
+
+        .search-input {
+          border: none;
+          background: transparent;
+          padding: 8px;
+          font-size: 14px;
+          outline: none;
+          color: var(--text-main);
+          flex: 1;
+
+          &::placeholder {
+            color: var(--text-main);
+            opacity: 0.5;
+          }
+        }
+
+        mat-icon {
+          color: var(--text-main);
+          opacity: 0.5;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+  }
+}
+
+// Gridster internal styles - FIXED for displacement and unused spacing
+gridster {
+  background: transparent;
+  width: 100% !important;
+  left: 0 !important; // Forces the grid to start at the left of the .grid-wrapper
+  position: relative !important;
+  display: block;
+}
+
+gridster-item {
+  background: transparent !important;
+  overflow: visible !important;
+  transition: all 0.3s ease; // Smooth animation on reset
+}
+
+.panel-card {
+  background: var(--surface-color);
+  border-radius: 8px;
+  height: 100%;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+
+  .card-header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-main);
+    margin-bottom: 16px;
+
+    .dim {
+      opacity: 0.5;
+      font-weight: 400;
+    }
+
+    .info-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      opacity: 0.5;
+    }
+  }
+
+  .card-body-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-stat {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-main);
+    margin-bottom: 12px;
+  }
+
+  .success-text {
+    color: #2ecc71;
+  }
+  .error-text {
+    color: #e74c3c;
+  }
+  .dim-main {
+    opacity: 0.6;
+  }
+
+  .sub-text {
+    font-size: 12px;
+    opacity: 0.6;
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  .sub-label {
+    font-size: 12px;
+    color: var(--text-main);
+    opacity: 0.6;
+    margin-top: 8px;
+  }
+
+  .dual-progress {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(128, 128, 128, 0.1);
+    margin-top: 10px;
+
+    .bar-success {
+      background: #2ecc71;
+    }
+    .bar-failure {
+      background: #e74c3c;
+      opacity: 0.7;
+    }
+  }
+
+  .trend {
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+
+    &.success-bg {
+      background: rgba(46, 204, 113, 0.1);
+      color: #27ae60;
+    }
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  .latency-bar,
+  .backfill-bar {
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 12px;
+  }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+
+    button {
+      flex: 1;
+      font-size: 12px;
+      height: 32px;
+      line-height: 32px;
+    }
+
+    .retry-now-btn {
+      background-color: #52a47d !important;
+      color: white !important;
+    }
+
+    .retry-all-btn {
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+  }
+}
+
+.full-width-table {
+  width: 100%;
+  background: transparent !important;
+
+  th {
+    color: var(--text-main);
+    opacity: 0.7;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 16px 24px;
+    letter-spacing: 0.5px;
+  }
+
+  td {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 14px;
+  }
+
+  .time-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .main-time {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .sub-source {
+      font-size: 12px;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  .type-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+
+    mat-icon {
+      font-size: 10px;
+      width: 10px;
+      height: 10px;
+      color: #2ecc71;
+    }
+
+    &.sync-type mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: #95a5a5;
+    }
+  }
+
+  .entity-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+
+    &.success {
+      background: rgba(46, 204, 113, 0.1);
+      color: #27ae60;
+    }
+    &.failure {
+      background: rgba(231, 76, 60, 0.1);
+      color: #c0392b;
+    }
+    &.partial-error {
+      background: rgba(230, 126, 34, 0.1);
+      color: #d35400;
+    }
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  .error-count {
+    font-size: 11px;
+    color: #d35400;
+    margin-top: 4px;
+  }
+
+  .ops-row {
+    display: flex;
+    gap: 8px;
+
+    button {
+      height: 32px;
+      font-size: 12px;
+      color: var(--text-main);
+      opacity: 0.8;
+      border-color: var(--border-color);
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
+      }
+
+      &:hover {
+        opacity: 1;
+        background-color: rgba(128, 128, 128, 0.05);
+      }
+    }
+
+    .resume-btn {
+      background: rgba(46, 204, 113, 0.05);
+      color: #27ae60;
+      border-color: #27ae60;
+
+      span {
+        margin-left: 4px;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+.row-progress {
+  height: 4px;
+  border-radius: 2px;
+  width: 100%;
+  max-width: 120px;
+}
+
+::ng-deep {
+  .mat-mdc-paginator {
+    background-color: var(--surface-color) !important;
+    border-top: 1px solid var(--border-color);
+    padding: 12px 24px !important;
+    font-family: 'Roboto', sans-serif !important;
+
+    .mat-mdc-paginator-page-size-label,
+    .mat-mdc-paginator-range-label {
+      color: var(--text-main) !important;
+      font-size: 14px !important;
+      margin: 0 8px !important;
+    }
+
+    .mat-mdc-paginator-navigation-previous,
+    .mat-mdc-paginator-navigation-next,
+    .mat-mdc-paginator-navigation-first,
+    .mat-mdc-paginator-navigation-last {
+      color: var(--text-main) !important;
+
+      svg {
+        fill: var(--text-main) !important;
+      }
+
+      &:disabled {
+        opacity: 0.3 !important;
+      }
+
+      &:not(:disabled):hover {
+        background-color: rgba(128, 128, 128, 0.1) !important;
+      }
+    }
+
+    .mat-mdc-paginator-page-size-select {
+      color: var(--text-main) !important;
+
+      .mat-mdc-select-value {
+        color: var(--text-main) !important;
+        font-size: 14px !important;
+      }
+
+      .mat-mdc-select-trigger {
+        border: none !important;
+        padding: 0 !important;
+      }
+    }
+
+    .mat-mdc-paginator-container {
+      justify-content: flex-end;
+      padding: 0 !important;
+    }
+
+    .mat-mdc-form-field {
+      .mat-mdc-text-field-wrapper {
+        background-color: transparent !important;
+      }
+
+      .mdc-notched-outline > * {
+        border-color: var(--border-color) !important;
+      }
+    }
+  }
+}

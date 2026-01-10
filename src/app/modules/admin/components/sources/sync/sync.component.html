@@ -1,1 +1,201 @@
-<p>sync.component works!</p>
+<div class="sync-main-container">
+  <header class="sync-header">
+    <div class="breadcrumb-area">
+      <div class="breadcrumb">Sources & Ingest</div>
+      <div class="title-row">
+        <h1>Load / Sync Status</h1>
+        <button mat-flat-button class="reset-btn" (click)="resetLayout()">
+          <mat-icon>restart_alt</mat-icon> Reset Layout
+        </button>
+      </div>
+      <p class="subtitle">
+        Monitor load and sync operations, track ingestion runs, backfills, and sync latency
+      </p>
+    </div>
+
+    <div class="workspace-area">
+      <mat-form-field appearance="outline" class="workspace-select">
+        <mat-select [(value)]="selectedWorkspace">
+          @for (ws of workspaces; track ws) {
+            <mat-option [value]="ws">{{ ws }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </header>
+
+  <div class="grid-wrapper">
+    @if (gridsterVisible) {
+      <gridster [options]="options">
+        @for (item of dashboard; track item.id) {
+          <gridster-item [item]="item">
+            <div class="panel-card">
+              @if (item.id === 'ingest') {
+                <div class="card-header-inner">
+                  <span>Ingest Runs <span class="dim">(24h)</span></span>
+                  <mat-icon class="info-icon">info_outline</mat-icon>
+                </div>
+                <div class="card-body-inner">
+                  <div class="main-stat">
+                    <span class="success-text">86</span> Success
+                    <span class="error-text">4</span> Failures
+                  </div>
+                  <div class="dual-progress">
+                    <div class="bar-success" style="width: 85%"></div>
+                    <div class="bar-failure" style="width: 15%"></div>
+                  </div>
+                </div>
+              }
+              @if (item.id === 'latency') {
+                <div class="card-header-inner">
+                  <span>Sync Latency</span>
+                </div>
+                <div class="card-body-inner">
+                  <div class="main-stat">
+                    25 mins
+                    <span class="trend success-bg"> <mat-icon>trending_up</mat-icon> 13% </span>
+                  </div>
+                  <mat-progress-bar
+                    mode="determinate"
+                    [value]="40"
+                    class="latency-bar"></mat-progress-bar>
+                </div>
+              }
+              @if (item.id === 'backfill') {
+                <div class="card-header-inner">
+                  <span>Current Backfill</span>
+                </div>
+                <div class="card-body-inner">
+                  <div class="main-stat dim-main">Running...</div>
+                  <mat-progress-bar
+                    mode="determinate"
+                    [value]="15"
+                    class="backfill-bar"></mat-progress-bar>
+                  <div class="sub-label">3,714 of 44,102 entities processed</div>
+                </div>
+              }
+              @if (item.id === 'retry') {
+                <div class="card-header-inner">
+                  <span>Retry Queue</span>
+                </div>
+                <div class="card-body-inner">
+                  <div class="main-stat">2 <span class="sub-text">Attempting replay...</span></div>
+                  <div class="action-row">
+                    <button mat-flat-button class="retry-now-btn">Retry Now</button>
+                    <button mat-stroked-button class="retry-all-btn">
+                      Retry All <mat-icon>expand_more</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </gridster-item>
+        }
+      </gridster>
+    }
+  </div>
+
+  <div class="table-card">
+    <div class="table-filters">
+      <mat-tab-group class="time-tabs">
+        <mat-tab label="Ingest Runs"></mat-tab>
+        <mat-tab label="24h"></mat-tab>
+        <mat-tab label="7d"></mat-tab>
+      </mat-tab-group>
+
+      <div class="filter-actions">
+        <div class="search-box">
+          <mat-icon>search</mat-icon>
+          <input
+            [(ngModel)]="searchTerm"
+            (input)="applyFilter()"
+            placeholder="Search runs..."
+            class="search-input" />
+        </div>
+      </div>
+    </div>
+
+    <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
+      <ng-container matColumnDef="startTime">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Start Time</th>
+        <td mat-cell *matCellDef="let run">
+          <div class="time-cell">
+            <span class="main-time">{{ run.startTime }}</span>
+            <span class="sub-source"> <mat-icon>business</mat-icon> {{ run.sourceName }} </span>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="type">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+        <td mat-cell *matCellDef="let run">
+          <div class="type-cell" [class.sync-type]="run.type === 'Sync'">
+            <mat-icon>{{ run.type === 'Sync' ? 'settings_backup_restore' : 'circle' }}</mat-icon>
+            <span>{{ run.type }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="entities">
+        <th mat-header-cell *matHeaderCellDef>Entities Processed</th>
+        <td mat-cell *matCellDef="let run">
+          <div class="entity-cell">
+            {{ run.entitiesProcessed }}
+            @if (run.progress) {
+              <mat-progress-bar mode="determinate" [value]="run.progress" class="row-progress">
+              </mat-progress-bar>
+            }
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="duration">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Duration</th>
+        <td mat-cell *matCellDef="let run">{{ run.duration }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+        <td mat-cell *matCellDef="let run">
+          <div class="status-chip" [ngClass]="run.status.toLowerCase().replace(' ', '-')">
+            @if (run.status === 'Partial Error') {
+              <mat-icon>warning</mat-icon>
+            }
+            @if (run.status === 'Success') {
+              <mat-icon>check_circle</mat-icon>
+            }
+            @if (run.status === 'Failure') {
+              <mat-icon>error</mat-icon>
+            }
+            {{ run.status }}
+          </div>
+          @if (run.errorCount) {
+            <div class="error-count">{{ run.errorCount }} load errors</div>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="operations">
+        <th mat-header-cell *matHeaderCellDef>Operations</th>
+        <td mat-cell *matCellDef="let run">
+          <div class="ops-row">
+            @if (run.status === 'Partial Error') {
+              <button mat-stroked-button class="resume-btn">
+                <mat-icon>play_arrow</mat-icon> Resume <span>{{ run.progress }}%</span>
+              </button>
+            } @else {
+              <button mat-stroked-button><mat-icon>refresh</mat-icon> Retry</button>
+            }
+            <button mat-stroked-button><mat-icon>visibility</mat-icon> Logs</button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="5" showFirstLastButtons>
+    </mat-paginator>
+  </div>
+</div>
