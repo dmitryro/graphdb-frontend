@@ -9,7 +9,7 @@
         <mat-icon>hub</mat-icon>
         <div>
           <h2>{{ currentAction === 'EDIT' ? 'Update' : 'Register' }} Data Source</h2>
-          <span class="subtitle">Canonical MPI Ingestion Flow</span>
+          <span class="subtitle">Canonical Ingestion Flow</span>
         </div>
       </div>
       <button mat-icon-button (click)="close()">
@@ -33,7 +33,7 @@
 
             <div class="info-text" [class.light-info]="theme === 'light'">
               <mat-icon>info</mat-icon>
-              <span>Define the origin and ownership for the MPI golden record context.</span>
+              <span>Define the origin and ownership for the data source.</span>
             </div>
 
             <div class="form-row">
