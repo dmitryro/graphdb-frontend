@@ -1,55 +1,102 @@
-import { Action } from "@modules/events/interfaces/action.interface";
-import { createAction, props } from "@ngrx/store";
+import { Action } from '@modules/events/interfaces/action.interface';
 
 export enum EventActionTypes {
-  PilotTermsAgreed = "[Event] Pilot Terms Agreed",
-  PilotContactFormUpdated = "[Event] Pilot Contact Form Updated",
-  ToggleHeader = "[Event] Toggle Header",
-  ToggleDrawer = "[Event] Toggle Drawer",
-  NonHealthcareUser = "[Event] Non Healthcare User",
-  OpenDrawer = "[Event] Open Drawer",
-  CloseDrawer = "[Event] Close Drawer",
-  OpenChat = "[Event] Open Chat",
-  CloseChat = "[Event] Close Chat",
-  OpenSearch = "[Event] Open Search",
-  CloseSearch = "[Event] Close Search",
-  OpenRegistrationModal = "[Event] Open Registration",
-  CloseRegistrationModal = "[Event] Close Registration",
-  InnerMenuItemSelected = "[Event] Inner Menu Item Selected",
-  CloseLoginDialog = "[Event] Close Login Dialog",
-  VKAuthSuccess = "[Event] VK Auth Success",
-  VKAuthFailure = "[Event] VK Auth Failure",
-  VKCodeReceived = "[Event] VK Code Received",
-  TwitterAuthSuccess = "[Event] Twitter Auth Success",
-  TwitterAuthFailure = "[Event] Twitter Auth Faiure",
-  GoogleAuthSuccess = "[Event] Google Auth Success",
-  GoogleAuthFailure = "[Event] Google Auth Faiure",
-  MSAuthSuccess = "[Event] MS Auth Success",
-  MSAuthFailure = "[Event] MS Auth Faiure",
-  TriggerLogout = "[Event] Trigger Logout",
-  OpenUserOptionsMenu = "[Event] Open User Options Menu",
-  CloseUserOptionsMenu = "[Event] Close User Options Menu",
-  SucceededAuthentication = "[Event] Succeeded Authentication",
-  FailedAuthentication = "[Event] Failed Authentication",
-  SessionRestored = "[Event] Session Restored",
-  ShowUserMenu = "[Event] Show User Menu",
-  SessionCreated = "[Event] Session Created",
-  LogoutUser = "[Event] Logout User",
-  SetPickerDate = "[Event] Set Picker Date",
-  OpenLoginModal = "[Event] Open Login Modal",
-  OpenModal = "[Event] Open modal",
-  CloseModal = "[Event] Close modal",
-  OpenUserMenu = "[Event] OpenUserMenu",
-  CloseUserMenu = "[Event] CloseUserMenu",
-  OpenSideMenu = "[Event] OpenSideMenu",
-  CloseSideMenu = "[Event] CloseSideMenu",
-  OpenMobileMenu = "[Event] OpenMibleMenu",
-  CloseMobileMenu = "[Event] CloseMobileMenu",
-  UpdateMenuItem = "[Event] UpdateMenuItem",
-  OptionSelected = "[Event] OptionSelected",
-  RefreshHeader = "[Event] RefreshHeader",
-  PageLoaded = "[Event] PageLoaded",
-  MobileModeEntered = "[Event] Mobile Mode Entered",
+  PilotTermsAgreed = '[Event] Pilot Terms Agreed',
+  PilotContactFormUpdated = '[Event] Pilot Contact Form Updated',
+  ToggleHeader = '[Event] Toggle Header',
+  ToggleDrawer = '[Event] Toggle Drawer',
+  NonHealthcareUser = '[Event] Non Healthcare User',
+  OpenDrawer = '[Event] Open Drawer',
+  CloseDrawer = '[Event] Close Drawer',
+  OpenChat = '[Event] Open Chat',
+  CloseChat = '[Event] Close Chat',
+  OpenSearch = '[Event] Open Search',
+  CloseSearch = '[Event] Close Search',
+  OpenRegistrationModal = '[Event] Open Registration',
+  CloseRegistrationModal = '[Event] Close Registration',
+  InnerMenuItemSelected = '[Event] Inner Menu Item Selected',
+  CloseLoginDialog = '[Event] Close Login Dialog',
+  VKAuthSuccess = '[Event] VK Auth Success',
+  VKAuthFailure = '[Event] VK Auth Failure',
+  VKCodeReceived = '[Event] VK Code Received',
+  TwitterAuthSuccess = '[Event] Twitter Auth Success',
+  TwitterAuthFailure = '[Event] Twitter Auth Faiure',
+  GoogleAuthSuccess = '[Event] Google Auth Success',
+  GoogleAuthFailure = '[Event] Google Auth Faiure',
+  MSAuthSuccess = '[Event] MS Auth Success',
+  MSAuthFailure = '[Event] MS Auth Faiure',
+  TriggerLogout = '[Event] Trigger Logout',
+  OpenUserOptionsMenu = '[Event] Open User Options Menu',
+  CloseUserOptionsMenu = '[Event] Close User Options Menu',
+  SucceededAuthentication = '[Event] Succeeded Authentication',
+  FailedAuthentication = '[Event] Failed Authentication',
+  SessionRestored = '[Event] Session Restored',
+  ShowUserMenu = '[Event] Show User Menu',
+  SessionCreated = '[Event] Session Created',
+  LogoutUser = '[Event] Logout User',
+  SetPickerDate = '[Event] Set Picker Date',
+  OpenLoginModal = '[Event] Open Login Modal',
+  OpenModal = '[Event] Open modal',
+  CloseModal = '[Event] Close modal',
+  OpenUserMenu = '[Event] OpenUserMenu',
+  CloseUserMenu = '[Event] CloseUserMenu',
+  OpenSideMenu = '[Event] OpenSideMenu',
+  CloseSideMenu = '[Event] CloseSideMenu',
+  OpenMobileMenu = '[Event] OpenMibleMenu',
+  CloseMobileMenu = '[Event] CloseMobileMenu',
+  UpdateMenuItem = '[Event] UpdateMenuItem',
+  OptionSelected = '[Event] OptionSelected',
+  RefreshHeader = '[Event] RefreshHeader',
+  PageLoaded = '[Event] PageLoaded',
+  MobileModeEntered = '[Event] Mobile Mode Entered',
+  AddSource = '[Event] Add Source',
+  EditSource = '[Event] Edit Source',
+  DeleteSource = '[Event] Delete Source',
+  InspectSource = '[Event] Inspect Source',
+  SyncSource = '[Event] Sync Source',
+  PauseIngestion = '[Event] Pause Ingestion',
+  DownloadSchema = '[Event] Download Schema',
+  ClearSourceCache = '[Event] Clear Source Cache',
+}
+
+export class AddSource implements Action {
+  readonly type = EventActionTypes.AddSource;
+  constructor(public payload: any) {}
+}
+
+export class EditSource implements Action {
+  readonly type = EventActionTypes.EditSource;
+  constructor(public payload: any) {}
+}
+
+export class DeleteSource implements Action {
+  readonly type = EventActionTypes.DeleteSource;
+  constructor(public payload: any) {}
+}
+
+export class InspectSource implements Action {
+  readonly type = EventActionTypes.InspectSource;
+  constructor(public payload: any) {}
+}
+
+export class SyncSource implements Action {
+  readonly type = EventActionTypes.SyncSource;
+  constructor(public payload: any) {}
+}
+
+export class PauseIngestion implements Action {
+  readonly type = EventActionTypes.PauseIngestion;
+  constructor(public payload: any) {}
+}
+
+export class DownloadSchema implements Action {
+  readonly type = EventActionTypes.DownloadSchema;
+  constructor(public payload: any) {}
+}
+
+export class ClearSourceCache implements Action {
+  readonly type = EventActionTypes.ClearSourceCache;
+  constructor(public payload: any) {}
 }
 
 export class PilotContactFormUpdated implements Action {
@@ -340,4 +387,12 @@ export type EventActions =
   | VKAuthSuccess
   | VKAuthFailure
   | InnerMenuItemSelected
-  | CloseLoginDialog;
+  | CloseLoginDialog
+  | AddSource
+  | EditSource
+  | DeleteSource
+  | InspectSource
+  | SyncSource
+  | PauseIngestion
+  | DownloadSchema
+  | ClearSourceCache;

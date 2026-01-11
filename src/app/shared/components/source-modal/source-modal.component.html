@@ -1,0 +1,496 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="close()">
+  <div
+    class="modal-container"
+    [class.dark]="theme === 'dark'"
+    [class.light]="theme === 'light'"
+    (click)="$event.stopPropagation()">
+    <header class="modal-header" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+      <div class="header-title">
+        <mat-icon>hub</mat-icon>
+        <div>
+          <h2>{{ currentAction === 'EDIT' ? 'Update' : 'Register' }} Data Source</h2>
+          <span class="subtitle">Canonical MPI Ingestion Flow</span>
+        </div>
+      </div>
+      <button mat-icon-button (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <div class="modal-body" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+      <mat-stepper
+        [linear]="true"
+        #stepper
+        [class.dark-stepper]="theme === 'dark'"
+        [class.light-stepper]="theme === 'light'">
+        <mat-step [stepControl]="identityForm" errorMessage="Identity info required">
+          <form
+            [formGroup]="identityForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Identity</ng-template>
+
+            <div class="info-text" [class.light-info]="theme === 'light'">
+              <mat-icon>info</mat-icon>
+              <span>Define the origin and ownership for the MPI golden record context.</span>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field
+                appearance="outline"
+                class="flex-2"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Source Name</mat-label>
+                <input matInput formControlName="name" required placeholder="e.g. CORE_VAULT_S3" />
+                <mat-error *ngIf="identityForm.get('name')?.invalid"
+                  >Valid name is required</mat-error
+                >
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="flex-1"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Environment</mat-label>
+                <mat-select formControlName="env" required>
+                  <mat-option value="prod">Production</mat-option>
+                  <mat-option value="stage">Staging</mat-option>
+                  <mat-option value="test">Testing</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Owner</mat-label>
+              <input
+                matInput
+                formControlName="owner"
+                required
+                placeholder="e.g. data-engineering@company.com" />
+              <mat-error *ngIf="identityForm.get('owner')?.invalid">Owner is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Description</mat-label>
+              <textarea
+                matInput
+                formControlName="description"
+                rows="2"
+                placeholder="Brief description of this data source"></textarea>
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Tags (Identity Context)</mat-label>
+              <mat-chip-grid #chipGrid>
+                <mat-chip-row *ngFor="let tag of tags" (removed)="removeTag(tag)">
+                  {{ tag }}
+                  <button matChipRemove><mat-icon>cancel</mat-icon></button>
+                </mat-chip-row>
+                <input
+                  placeholder="Add context tag..."
+                  [matChipInputFor]="chipGrid"
+                  [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="addTag($event)" />
+              </mat-chip-grid>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field
+                appearance="outline"
+                class="flex-1"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Source Category</mat-label>
+                <mat-select formControlName="category" required>
+                  <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="flex-1"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Trust Intent</mat-label>
+                <mat-select formControlName="intent" required>
+                  <mat-option *ngFor="let intent of trustIntents" [value]="intent">{{
+                    intent
+                  }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button
+                mat-flat-button
+                color="primary"
+                matStepperNext
+                [disabled]="identityForm.invalid">
+                Continue to Technical Setup
+              </button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="connectivityForm" errorMessage="Connection details required">
+          <form
+            [formGroup]="connectivityForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Connectivity</ng-template>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Canonical Source Type</mat-label>
+              <mat-select formControlName="type" required>
+                <mat-optgroup *ngFor="let group of sourceTypes" [label]="group.group">
+                  <mat-option *ngFor="let type of group.types" [value]="type">{{
+                    type
+                  }}</mat-option>
+                </mat-optgroup>
+              </mat-select>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field
+                appearance="outline"
+                class="flex-2"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Host / URL / Endpoint</mat-label>
+                <input
+                  matInput
+                  formControlName="host"
+                  required
+                  placeholder="s3://us-east-1/clinical-data" />
+                <mat-error *ngIf="connectivityForm.get('host')?.invalid"
+                  >Endpoint host is required</mat-error
+                >
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="flex-1"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Protocol</mat-label>
+                <mat-select formControlName="protocol" required>
+                  <mat-option value="https">HTTPS</mat-option>
+                  <mat-option value="bolt">BOLT (Graph)</mat-option>
+                  <mat-option value="sftp">SFTP</mat-option>
+                  <mat-option value="grpc">gRPC</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field
+                appearance="outline"
+                class="flex-1"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Port (Optional)</mat-label>
+                <input matInput formControlName="port" placeholder="443" />
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="flex-2"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Path (Optional)</mat-label>
+                <input matInput formControlName="path" placeholder="/api/v1" />
+              </mat-form-field>
+            </div>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Ingestion Mode</mat-label>
+              <mat-select formControlName="mode">
+                <mat-option value="Stream">Stream (Real-time)</mat-option>
+                <mat-option value="Batch">Batch (Scheduled)</mat-option>
+                <mat-option value="Hybrid">Hybrid (Mixed)</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div
+              class="connection-test-area"
+              [class.success]="connectionStatus === 'success'"
+              [class.error]="connectionStatus === 'error'"
+              [class.dark-test]="theme === 'dark'"
+              [class.light-test]="theme === 'light'">
+              <button
+                type="button"
+                mat-stroked-button
+                (click)="testConnection()"
+                [disabled]="isTesting">
+                <mat-spinner
+                  diameter="20"
+                  *ngIf="isTesting"
+                  [class.light]="theme === 'light'"></mat-spinner>
+                <mat-icon *ngIf="!isTesting && connectionStatus === 'idle'">lan</mat-icon>
+                <mat-icon *ngIf="connectionStatus === 'success'">check_circle</mat-icon>
+                <mat-icon *ngIf="connectionStatus === 'error'">error</mat-icon>
+                {{ isTesting ? 'Attempting Handshake...' : 'Test Connection' }}
+              </button>
+              <span class="test-msg" *ngIf="connectionStatus === 'success'"
+                >Handshake Successful: Endpoint Reachable</span
+              >
+              <span class="test-msg" *ngIf="connectionStatus === 'error'"
+                >Connection Failed: Verify Host/Protocol</span
+              >
+            </div>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-flat-button color="primary" matStepperPrevious>Back</button>
+              <button
+                mat-flat-button
+                color="primary"
+                matStepperNext
+                [disabled]="connectivityForm.invalid">
+                Next: Security
+              </button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="securityForm">
+          <form
+            [formGroup]="securityForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Security</ng-template>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Authentication Strategy</mat-label>
+              <mat-select formControlName="authType" required>
+                <mat-option value="OAuth2">OAuth2 (JWT/mTLS)</mat-option>
+                <mat-option value="Vault">HashiCorp Vault / KMS</mat-option>
+                <mat-option value="IAM">Cloud IAM Policy</mat-option>
+                <mat-option value="Key">Public/Private Key Pair</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Credential Reference (Vault Path)</mat-label>
+              <input
+                matInput
+                formControlName="vaultRef"
+                required
+                placeholder="kv/data/sources/fhir-primary" />
+              <mat-icon matSuffix>lock</mat-icon>
+              <mat-error *ngIf="securityForm.get('vaultRef')?.invalid"
+                >Vault reference is required</mat-error
+              >
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Credential Rotation Policy</mat-label>
+              <mat-select formControlName="rotation">
+                <mat-option value="30 Days">30 Days</mat-option>
+                <mat-option value="90 Days">90 Days</mat-option>
+                <mat-option value="180 Days">180 Days</mat-option>
+                <mat-option value="Manual">Manual Only</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-slide-toggle
+              formControlName="tlsEnforced"
+              [class.dark-toggle]="theme === 'dark'"
+              [class.light-toggle]="theme === 'light'">
+              Enforce TLS 1.3 Encryption
+            </mat-slide-toggle>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-flat-button color="primary" matStepperPrevious>Back</button>
+              <button
+                mat-flat-button
+                color="primary"
+                matStepperNext
+                [disabled]="securityForm.invalid">
+                Next: Semantics
+              </button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="semanticsForm">
+          <form
+            [formGroup]="semanticsForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Semantics</ng-template>
+
+            <div class="form-row">
+              <mat-form-field
+                appearance="outline"
+                class="flex-1"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Data Format</mat-label>
+                <mat-select formControlName="format" required>
+                  <mat-option value="JSON">JSON / NDJSON</mat-option>
+                  <mat-option value="Parquet">Parquet (Columnar)</mat-option>
+                  <mat-option value="Avro">Avro (Binary)</mat-option>
+                  <mat-option value="FHIR">FHIR Resource Bundle</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="flex-1"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Schema Discovery</mat-label>
+                <mat-select formControlName="strategy">
+                  <mat-option value="Auto-discover">Auto-discover</mat-option>
+                  <mat-option value="Manual">Manual Mapping</mat-option>
+                  <mat-option value="Template">Use Template</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Identity Matching Strategy</mat-label>
+              <mat-select formControlName="identityMatch" required>
+                <mat-option value="Exact">Deterministic (Exact)</mat-option>
+                <mat-option value="Fuzzy">Probabilistic (Fuzzy)</mat-option>
+                <mat-option value="ML">ML-Enhanced Matching</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-flat-button color="primary" matStepperPrevious>Back</button>
+              <button
+                mat-flat-button
+                color="primary"
+                matStepperNext
+                [disabled]="semanticsForm.invalid">
+                Next: Governance
+              </button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="governanceForm">
+          <form
+            [formGroup]="governanceForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Activation</ng-template>
+
+            <div
+              class="final-summary"
+              [class.dark-summary]="theme === 'dark'"
+              [class.light-summary]="theme === 'light'">
+              <h3>Governance Review</h3>
+              <p>
+                Source <strong>{{ identityForm.get('name')?.value || 'Unnamed' }}</strong> is ready
+                for deployment.
+              </p>
+              <ul>
+                <li>
+                  <strong>Type:</strong>
+                  {{ connectivityForm.get('type')?.value || 'Not specified' }}
+                </li>
+                <li><strong>Environment:</strong> {{ identityForm.get('env')?.value }}</li>
+                <li><strong>Audit Log:</strong> execute_merge_query_with_context</li>
+              </ul>
+            </div>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Ingestion Schedule</mat-label>
+              <mat-select formControlName="ingestion">
+                <mat-option value="Continuous">Continuous (Real-time)</mat-option>
+                <mat-option value="Hourly">Hourly</mat-option>
+                <mat-option value="Daily">Daily</mat-option>
+                <mat-option value="Manual">Manual Trigger Only</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Compliance Framework</mat-label>
+              <mat-select formControlName="compliance">
+                <mat-option value="HIPAA">HIPAA</mat-option>
+                <mat-option value="GDPR">GDPR</mat-option>
+                <mat-option value="SOC2">SOC 2</mat-option>
+                <mat-option value="Custom">Custom Policy</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-checkbox
+              formControlName="activate"
+              [class.dark-checkbox]="theme === 'dark'"
+              [class.light-checkbox]="theme === 'light'">
+              Confirm Deployment and Log to Event Graph
+            </mat-checkbox>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-flat-button color="primary" matStepperPrevious>Back</button>
+              <button
+                mat-flat-button
+                color="warn"
+                (click)="confirmAction()"
+                [disabled]="governanceForm.invalid">
+                Activate Source
+              </button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-stepper>
+    </div>
+  </div>
+</div>

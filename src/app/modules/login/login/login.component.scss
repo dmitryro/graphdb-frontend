@@ -1,11 +1,12 @@
 @use 'src/scss/variables' as *;
 
 .login-page {
+  font-family: 'Roboto', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background-color: #F0F0F5; // Consistent with sidebar
+  background-color: #f0f0f5;
   position: relative;
 
   .content {
@@ -19,12 +20,11 @@
       display: flex;
       justify-content: center;
 
-      // Brand Styling
       .nav-brand {
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #436D9D;
+        color: #436d9d;
         font-weight: 700;
         font-size: 28px;
         letter-spacing: 1px;
@@ -33,45 +33,53 @@
           font-size: 32px;
           height: 32px;
           width: 32px;
-          transform: rotate(-15deg); // Slight tilt to match LINTYL style
+          transform: rotate(-15deg);
         }
       }
     }
 
     .login-form {
       padding: 40px 50px;
-      background: #FFFFFF;
+      background: #ffffff;
       width: 100%;
       max-width: 420px;
       border-radius: 8px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 
-      .forgot-password {
-        color: #5493D1;
-        text-decoration: none;
+      // Unified link style for Forgot Password and Sign Up
+      .brand-link {
+        color: #436d9d;
+        font-weight: 600;
         font-size: 14px;
-        &:hover { text-decoration: underline; }
+        text-decoration: none;
+        cursor: pointer;
+        font-family: 'Roboto', sans-serif;
+
+        &:hover {
+          text-decoration: underline;
+        }
       }
 
       .login-button {
-        background-color: #436D9D !important;
+        background-color: #436d9d !important;
         color: white !important;
         height: 52px;
         font-size: 16px;
         font-weight: 600;
         margin-bottom: 20px;
         border-radius: 4px;
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
       }
 
       .signup-prompt {
         text-align: center;
         font-size: 14px;
-        color: #5F6368;
-        a {
-          color: #436D9D;
-          font-weight: 600;
-          text-decoration: none;
-        }
+        color: #5f6368;
+        margin-top: 10px;
       }
     }
   }

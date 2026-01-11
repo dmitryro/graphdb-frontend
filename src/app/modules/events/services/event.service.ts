@@ -56,6 +56,15 @@ export class EventService {
     m.set('close_search', EventActionTypes.CloseSearch);
     m.set('open_registration', EventActionTypes.OpenRegistrationModal);
     m.set('close_registration', EventActionTypes.CloseRegistrationModal);
+    // New Source signals
+    m.set('add_source', EventActionTypes.AddSource);
+    m.set('edit_source', EventActionTypes.EditSource);
+    m.set('delete_source', EventActionTypes.DeleteSource);
+    m.set('inspect_source', EventActionTypes.InspectSource);
+    m.set('sync_source', EventActionTypes.SyncSource);
+    m.set('pause_ingestion', EventActionTypes.PauseIngestion);
+    m.set('download_schema', EventActionTypes.DownloadSchema);
+    m.set('clear_source_cache', EventActionTypes.ClearSourceCache);
     this.eventStore.dispatch({
       type: m.get(event),
       payload: { id: id, event: event, payload: payload },

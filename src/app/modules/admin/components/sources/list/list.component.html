@@ -4,7 +4,7 @@
       <h1>Sources & Ingest</h1>
       <p class="subtitle">Manage data sources, ingestion status, and processing queues.</p>
     </div>
-    <button mat-flat-button class="add-source-btn">
+    <button mat-flat-button class="add-source-btn" (click)="addSource()">
       <mat-icon>add</mat-icon>
       Add Source
     </button>
@@ -74,7 +74,7 @@
           <button mat-icon-button class="action-btn" [matMenuTriggerFor]="itemMenu">
             <mat-icon>more_vert</mat-icon>
           </button>
-          
+
           <mat-menu #itemMenu="matMenu" class="compact-list-menu" xPosition="before">
             <button mat-menu-item (click)="editSource(element)">
               <mat-icon>edit</mat-icon><span>Edit Source</span>
@@ -88,7 +88,9 @@
             <button mat-menu-item (click)="syncNow(element)">
               <mat-icon>sync</mat-icon><span>Sync Now</span>
             </button>
+
             <div class="menu-divider"></div>
+
             <button mat-menu-item (click)="pauseIngestion(element)">
               <mat-icon>pause_circle</mat-icon><span>Pause / Disable</span>
             </button>
@@ -98,7 +100,9 @@
             <button mat-menu-item (click)="clearCache(element)">
               <mat-icon>refresh</mat-icon><span>Clear Cache</span>
             </button>
+
             <div class="menu-divider danger-divider"></div>
+
             <button mat-menu-item (click)="removeSource(element)" class="delete-action">
               <mat-icon>delete_forever</mat-icon><span>Remove Source</span>
             </button>

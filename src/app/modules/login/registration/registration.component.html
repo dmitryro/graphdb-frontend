@@ -1,0 +1,172 @@
+<div class="registration-page">
+  <div class="registration-container">
+    <div class="registration-card">
+      <div class="text-center logo-container">
+        <div class="nav-brand">
+          <mat-icon class="brand-logo-icon">share</mat-icon>
+          <span>LINTYL</span>
+        </div>
+      </div>
+
+      <mat-stepper [linear]="true" #stepper class="clean-stepper">
+        <mat-step [stepControl]="identityFormGroup">
+          <ng-template matStepLabel>Account</ng-template>
+          <form [formGroup]="identityFormGroup" class="step-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="firstName" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="lastName" />
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Business / Company</mat-label>
+              <input matInput formControlName="company" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100 username-field">
+              <mat-label>Username</mat-label>
+              <input matInput formControlName="username" placeholder="Choose a unique username" />
+              <mat-hint>This will be your unique identity in the LINTYL graph.</mat-hint>
+            </mat-form-field>
+
+            <div class="form-row mt-10">
+              <mat-form-field appearance="outline" class="flex-60">
+                <mat-label>Email Address</mat-label>
+                <input matInput type="email" formControlName="email" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="flex-40">
+                <mat-label>Phone</mat-label>
+                <input matInput type="tel" formControlName="phone" />
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <div class="password-wrapper flex-1">
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>Password</mat-label>
+                  <input
+                    matInput
+                    [type]="hidePassword ? 'password' : 'text'"
+                    formControlName="password" />
+                  <button
+                    mat-icon-button
+                    matSuffix
+                    (click)="hidePassword = !hidePassword"
+                    type="button">
+                    <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                  </button>
+                </mat-form-field>
+                <div class="strength-meter" *ngIf="identityFormGroup.get('password')?.value">
+                  <mat-progress-bar
+                    mode="determinate"
+                    [value]="passwordStrength"
+                    [color]="strengthColor"></mat-progress-bar>
+                  <span class="strength-label" [attr.data-strength]="strengthLabel">{{
+                    strengthLabel
+                  }}</span>
+                </div>
+              </div>
+
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Confirm Password</mat-label>
+                <input
+                  matInput
+                  [type]="hidePassword ? 'password' : 'text'"
+                  formControlName="confirmPassword" />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  (click)="hidePassword = !hidePassword"
+                  type="button">
+                  <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+
+            <div
+              *ngIf="
+                identityFormGroup.hasError('passwordMismatch') &&
+                identityFormGroup.get('confirmPassword')?.touched
+              "
+              class="error-text">
+              Passwords do not match.
+            </div>
+
+            <button mat-raised-button color="primary" class="w-100 action-btn" matStepperNext>
+              Continue
+            </button>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="purposeFormGroup">
+          <ng-template matStepLabel>Purpose</ng-template>
+          <form [formGroup]="purposeFormGroup" class="step-content">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Purpose of Use</mat-label>
+              <mat-select formControlName="purpose">
+                @for (opt of purposeOptions; track opt.value) {
+                  <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <div class="consent-wrapper">
+              <div class="consent-scroll-box">
+                {{ mockConsentText }}
+              </div>
+              <div class="consent-checkbox-area">
+                <mat-checkbox formControlName="consent" color="primary">
+                  I agree to the LINTYL terms and data processing conditions.
+                </mat-checkbox>
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button mat-raised-button class="back-btn" matStepperPrevious>Back</button>
+              <button
+                mat-raised-button
+                color="primary"
+                class="action-btn"
+                (click)="onRegister()"
+                matStepperNext>
+                Register Account
+              </button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step>
+          <ng-template matStepLabel>Verify</ng-template>
+          <div class="verification-view text-center">
+            <mat-icon class="success-icon">mark_email_read</mat-icon>
+            <h2>Check your email</h2>
+            <p>Verification link sent to:</p>
+            <p class="email-highlight">{{ identityFormGroup.get('email')?.value }}</p>
+            <div class="resend-section">
+              <p *ngIf="!canResend" class="timer-text">
+                Resend in <strong>{{ countdownDisplay }}s</strong>
+              </p>
+              <button mat-button color="primary" [disabled]="!canResend" (click)="resendEmail()">
+                Resend Email
+              </button>
+            </div>
+            <button
+              mat-flat-button
+              color="primary"
+              class="w-100 mt-20 action-btn"
+              (click)="goToLogin()">
+              Back to Login
+            </button>
+          </div>
+        </mat-step>
+      </mat-stepper>
+
+      <div class="footer-prompt">Already registered? <a (click)="goToLogin()">Sign In</a></div>
+    </div>
+  </div>
+</div>

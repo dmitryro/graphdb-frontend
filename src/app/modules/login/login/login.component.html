@@ -7,32 +7,48 @@
           <span>LINTYL</span>
         </div>
       </div>
-      
+
       <div fxLayout="row">
         <div fxFlexFill>
           <mat-form-field class="w-100" appearance="outline">
-            <mat-label>Email</mat-label>
-            <input matInput name="email" type="email" required>
+            <mat-label>Username or Email</mat-label>
+            <input
+              matInput
+              name="credential"
+              type="text"
+              required
+              [(ngModel)]="loginData.credential" />
           </mat-form-field>
+
           <mat-form-field class="w-100" appearance="outline">
             <mat-label>Password</mat-label>
-            <input matInput name="password" type="password" required>
+            <input
+              matInput
+              name="password"
+              type="password"
+              required
+              [(ngModel)]="loginData.password" />
           </mat-form-field>
         </div>
       </div>
 
       <div fxLayout="row" fxLayoutAlign="space-between" class="mt10 mb20">
         <mat-checkbox color="primary">Remember Me</mat-checkbox>
-        <a href="javascript:void(0)" class="forgot-password">Forgot Password</a>
+        <a href="javascript:void(0)" class="brand-link">Forgot Password</a>
       </div>
 
       <div fxLayout="row">
         <div fxFlexFill>
-          <button type="submit" mat-raised-button class="w-100 login-button">
+          <button
+            type="submit"
+            mat-raised-button
+            class="w-100 login-button"
+            [disabled]="myForm.invalid">
             Login
           </button>
           <div class="signup-prompt">
-            Don't have an account? <a (click)="onLogin()" href="javascript:void(0)">Sign Up</a>
+            Don't have an account?
+            <a (click)="onRegister()" href="javascript:void(0)" class="brand-link">Sign Up</a>
           </div>
         </div>
       </div>

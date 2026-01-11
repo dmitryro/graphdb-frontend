@@ -1,9 +1,6 @@
-import { Action } from "@modules/events/interfaces/action.interface";
-import {
-  EventActionTypes,
-  EventActions,
-} from "@modules/events/actions/event.actions";
-import { EventState, initialState } from "@modules/events/states/event.state";
+import { EventActionTypes, EventActions } from '@modules/events/actions/event.actions';
+import { Action } from '@modules/events/interfaces/action.interface';
+import { EventState, initialState } from '@modules/events/states/event.state';
 
 export function eventReducer(
   state: EventState | undefined = initialState,
@@ -153,6 +150,30 @@ export function eventReducer(
     }
     case EventActionTypes.PilotTermsAgreed: {
       return { modal: true, items: action.payload };
+    }
+    case EventActionTypes.AddSource: {
+      return { modal: true, items: action.payload };
+    }
+    case EventActionTypes.EditSource: {
+      return { modal: true, items: action.payload };
+    }
+    case EventActionTypes.DeleteSource: {
+      return { modal: true, items: action.payload };
+    }
+    case EventActionTypes.InspectSource: {
+      return { modal: true, items: action.payload };
+    }
+    case EventActionTypes.SyncSource: {
+      return { modal: true, items: action.payload };
+    }
+    case EventActionTypes.PauseIngestion: {
+      return { modal: true, items: action.payload };
+    }
+    case EventActionTypes.DownloadSchema: {
+      return { modal: true, items: action.payload };
+    }
+    case EventActionTypes.ClearSourceCache: {
+      return { ...state, modal: true, items: action.payload };
     }
     default:
       return state;
