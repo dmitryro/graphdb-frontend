@@ -69,7 +69,10 @@ export class EventService {
 
     // NEW: Normalization Signal for MPI Event Graph logging
     m.set('add_normalization_model', EventActionTypes.AddNormalizationModel);
-
+    m.set('add_normalization_rule', EventActionTypes.AddNormalizationRule);
+    m.set('add_normalization_mapping', EventActionTypes.AddNormalizationMapping);
+    m.set('add_normalization_code', EventActionTypes.AddNormalizationCode);
+    m.set('add_normalization_version', EventActionTypes.AddNormalizationVersion);
     const actionType = m.get(event);
 
     if (actionType) {

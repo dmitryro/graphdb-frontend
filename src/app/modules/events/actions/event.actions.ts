@@ -59,10 +59,34 @@ export enum EventActionTypes {
   ClearSourceCache = '[Event] Clear Source Cache',
   // NEW: Normalization signals for MPI Graph Traceability
   AddNormalizationModel = '[Event] Add Normalization Model',
+  AddNormalizationMapping = '[Event] Add Normalization Mapping',
+  AddNormalizationVersion = '[Event] Add Normalization Version',
+  AddNormalizationRule = '[Event] Add Normalization Rule',
+  AddNormalizationCode = '[Event] Add Normalization Code',
 }
 
 export class AddNormalizationModel implements Action {
   readonly type = EventActionTypes.AddNormalizationModel;
+  constructor(public payload: any) {}
+}
+
+export class AddNormalizationMapping implements Action {
+  readonly type = EventActionTypes.AddNormalizationMapping;
+  constructor(public payload: any) {}
+}
+
+export class AddNormalizationRule implements Action {
+  readonly type = EventActionTypes.AddNormalizationRule;
+  constructor(public payload: any) {}
+}
+
+export class AddNormalizationVersion implements Action {
+  readonly type = EventActionTypes.AddNormalizationVersion;
+  constructor(public payload: any) {}
+}
+
+export class AddNormalizationCode implements Action {
+  readonly type = EventActionTypes.AddNormalizationCode;
   constructor(public payload: any) {}
 }
 
@@ -396,6 +420,10 @@ export type EventActions =
   | InnerMenuItemSelected
   | CloseLoginDialog
   | AddNormalizationModel
+  | AddNormalizationMapping
+  | AddNormalizationRule
+  | AddNormalizationCode
+  | AddNormalizationVersion
   | AddSource
   | EditSource
   | DeleteSource

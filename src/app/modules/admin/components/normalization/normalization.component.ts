@@ -171,28 +171,28 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   addNewMapping(): void {
-    this.eventService.publish('nf', 'open_mapping_modal', {
+    this.eventService.publish('nf', 'add_normalization_mapping', {
       theme: this.getActiveTheme(),
       mode: 'create',
     });
   }
 
   addNewRule(): void {
-    this.eventService.publish('nf', 'open_rule_modal', {
+    this.eventService.publish('nf', 'add_normalization_rule', {
       theme: this.getActiveTheme(),
       mode: 'create',
     });
   }
 
   createNewVersion(): void {
-    this.eventService.publish('nf', 'open_version_modal', {
+    this.eventService.publish('nf', 'add_normalization_version', {
       theme: this.getActiveTheme(),
       mode: 'create',
     });
   }
 
   addNewCodeSystem(): void {
-    this.eventService.publish('nf', 'open_code_modal', {
+    this.eventService.publish('nf', 'add_normalization_code', {
       theme: this.getActiveTheme(),
       mode: 'create',
     });

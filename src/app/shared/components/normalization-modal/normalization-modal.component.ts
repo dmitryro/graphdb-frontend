@@ -41,6 +41,30 @@ export class NormalizationModalComponent implements OnInit, OnDestroy {
           this.isOpen = true;
           console.log(`[NormalizationModal] Opening in ${this.theme} mode.`);
         }
+        if (itemEvent === 'add_normalization_mapping') {
+          // Extract theme from signal to ensure modal matches parent state
+          this.theme = payload?.theme || 'dark';
+          this.isOpen = true;
+          console.log(`[NormalizationModal] Opening in ${this.theme} mode.`);
+        }
+        if (itemEvent === 'add_normalization_version') {
+          // Extract theme from signal to ensure modal matches parent state
+          this.theme = payload?.theme || 'dark';
+          this.isOpen = true;
+          console.log(`[NormalizationModal] Opening in ${this.theme} mode.`);
+        }
+        if (itemEvent === 'add_normalization_code') {
+          // Extract theme from signal to ensure modal matches parent state
+          this.theme = payload?.theme || 'dark';
+          this.isOpen = true;
+          console.log(`[NormalizationModal] Opening in ${this.theme} mode.`);
+        }
+        if (itemEvent === 'add_normalization_rule') {
+          // Extract theme from signal to ensure modal matches parent state
+          this.theme = payload?.theme || 'dark';
+          this.isOpen = true;
+          console.log(`[NormalizationModal] Opening in ${this.theme} mode.`);
+        }
       }
     });
   }

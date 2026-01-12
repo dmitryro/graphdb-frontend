@@ -182,6 +182,30 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.AddNormalizationMapping: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.AddNormalizationRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.AddNormalizationCode: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.AddNormalizationVersion: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     default:
       return state;
   }
