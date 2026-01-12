@@ -57,6 +57,13 @@ export enum EventActionTypes {
   PauseIngestion = '[Event] Pause Ingestion',
   DownloadSchema = '[Event] Download Schema',
   ClearSourceCache = '[Event] Clear Source Cache',
+  // NEW: Normalization signals for MPI Graph Traceability
+  AddNormalizationModel = '[Event] Add Normalization Model',
+}
+
+export class AddNormalizationModel implements Action {
+  readonly type = EventActionTypes.AddNormalizationModel;
+  constructor(public payload: any) {}
 }
 
 export class AddSource implements Action {
@@ -388,6 +395,7 @@ export type EventActions =
   | VKAuthFailure
   | InnerMenuItemSelected
   | CloseLoginDialog
+  | AddNormalizationModel
   | AddSource
   | EditSource
   | DeleteSource

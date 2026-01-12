@@ -7,7 +7,6 @@
   justify-content: center;
   height: 100vh;
   background-color: #f0f0f5;
-  position: relative;
 
   .content {
     z-index: 1;
@@ -30,6 +29,7 @@
         letter-spacing: 1px;
 
         .brand-logo-icon {
+          color: #436d9d;
           font-size: 32px;
           height: 32px;
           width: 32px;
@@ -46,14 +46,12 @@
       border-radius: 8px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 
-      // Unified link style for Forgot Password and Sign Up
       .brand-link {
         color: #436d9d;
         font-weight: 600;
         font-size: 14px;
         text-decoration: none;
         cursor: pointer;
-        font-family: 'Roboto', sans-serif;
 
         &:hover {
           text-decoration: underline;
@@ -61,6 +59,7 @@
       }
 
       .login-button {
+        // Force the LINTYL blue as the base
         background-color: #436d9d !important;
         color: white !important;
         height: 52px;
@@ -68,10 +67,22 @@
         font-weight: 600;
         margin-bottom: 20px;
         border-radius: 4px;
+        width: 100%;
 
-        &:disabled {
-          opacity: 0.6;
+        // Target the Material state layer to remove the white/grey "overlay"
+        &.mat-mdc-button-disabled {
+          background-color: #436d9d !important;
+          color: rgba(255, 255, 255, 0.5) !important; // Muted text only
           cursor: not-allowed;
+
+          // Remove the default Material grey background filter
+          ::ng-deep .mdc-button__ripple {
+            display: none !important;
+          }
+        }
+
+        &:hover:not(:disabled) {
+          filter: brightness(1.1);
         }
       }
 
@@ -83,4 +94,18 @@
       }
     }
   }
+}
+
+// Global utilities
+.w-100 {
+  width: 100%;
+}
+.mt10 {
+  margin-top: 10px;
+}
+.mb20 {
+  margin-bottom: 20px;
+}
+.text-center {
+  text-align: center;
 }

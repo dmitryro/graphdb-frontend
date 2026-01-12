@@ -175,6 +175,13 @@ export function eventReducer(
     case EventActionTypes.ClearSourceCache: {
       return { ...state, modal: true, items: action.payload };
     }
+    // NEW: Normalization case for tracking transactions in the event graph [cite: 2026-01-01]
+    case EventActionTypes.AddNormalizationModel: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     default:
       return state;
   }

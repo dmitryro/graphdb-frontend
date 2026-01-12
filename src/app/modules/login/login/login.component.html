@@ -1,54 +1,48 @@
 <div class="login-page">
-  <div class="content px20">
+  <div class="content">
     <form class="login-form" #myForm="ngForm" (ngSubmit)="onLogin()">
       <div class="text-center logo-container">
         <div class="nav-brand">
-          <mat-icon role="img" class="brand-logo-icon">share</mat-icon>
+          <mat-icon class="brand-logo-icon">share</mat-icon>
           <span>LINTYL</span>
         </div>
       </div>
 
-      <div fxLayout="row">
-        <div fxFlexFill>
-          <mat-form-field class="w-100" appearance="outline">
-            <mat-label>Username or Email</mat-label>
-            <input
-              matInput
-              name="credential"
-              type="text"
-              required
-              [(ngModel)]="loginData.credential" />
-          </mat-form-field>
+      <div fxLayout="column" fxLayoutGap="10px">
+        <mat-form-field class="w-100" appearance="outline">
+          <mat-label>Username or Email</mat-label>
+          <input
+            matInput
+            name="credential"
+            type="text"
+            required
+            [(ngModel)]="loginData.credential" />
+        </mat-form-field>
 
-          <mat-form-field class="w-100" appearance="outline">
-            <mat-label>Password</mat-label>
-            <input
-              matInput
-              name="password"
-              type="password"
-              required
-              [(ngModel)]="loginData.password" />
-          </mat-form-field>
-        </div>
+        <mat-form-field class="w-100" appearance="outline">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            name="password"
+            type="password"
+            required
+            [(ngModel)]="loginData.password" />
+        </mat-form-field>
       </div>
 
-      <div fxLayout="row" fxLayoutAlign="space-between" class="mt10 mb20">
+      <div fxLayout="row" fxLayoutAlign="space-between center" class="mt10 mb20">
         <mat-checkbox color="primary">Remember Me</mat-checkbox>
         <a href="javascript:void(0)" class="brand-link">Forgot Password</a>
       </div>
 
       <div fxLayout="row">
         <div fxFlexFill>
-          <button
-            type="submit"
-            mat-raised-button
-            class="w-100 login-button"
-            [disabled]="myForm.invalid">
+          <button type="submit" mat-flat-button class="login-button" [disabled]="myForm.invalid">
             Login
           </button>
           <div class="signup-prompt">
             Don't have an account?
-            <a (click)="onRegister()" href="javascript:void(0)" class="brand-link">Sign Up</a>
+            <a (click)="onRegister()" class="brand-link">Sign Up</a>
           </div>
         </div>
       </div>

@@ -9,7 +9,7 @@ import { Store } from '@ngrx/store';
 export class EventService {
   constructor(protected eventStore: Store<{ es: EventState }>) {}
 
-  publish(id: string, event: any, payload: any): void {
+  publish(id: string, event: string, payload: any): void {
     const m = new Map();
     m.set('open_modal', EventActionTypes.OpenModal);
     m.set('close_modal', EventActionTypes.CloseModal);
@@ -56,7 +56,8 @@ export class EventService {
     m.set('close_search', EventActionTypes.CloseSearch);
     m.set('open_registration', EventActionTypes.OpenRegistrationModal);
     m.set('close_registration', EventActionTypes.CloseRegistrationModal);
-    // New Source signals
+
+    // Source signals
     m.set('add_source', EventActionTypes.AddSource);
     m.set('edit_source', EventActionTypes.EditSource);
     m.set('delete_source', EventActionTypes.DeleteSource);
@@ -65,9 +66,19 @@ export class EventService {
     m.set('pause_ingestion', EventActionTypes.PauseIngestion);
     m.set('download_schema', EventActionTypes.DownloadSchema);
     m.set('clear_source_cache', EventActionTypes.ClearSourceCache);
-    this.eventStore.dispatch({
-      type: m.get(event),
-      payload: { id: id, event: event, payload: payload },
-    });
+
+    // NEW: Normalization Signal for MPI Event Graph logging
+    m.set('add_normalization_model', EventActionTypes.AddNormalizationModel);
+
+    const actionType = m.get(event);
+
+    if (actionType) {
+      this.eventStore.dispatch({
+        type: actionType,
+        payload: { id: id, event: event, payload: payload },
+      });
+    } else {
+      console.warn(`[EventService] No mapping found for event: ${event}`);
+    }
   }
 }

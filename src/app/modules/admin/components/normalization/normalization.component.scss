@@ -1,0 +1,410 @@
+@use 'src/scss/variables' as *;
+
+// Clean z-index ladder – higher number = appears on top
+$z-tabs: 900;
+$z-search: 800;
+$z-filters: 700;
+$z-table-header: 600;
+$z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
+
+.normalization-main-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+
+  position: relative;
+  z-index: 0;
+}
+
+.normalization-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 40px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-color) !important;
+
+  // ! IMPORTANT: NO sticky anymore – scrolls away like in your other component
+  position: static;
+  z-index: auto;
+
+  .breadcrumb-area {
+    .breadcrumb {
+      color: var(--text-main);
+      opacity: 0.5;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .title-row h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+    .subtitle {
+      color: var(--text-main);
+      opacity: 0.6;
+      margin: 4px 0 0;
+      font-size: 14px;
+    }
+  }
+
+  .workspace-area {
+    .workspace-select {
+      width: 180px;
+
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        background-color: #e18840 !important;
+        border-radius: 6px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+      }
+
+      ::ng-deep .mat-mdc-form-field-flex {
+        background-color: transparent !important;
+      }
+
+      ::ng-deep .mat-mdc-form-field-infix {
+        background-color: transparent !important;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        border: none !important;
+      }
+
+      ::ng-deep .mat-mdc-select,
+      ::ng-deep .mat-mdc-select-trigger,
+      ::ng-deep .mat-mdc-select-value {
+        background-color: transparent !important;
+      }
+
+      ::ng-deep .mat-mdc-select-value-text,
+      ::ng-deep .mat-mdc-select-arrow {
+        color: white !important;
+        font-weight: 600;
+      }
+
+      ::ng-deep .mat-mdc-select-arrow svg {
+        fill: white !important;
+      }
+
+      ::ng-deep .mdc-notched-outline {
+        display: none !important;
+      }
+
+      ::ng-deep .mdc-notched-outline__leading,
+      ::ng-deep .mdc-notched-outline__notch,
+      ::ng-deep .mdc-notched-outline__trailing {
+        border: none !important;
+      }
+    }
+  }
+}
+
+.table-card {
+  margin: 24px 40px;
+  background: var(--surface-color);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+
+  // FIX: Removed overflow: hidden to prevent clipping and allow sticky headers to work correctly
+  position: relative;
+  z-index: 1;
+}
+
+.tabs-section {
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--surface-color) !important;
+
+  position: static; // REMOVED STICKY: scrolls with entire section
+  z-index: $z-tabs;
+  border-radius: 12px 12px 0 0; // Maintain radius on sticky header
+
+  .normalization-tabs {
+    ::ng-deep {
+      .mat-mdc-tab-group {
+        --mdc-tab-indicator-active-indicator-color: #436d9d;
+        --mat-tab-header-active-label-text-color: var(--text-main);
+        --mat-tab-header-inactive-label-text-color: var(--text-main);
+      }
+
+      .mat-mdc-tab-header {
+        padding: 0 24px;
+        background-color: var(--surface-color) !important;
+        border-radius: 12px 12px 0 0;
+      }
+
+      .mat-mdc-tab-labels {
+        border: none;
+        background-color: var(--surface-color) !important;
+      }
+
+      .mat-mdc-tab .mdc-tab__text-label {
+        color: var(--text-main) !important;
+        opacity: 0.6;
+      }
+
+      .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+        opacity: 1 !important;
+      }
+
+      .mat-mdc-tab-header-pagination-controls-enabled .mat-mdc-tab-header-pagination {
+        display: none !important;
+      }
+    }
+  }
+}
+
+.search-section {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--surface-color) !important;
+
+  position: static; // REMOVED STICKY: scrolls with entire section
+  z-index: $z-search;
+
+  .search-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+    .search-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0 16px;
+      height: 44px;
+
+      .search-icon {
+        color: var(--text-main);
+        opacity: 0.5;
+      }
+
+      .search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--text-main);
+        padding: 8px;
+        font-size: 14px;
+
+        &::placeholder {
+          color: var(--text-main);
+          opacity: 0.4;
+        }
+      }
+
+      .clear-btn {
+        color: var(--text-main);
+        opacity: 0.5;
+      }
+    }
+
+    .add-source-btn {
+      background-color: #436d9d !important;
+      color: white !important;
+      height: 44px;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      mat-icon {
+        margin-right: 8px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+}
+
+.filter-actions {
+  padding: 10px 24px;
+  display: flex;
+  gap: 12px;
+  background: var(--surface-color) !important;
+  border-bottom: 1px solid var(--border-color);
+
+  position: static; // REMOVED STICKY: scrolls with entire section
+  z-index: $z-filters;
+
+  .filter-dropdown {
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    height: 34px;
+    font-size: 13px;
+    border-radius: 6px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .chevron {
+      opacity: 0.5;
+      margin-left: 4px;
+    }
+
+    &:hover {
+      background: rgba(128, 128, 128, 0.05);
+    }
+  }
+}
+
+.full-width-table {
+  width: 100%;
+  background: transparent !important;
+  position: relative;
+  z-index: 0;
+
+  th {
+    color: var(--text-main);
+    opacity: 0.7;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 16px 24px;
+    background: var(--surface-color) !important;
+    letter-spacing: 0.5px;
+
+    position: static; // REMOVED STICKY: scrolls with entire section
+    z-index: $z-table-header;
+  }
+
+  td {
+    color: var(--text-main);
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+    position: relative;
+    z-index: 0;
+
+    &.primary-text {
+      font-weight: 500;
+    }
+  }
+
+  .action-btn {
+    color: var(--text-main);
+    opacity: 0.6;
+
+    &:hover {
+      opacity: 1;
+      background-color: rgba(128, 128, 128, 0.05);
+    }
+  }
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &.active {
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+  }
+  &.deployed {
+    background: rgba(52, 152, 219, 0.15);
+    color: #3498db;
+  }
+  &.deprecated {
+    background: rgba(230, 126, 34, 0.15);
+    color: #e67e22;
+  }
+  &.draft {
+    background: rgba(149, 165, 166, 0.15);
+    color: #95a5a6;
+  }
+}
+
+// ────────────────────────────────────────────────
+// MATERIAL OVERLAYS – make sure they are above everything
+// ────────────────────────────────────────────────
+
+::ng-deep {
+  .cdk-overlay-container,
+  .cdk-overlay-pane {
+    z-index: $z-overlay !important;
+  }
+
+  .mat-mdc-menu-panel,
+  .mat-mdc-select-panel,
+  .compact-list-menu {
+    z-index: $z-overlay !important;
+    background-color: var(--surface-color) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .compact-list-menu {
+    min-width: 180px !important;
+
+    .mat-mdc-menu-item {
+      color: var(--text-main) !important;
+      font-size: 13px !important;
+      min-height: 40px !important;
+
+      mat-icon {
+        color: var(--text-main);
+        opacity: 0.7;
+        margin-right: 8px !important;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      &:hover {
+        background: rgba(128, 128, 128, 0.1) !important;
+      }
+
+      &.delete-action {
+        color: #f44336 !important;
+        mat-icon {
+          color: #f44336 !important;
+          opacity: 1;
+        }
+      }
+    }
+
+    .menu-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 4px 0;
+
+      &.danger-divider {
+        background: rgba(244, 67, 54, 0.2);
+      }
+    }
+  }
+
+  .mat-mdc-paginator {
+    background: var(--surface-color) !important;
+    color: var(--text-main) !important;
+    border-top: 1px solid var(--border-color);
+    padding: 12px 24px !important;
+    position: relative;
+    z-index: 100;
+  }
+}

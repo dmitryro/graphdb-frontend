@@ -145,22 +145,48 @@ export class SyncComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+
+    // Custom sorting for processed values
+    this.dataSource.sortingDataAccessor = (item, property) => {
+      switch (property) {
+        case 'entities':
+          return item.processedValue;
+        default:
+          return (item as any)[property];
+      }
+    };
+
+    // FIXED SEARCH LOGIC: Lexicographic match across all columns
     this.dataSource.filterPredicate = (data: IngestRun, filter: string) => {
-      const searchStr = filter.toLowerCase();
-      return (
-        data.startTime.toLowerCase().includes(searchStr) ||
-        data.sourceName.toLowerCase().includes(searchStr) ||
-        data.type.toLowerCase().includes(searchStr) ||
-        data.status.toLowerCase().includes(searchStr)
-      );
+      const searchStr = filter.trim().toLowerCase();
+
+      // Explicitly index all fields visible in the HTML table
+      const searchableFields = [
+        data.startTime,
+        data.sourceName, // Nested in the Start Time cell
+        data.type,
+        data.entitiesProcessed, // e.g., "3,714 of 44,102 entities"
+        data.duration,
+        data.status,
+        data.errorCount ? `${data.errorCount} load errors` : '',
+      ].map(val => val?.toString().toLowerCase() || '');
+
+      // Returns true if ANY column contains the search sequence
+      return searchableFields.some(field => field.includes(searchStr));
     };
   }
 
   applyFilter() {
-    this.dataSource.filter = this.searchTerm.trim().toLowerCase();
+    const filterValue = this.searchTerm.trim().toLowerCase();
+    this.dataSource.filter = filterValue;
+
+    // CRITICAL: Reset paginator to the first page so matches aren't hidden on later pages
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
+
+    // Log the search transaction for MPI traceability [cite: 2025-12-20]
+    this.logTransaction({ action: 'table_filter', query: filterValue });
   }
 
   private generateMockRuns(count: number): IngestRun[] {

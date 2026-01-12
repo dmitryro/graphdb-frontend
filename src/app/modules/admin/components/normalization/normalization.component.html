@@ -1,1 +1,372 @@
-<p>normalization.component works!</p>
+<div class="normalization-main-container">
+  <header class="normalization-header">
+    <div class="breadcrumb-area">
+      <div class="breadcrumb">Normalization</div>
+      <div class="title-row">
+        <h1>Normalization</h1>
+      </div>
+      <p class="subtitle">
+        Define how raw inputs are transformed into canonical, structured records.
+      </p>
+    </div>
+
+    <div class="workspace-area">
+      <mat-form-field appearance="outline" class="workspace-select">
+        <mat-select [(value)]="selectedEnv">
+          <mat-option value="Production">Production</mat-option>
+          <mat-option value="Staging">Staging</mat-option>
+          <mat-option value="Development">Development</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </header>
+
+  <div class="table-card">
+    <div class="tabs-section">
+      <mat-tab-group
+        class="normalization-tabs"
+        [(selectedIndex)]="activeTabIndex"
+        (selectedTabChange)="onTabChange($event)">
+        <mat-tab label="Models"></mat-tab>
+        <mat-tab label="Mappings"></mat-tab>
+        <mat-tab label="Rules"></mat-tab>
+        <mat-tab label="Versions"></mat-tab>
+        <mat-tab label="Codes"></mat-tab>
+      </mat-tab-group>
+    </div>
+
+    <div class="tab-content" *ngIf="activeTabIndex === 0">
+      <div class="search-section">
+        <div class="search-bar-container">
+          <div class="search-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search models..."
+              [(ngModel)]="modelSearch"
+              (input)="applyModelFilter()" />
+            <button
+              mat-icon-button
+              *ngIf="modelSearch"
+              (click)="modelSearch = ''; applyModelFilter()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <button mat-flat-button class="add-source-btn" (click)="addNewModel()">
+            <mat-icon>add</mat-icon> New Model
+          </button>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button mat-button class="filter-dropdown">
+          <mat-icon>list</mat-icon> Status <mat-icon class="chevron">expand_more</mat-icon>
+        </button>
+        <button mat-button class="filter-dropdown">
+          <mat-icon>layers</mat-icon> Type <mat-icon class="chevron">expand_more</mat-icon>
+        </button>
+      </div>
+      <table mat-table [dataSource]="modelDataSource" matSort class="full-width-table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
+          <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+          <td mat-cell *matCellDef="let element">{{ element.type }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="status-pill" [ngClass]="element.status.toLowerCase()">
+              <mat-icon>check_circle</mat-icon>{{ element.status }}
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="fields">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fields</th>
+          <td mat-cell *matCellDef="let element">{{ element.fields }}</td>
+        </ng-container>
+        <ng-container matColumnDef="dependencies">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Dependencies</th>
+          <td mat-cell *matCellDef="let element">{{ element.dependencies }}</td>
+        </ng-container>
+        <ng-container matColumnDef="lastModified">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+          <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let element">
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="modelMenu"
+              [matMenuTriggerData]="{ item: element }">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="modelColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: modelColumns"></tr>
+      </table>
+      <mat-paginator
+        #modelPaginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        showFirstLastButtons></mat-paginator>
+    </div>
+
+    <div class="tab-content" *ngIf="activeTabIndex === 1">
+      <div class="search-section">
+        <div class="search-bar-container">
+          <div class="search-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search mappings..."
+              [(ngModel)]="mappingSearch"
+              (input)="applyMappingFilter()" />
+          </div>
+          <button mat-flat-button class="add-source-btn" (click)="addNewMapping()">
+            <mat-icon>add</mat-icon> New Mapping
+          </button>
+        </div>
+      </div>
+      <table mat-table [dataSource]="mappingDataSource" matSort class="full-width-table">
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Source System</th>
+          <td mat-cell *matCellDef="let element" class="primary-text">{{ element.source }}</td>
+        </ng-container>
+        <ng-container matColumnDef="target">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Target FHIR</th>
+          <td mat-cell *matCellDef="let element">{{ element.target }}</td>
+        </ng-container>
+        <ng-container matColumnDef="engine">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Engine</th>
+          <td mat-cell *matCellDef="let element">{{ element.engine }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="status-pill active">{{ element.status }}</div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="lastModified">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+          <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let element">
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="modelMenu"
+              [matMenuTriggerData]="{ item: element }">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="mappingColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: mappingColumns"></tr>
+      </table>
+      <mat-paginator
+        #mappingPaginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        showFirstLastButtons></mat-paginator>
+    </div>
+
+    <div class="tab-content" *ngIf="activeTabIndex === 2">
+      <div class="search-section">
+        <div class="search-bar-container">
+          <div class="search-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search rules..."
+              [(ngModel)]="ruleSearch"
+              (input)="applyRuleFilter()" />
+          </div>
+          <button mat-flat-button class="add-source-btn" (click)="addNewRule()">
+            <mat-icon>add</mat-icon> New Rule
+          </button>
+        </div>
+      </div>
+      <table mat-table [dataSource]="ruleDataSource" matSort class="full-width-table">
+        <ng-container matColumnDef="ruleName">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Rule Name</th>
+          <td mat-cell *matCellDef="let element" class="primary-text">{{ element.ruleName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="trigger">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Trigger</th>
+          <td mat-cell *matCellDef="let element">{{ element.trigger }}</td>
+        </ng-container>
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th>
+          <td mat-cell *matCellDef="let element">{{ element.priority }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="status-pill active">{{ element.status }}</div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let element">
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="modelMenu"
+              [matMenuTriggerData]="{ item: element }">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="ruleColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: ruleColumns"></tr>
+      </table>
+      <mat-paginator
+        #rulePaginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        showFirstLastButtons></mat-paginator>
+    </div>
+
+    <div class="tab-content" *ngIf="activeTabIndex === 3">
+      <div class="search-section">
+        <div class="search-bar-container">
+          <div class="search-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search versions..."
+              [(ngModel)]="versionSearch"
+              (input)="applyVersionFilter()" />
+          </div>
+          <button mat-flat-button class="add-source-btn" (click)="createNewVersion()">
+            <mat-icon>publish</mat-icon> New Version
+          </button>
+        </div>
+      </div>
+      <table mat-table [dataSource]="versionDataSource" matSort class="full-width-table">
+        <ng-container matColumnDef="versionTag">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tag</th>
+          <td mat-cell *matCellDef="let element" class="primary-text">{{ element.versionTag }}</td>
+        </ng-container>
+        <ng-container matColumnDef="releasedBy">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Author</th>
+          <td mat-cell *matCellDef="let element">{{ element.releasedBy }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="status-pill deployed">{{ element.status }}</div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="timestamp">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</th>
+          <td mat-cell *matCellDef="let element">{{ element.timestamp }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let element">
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="modelMenu"
+              [matMenuTriggerData]="{ item: element }">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="versionColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: versionColumns"></tr>
+      </table>
+      <mat-paginator
+        #versionPaginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        showFirstLastButtons></mat-paginator>
+    </div>
+
+    <div class="tab-content" *ngIf="activeTabIndex === 4">
+      <div class="search-section">
+        <div class="search-bar-container">
+          <div class="search-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search code systems..."
+              [(ngModel)]="codeSearch"
+              (input)="applyCodeFilter()" />
+          </div>
+          <button mat-flat-button class="add-source-btn" (click)="addNewCodeSystem()">
+            <mat-icon>add</mat-icon> New Code
+          </button>
+        </div>
+      </div>
+      <table mat-table [dataSource]="codeDataSource" matSort class="full-width-table">
+        <ng-container matColumnDef="codeSystem">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>System</th>
+          <td mat-cell *matCellDef="let element" class="primary-text">{{ element.codeSystem }}</td>
+        </ng-container>
+        <ng-container matColumnDef="standard">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Standard</th>
+          <td mat-cell *matCellDef="let element">{{ element.standard }}</td>
+        </ng-container>
+        <ng-container matColumnDef="oid">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>OID</th>
+          <td mat-cell *matCellDef="let element">{{ element.oid }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="status-pill active">{{ element.status }}</div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let element">
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="modelMenu"
+              [matMenuTriggerData]="{ item: element }">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="codeColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: codeColumns"></tr>
+      </table>
+      <mat-paginator
+        #codePaginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        showFirstLastButtons></mat-paginator>
+    </div>
+
+    <mat-menu #modelMenu="matMenu" class="compact-list-menu" xPosition="before">
+      <ng-template matMenuContent let-item="item">
+        <button mat-menu-item (click)="onEdit(item)">
+          <mat-icon>edit</mat-icon><span>Edit</span>
+        </button>
+
+        <button mat-menu-item *ngIf="item.status !== 'Active'" (click)="onActivate(item)">
+          <mat-icon>play_circle</mat-icon><span>Activate</span>
+        </button>
+
+        <button mat-menu-item *ngIf="item.status === 'Active'" (click)="onDeprecate(item)">
+          <mat-icon>pause_circle</mat-icon><span>Deprecate</span>
+        </button>
+
+        <button mat-menu-item (click)="onViewLogs(item)">
+          <mat-icon>history</mat-icon><span>View Logs</span>
+        </button>
+
+        <div class="menu-divider danger-divider"></div>
+
+        <button mat-menu-item class="delete-action" (click)="onDelete(item)">
+          <mat-icon>delete_forever</mat-icon><span>Delete</span>
+        </button>
+      </ng-template>
+    </mat-menu>
+  </div>
+</div>

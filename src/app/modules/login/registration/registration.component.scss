@@ -23,10 +23,11 @@
         justify-content: center;
         align-items: center;
         gap: 8px;
-        color: #436d9d;
+        color: #436d9d; // LINTYL Primary
         font-weight: 700;
         font-size: 28px;
         .brand-logo-icon {
+          color: #436d9d; // Logo color
           font-size: 32px;
           height: 32px;
           width: 32px;
@@ -204,8 +205,9 @@
       background: rgba(67, 109, 157, 0.05) !important;
     }
   }
-  .mat-step-header .mat-step-icon-selected {
-    background-color: #436d9d;
+  .mat-step-header .mat-step-icon-selected,
+  .mat-step-header .mat-step-icon-state-done {
+    background-color: #436d9d !important;
   }
   .mat-step-label {
     font-size: 13px;
@@ -233,6 +235,7 @@
   button {
     font-weight: 600;
     font-size: 12px;
+    color: #436d9d;
   }
 }
 
@@ -248,9 +251,11 @@
 .text-center {
   text-align: center;
 }
+
 .success-icon {
   animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
+
 @keyframes bounceIn {
   0% {
     transform: scale(0);

@@ -80,6 +80,8 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+
+    // 1. Custom Sorting (Keep your existing logic)
     this.dataSource.sortingDataAccessor = (item, property) => {
       switch (property) {
         case 'records':
@@ -90,11 +92,23 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
           return (item as any)[property];
       }
     };
+
+    // 2. THE CRITICAL FIX: Custom Filter Predicate
     this.dataSource.filterPredicate = (data: SourceData, filter: string) => {
-      const searchStr = filter.toLowerCase();
-      return (
-        data.name.toLowerCase().includes(searchStr) || data.type.toLowerCase().includes(searchStr)
-      );
+      const searchStr = filter.trim().toLowerCase();
+
+      // We explicitly create an array of the values visible in your screenshot columns
+      const columnValues = [
+        data.name, // e.g. "Source 16"
+        data.type, // e.g. "KAFKA"
+        data.status, // e.g. "Healthy"
+        data.recordsIngested, // e.g. "309K"
+        data.queueDepth, // e.g. "2m"
+        data.lastIngest, // e.g. "2m ago"
+      ].map(v => (v ? v.toString().toLowerCase() : ''));
+
+      // Lexicographic match: Does ANY column contain the exact "2m" sequence?
+      return columnValues.some(val => val.includes(searchStr));
     };
   }
 
@@ -106,8 +120,13 @@ export class ListComponent implements OnInit, AfterViewInit, OnDestroy {
     return isDark ? 'dark' : 'light';
   }
 
+  // Ensure this method is being called on (input)
   applyFilter() {
-    this.dataSource.filter = this.searchTerm.trim().toLowerCase();
+    const filterValue = this.searchTerm.trim().toLowerCase();
+    this.dataSource.filter = filterValue;
+
+    // Very Important: Reset the paginator so it doesn't stay on page 4
+    // when there is only 1 result ("Source 16")
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }

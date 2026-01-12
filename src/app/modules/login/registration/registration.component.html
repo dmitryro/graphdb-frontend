@@ -97,9 +97,7 @@
               Passwords do not match.
             </div>
 
-            <button mat-raised-button color="primary" class="w-100 action-btn" matStepperNext>
-              Continue
-            </button>
+            <button mat-raised-button class="w-100 action-btn" matStepperNext>Continue</button>
           </form>
         </mat-step>
 
@@ -120,7 +118,7 @@
                 {{ mockConsentText }}
               </div>
               <div class="consent-checkbox-area">
-                <mat-checkbox formControlName="consent" color="primary">
+                <mat-checkbox formControlName="consent">
                   I agree to the LINTYL terms and data processing conditions.
                 </mat-checkbox>
               </div>
@@ -128,12 +126,7 @@
 
             <div class="button-group">
               <button mat-raised-button class="back-btn" matStepperPrevious>Back</button>
-              <button
-                mat-raised-button
-                color="primary"
-                class="action-btn"
-                (click)="onRegister()"
-                matStepperNext>
+              <button mat-raised-button class="action-btn" (click)="onRegister()" matStepperNext>
                 Register Account
               </button>
             </div>
@@ -151,15 +144,11 @@
               <p *ngIf="!canResend" class="timer-text">
                 Resend in <strong>{{ countdownDisplay }}s</strong>
               </p>
-              <button mat-button color="primary" [disabled]="!canResend" (click)="resendEmail()">
+              <button mat-button [disabled]="!canResend" (click)="resendEmail()">
                 Resend Email
               </button>
             </div>
-            <button
-              mat-flat-button
-              color="primary"
-              class="w-100 mt-20 action-btn"
-              (click)="goToLogin()">
+            <button mat-flat-button class="w-100 mt-20 action-btn" (click)="goToLogin()">
               Back to Login
             </button>
           </div>
