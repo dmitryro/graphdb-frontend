@@ -1,6 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
 // NgRx & Events
@@ -11,16 +18,27 @@ import { Store } from '@ngrx/store';
 // Material Imports
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
+import {
+  MatPaginator,
+  MatPaginatorIntl,
+  MatPaginatorModule,
+  PageEvent,
+} from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
+
+// User & Version Models
+import { IVersionCommit } from '@modules/admin/models/version.model';
+import { UsersModule } from '@modules/users/users-module';
 
 @Component({
   selector: 'app-normalization',
@@ -28,6 +46,7 @@ import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
@@ -40,6 +59,9 @@ import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
     MatMenuModule,
     MatTabsModule,
     MatSelectModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    UsersModule,
   ],
   providers: [{ provide: MatPaginatorIntl, useClass: MatPaginatorIntl }, EventService],
   templateUrl: './normalization.component.html',
@@ -52,6 +74,13 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   activeTabIndex = 0;
   activeTabLabel = 'Models';
   selectedEnv = 'Production';
+  tempAvatar = 'assets/images/avatar.png';
+
+  // Pagination State for Versions (Custom Timeline) - FIXED: Match template default
+  public currentPage = 0;
+  public pageSize = 5; // Changed from 10 to match template
+
+  public filteredVersionHistory: IVersionCommit[] = [];
 
   // Search Bindings
   modelSearch = '';
@@ -59,6 +88,12 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   ruleSearch = '';
   versionSearch = '';
   codeSearch = '';
+
+  // Date Range Picker Form
+  range = new FormGroup({
+    start: new FormControl<Date | null>(null),
+    end: new FormControl<Date | null>(null),
+  });
 
   // Column Definitions
   modelColumns: string[] = [
@@ -82,6 +117,9 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   versionDataSource = new MatTableDataSource<any>([]);
   codeDataSource = new MatTableDataSource<any>([]);
 
+  // Versions as a list for the Timeline View using IVersionCommit
+  versionHistory: IVersionCommit[] = [];
+
   private tabOrder: string[] = ['Models', 'Mappings', 'Rules', 'Versions', 'Codes'];
 
   @ViewChild('modelPaginator') modelPaginator!: MatPaginator;
@@ -94,11 +132,17 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   constructor(
     protected eventService: EventService,
     protected eventStore: Store<{ nf: EventState }>,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     this.loadAllData();
     this.subscribeEvents();
+
+    // Re-filter when date range changes
+    this.range.valueChanges.subscribe(() => {
+      this.applyVersionFilter();
+    });
   }
 
   subscribeEvents(): void {
@@ -116,6 +160,33 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngAfterViewInit(): void {
     this.refreshTablePointers();
+
+    if (this.versionPaginator) {
+      // Sync initial pageSize from paginator
+      this.pageSize = this.versionPaginator.pageSize;
+
+      this.versionPaginator.page.subscribe((event: PageEvent) => {
+        this.currentPage = event.pageIndex;
+        this.pageSize = event.pageSize;
+        this.cdr.detectChanges();
+      });
+    }
+
+    // Initial filter to populate filteredVersionHistory
+    this.applyVersionFilter();
+  }
+
+  // --- Version Pagination Getters ---
+  get totalPages(): number {
+    return Math.ceil(this.filteredVersionHistory.length / this.pageSize);
+  }
+
+  get pagedVersionHistory(): IVersionCommit[] {
+    // Use paginator values if available, otherwise use component state
+    const page = this.versionPaginator?.pageIndex ?? this.currentPage;
+    const size = this.versionPaginator?.pageSize ?? this.pageSize;
+    const startIndex = page * size;
+    return this.filteredVersionHistory.slice(startIndex, startIndex + size);
   }
 
   private getActiveTheme(): 'light' | 'dark' {
@@ -129,7 +200,10 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   onTabChange(event: MatTabChangeEvent): void {
     this.activeTabIndex = event.index;
     this.activeTabLabel = this.tabOrder[this.activeTabIndex];
-    setTimeout(() => this.refreshTablePointers());
+    setTimeout(() => {
+      this.refreshTablePointers();
+      this.cdr.detectChanges();
+    });
   }
 
   private refreshTablePointers(): void {
@@ -139,6 +213,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     if (this.activeTabIndex === 2) ds.paginator = this.rulePaginator;
     if (this.activeTabIndex === 3) ds.paginator = this.versionPaginator;
     if (this.activeTabIndex === 4) ds.paginator = this.codePaginator;
+
     if (this.sort) ds.sort = this.sort;
   }
 
@@ -151,9 +226,48 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   applyRuleFilter(): void {
     this.filterDS(this.ruleDataSource, this.ruleSearch);
   }
+
   applyVersionFilter(): void {
-    this.filterDS(this.versionDataSource, this.versionSearch);
+    const { start, end } = this.range.value;
+
+    // 1. Filter based on Search AND Date Range
+    this.filteredVersionHistory = this.versionHistory.filter(commit => {
+      // Date Filter logic
+      if (start || end) {
+        const commitDate = new Date(commit.absoluteTime);
+        if (start && commitDate < start) return false;
+        if (end) {
+          // Set end date to end of day for inclusive filtering
+          const adjustedEnd = new Date(end);
+          adjustedEnd.setHours(23, 59, 59, 999);
+          if (commitDate > adjustedEnd) return false;
+        }
+      }
+
+      // Text Search Filter logic
+      if (!this.versionSearch) return true;
+      const search = this.versionSearch.toLowerCase();
+      return (
+        commit.author.name.toLowerCase().includes(search) ||
+        commit.hash.toLowerCase().includes(search) ||
+        commit.events.some(e => e.subject.toLowerCase().includes(search))
+      );
+    });
+
+    // 2. Reset to first page
+    this.currentPage = 0;
+    if (this.versionPaginator) {
+      this.versionPaginator.length = this.filteredVersionHistory.length;
+      this.versionPaginator.firstPage();
+    }
+
+    this.cdr.detectChanges();
   }
+
+  clearDateRange(): void {
+    this.range.reset();
+  }
+
   applyCodeFilter(): void {
     this.filterDS(this.codeDataSource, this.codeSearch);
   }
@@ -163,6 +277,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     if (ds.paginator) ds.paginator.firstPage();
   }
 
+  // --- Actions ---
   addNewModel(): void {
     this.eventService.publish('nf', 'add_normalization_model', {
       theme: this.getActiveTheme(),
@@ -199,10 +314,26 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   onEdit(row: any): void {
-    const signalName =
-      this.activeTabIndex === 0
-        ? 'add_normalization_model'
-        : `open_${this.activeTabLabel.toLowerCase().slice(0, -1)}_modal`;
+    let signalName = '';
+    switch (this.activeTabIndex) {
+      case 0:
+        signalName = 'add_normalization_model';
+        break;
+      case 1:
+        signalName = 'add_normalization_mapping';
+        break;
+      case 2:
+        signalName = 'add_normalization_rule';
+        break;
+      case 3:
+        signalName = 'add_normalization_version';
+        break;
+      case 4:
+        signalName = 'add_normalization_code';
+        break;
+      default:
+        signalName = `open_${this.activeTabLabel.toLowerCase().slice(0, -1)}_modal`;
+    }
     this.eventService.publish('nf', signalName, {
       theme: this.getActiveTheme(),
       mode: 'edit',
@@ -212,30 +343,21 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   onActivate(row: any): void {
     row.status = 'Active';
-    this.logTransaction(row, 'ACTIVATE');
   }
-
   onDeprecate(row: any): void {
     row.status = 'Deprecated';
-    this.logTransaction(row, 'DEPRECATE');
   }
 
   onViewLogs(row: any): void {
-    console.log('Viewing graph logs for:', row);
+    this.eventService.publish('nf', 'view_event_logs', {
+      theme: this.getActiveTheme(),
+      goldenRecordId: row.id || row.name,
+      context: 'normalization_audit',
+    });
   }
 
   onDelete(row: any): void {
     console.log('Delete requested for:', row);
-    this.logTransaction(row, 'DELETE');
-  }
-
-  private logTransaction(row: any, action: string): void {
-    this.eventService.publish('nf', 'execute_merge_query_with_context', {
-      action: `LOG_${action}`,
-      recordId: row.name || row.ruleName || row.versionTag || row.codeSystem,
-      timestamp: new Date().toISOString(),
-      status: row.status,
-    });
   }
 
   private getActiveDataSource(): MatTableDataSource<any> {
@@ -249,9 +371,9 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     return map[this.activeTabLabel] || this.modelDataSource;
   }
 
-  private loadAllData(): void {
-    // 1. Models (35 entries)
+  public loadAllData(): void {
     this.modelDataSource.data = Array.from({ length: 35 }, (_, i) => ({
+      id: `m-${i}`,
       name: i === 0 ? 'Patient Golden Record' : `Clinical Model ${i + 1}`,
       type: i % 2 === 0 ? 'FHIR R4' : 'HL7 v2',
       status: i % 7 === 0 ? 'Draft' : 'Active',
@@ -260,8 +382,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       lastModified: '2026-01-10',
     }));
 
-    // 2. Mappings (35 entries)
     this.mappingDataSource.data = Array.from({ length: 35 }, (_, i) => ({
+      id: `map-${i}`,
       source: i % 2 === 0 ? `PID-${i + 1}` : `OBX-${i + 1}`,
       target: i % 2 === 0 ? `Patient.identifier[${i}]` : `Observation.value[x]`,
       engine: i % 3 === 0 ? 'Jolt' : 'Liquid',
@@ -269,37 +391,61 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       lastModified: `${i + 1}h ago`,
     }));
 
-    // 3. Rules (35 entries)
     this.ruleDataSource.data = Array.from({ length: 35 }, (_, i) => ({
+      id: `rule-${i}`,
       ruleName: `Normalization_Rule_${100 + i}`,
       trigger: i % 2 === 0 ? 'On_Ingest' : 'On_Update',
       priority: i % 5 === 0 ? 'P1' : 'P2',
       status: i % 10 === 0 ? 'Draft' : 'Active',
     }));
 
-    // 4. Versions (35 entries)
-    this.versionDataSource.data = Array.from({ length: 35 }, (_, i) => ({
-      versionTag: `v2.${i}.0-release`,
-      releasedBy: i % 3 === 0 ? 'System' : 'Admin_User',
-      status: 'Deployed',
-      timestamp: `2026-01-${Math.min(31, i + 1)
-        .toString()
-        .padStart(2, '0')}`,
-    }));
+    this.versionHistory = Array.from({ length: 26 }, (_, i): IVersionCommit => {
+      const isBrianna = i % 3 === 0;
+      return {
+        id: `commit-${i}`,
+        hash: Math.random().toString(16).substring(2, 9).toUpperCase(),
+        author: {
+          name: isBrianna ? 'Brianna Wilson' : 'Mason Adams',
+          avatar: `https://i.pravatar.cc/150?u=${i + 10}`,
+        },
+        relativeTime: `${i + 1} days ago`,
+        absoluteTime: `January ${Math.max(1, 12 - i)}, 2026 10:30 AM`,
+        events: [
+          {
+            action: 'Added',
+            subject: 'Missing Required Field (v4)',
+            version: `v2.${i}.0`,
+            type: 'Model',
+            timestamp: '10:30 AM',
+            scopeChange: 'Field-level → System',
+            statusIcon: 'check_circle',
+            nested: {
+              title: 'System Validation Check',
+              tag: 'Normalization',
+              time: '10:31 AM',
+            },
+          },
+        ],
+      };
+    });
 
-    // 5. Codes (35 entries across 5 categories)
+    this.versionDataSource.data = this.versionHistory;
+
     const systems = ['SNOMED', 'LOINC', 'ICD-10', 'OMOP', 'MEDDRA'];
     const standardTypes = ['Clinical', 'Lab', 'Diagnosis', 'Research', 'Safety'];
-
     this.codeDataSource.data = Array.from({ length: 35 }, (_, i) => {
-      const sysIdx = Math.floor(i / 7); // 7 entries per category
+      const sysIdx = Math.floor(i / 7);
       return {
-        codeSystem: systems[sysIdx],
-        standard: standardTypes[sysIdx],
+        id: `code-${i}`,
+        codeSystem: systems[sysIdx % systems.length],
+        standard: standardTypes[sysIdx % standardTypes.length],
         oid: `2.16.840.1.113883.6.${100 + i}`,
         status: 'Active',
       };
     });
+
+    // Initialize filtered version history
+    this.applyVersionFilter();
   }
 
   ngOnDestroy(): void {

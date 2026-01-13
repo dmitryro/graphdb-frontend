@@ -205,28 +205,108 @@
 
     .filter-actions {
       display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
 
       .filter-btn {
-        border-color: var(--border-color);
-        color: var(--text-main);
-        font-size: 13px;
+        height: 72px;
+        padding: 0 24px !important;
+        border-radius: 12px !important;
+        border: 1px solid var(--border-color);
         background: var(--surface-color);
+        color: var(--text-main);
+        font-size: 16px;
+        font-weight: 500;
+
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+
+        &.active-filter {
+          border-color: #436d9d;
+          background: rgba(67, 109, 157, 0.05);
+          color: #436d9d;
+        }
 
         &:hover {
           background: rgba(128, 128, 128, 0.05);
         }
+      }
 
-        mat-icon {
-          font-size: 18px;
-          width: 18px;
-          height: 18px;
-        }
+      .search-field {
+        width: 420px;
+        height: 72px;
+        margin-left: auto;
 
-        .chevron {
-          opacity: 0.5;
-          margin-left: 4px;
+        ::ng-deep {
+          .mat-mdc-form-field-wrapper {
+            padding-bottom: 0;
+          }
+
+          .mat-mdc-text-field-wrapper {
+            background-color: transparent !important;
+            padding: 0 24px;
+            height: 72px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.2s ease-in-out;
+
+            &:hover {
+              border-color: rgba(67, 109, 157, 0.5);
+              background-color: rgba(128, 128, 128, 0.02) !important;
+            }
+
+            &.mdc-text-field--focused {
+              border-color: #436d9d;
+              box-shadow: 0 0 0 4px rgba(67, 109, 157, 0.1);
+              background-color: transparent !important;
+            }
+          }
+
+          .mat-mdc-form-field-flex {
+            height: 100%;
+            align-items: center;
+          }
+
+          .mat-mdc-form-field-infix {
+            padding: 0 !important;
+            min-height: unset;
+            display: flex;
+            align-items: center;
+          }
+
+          .mdc-notched-outline {
+            display: none !important;
+          }
+
+          input.mat-mdc-input-element {
+            color: var(--text-main);
+            font-size: 18px;
+            font-weight: 400;
+            height: 100%;
+
+            &::placeholder {
+              color: var(--text-main);
+              opacity: 0.4;
+            }
+          }
+
+          .mat-mdc-form-field-prefix {
+            display: flex;
+            align-items: center;
+
+            .mat-icon {
+              font-size: 28px;
+              width: 28px;
+              height: 28px;
+              color: var(--text-main);
+              opacity: 0.5;
+              margin-right: 16px;
+            }
+          }
         }
       }
     }
@@ -293,8 +373,8 @@
 
     th {
       background: rgba(128, 128, 128, 0.02);
-      color: var(--text-main);
-      opacity: 0.7;
+      color: var(--text-main) !important;
+      opacity: 0.8; // Increased from 0.7 for visibility
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -305,7 +385,7 @@
     td {
       padding: 16px;
       border-bottom: 1px solid var(--border-color);
-      color: var(--text-main);
+      color: var(--text-main) !important;
     }
 
     .rule-cell {
@@ -318,7 +398,7 @@
       .secondary {
         font-size: 12px;
         color: var(--text-main);
-        opacity: 0.6;
+        opacity: 0.7; // Increased for visibility
       }
     }
 
@@ -326,7 +406,7 @@
     .source-info {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
 
       mat-icon {
         color: var(--text-main);
@@ -336,15 +416,22 @@
         height: 20px;
       }
 
+      .text-container {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+      }
+
       .name {
-        font-weight: 500;
-        color: var(--text-main);
+        font-weight: 600; // Boosted weight
+        color: var(--text-main) !important;
       }
 
       .type {
         font-size: 12px;
-        color: var(--text-main);
-        opacity: 0.6;
+        color: var(--text-main) !important;
+        opacity: 0.7 !important; // Forced visibility for the EHR / EMR text
+        margin-top: 2px;
       }
     }
 
@@ -366,7 +453,6 @@
       &.critical {
         background: rgba(239, 68, 68, 0.15);
         color: #ef4444;
-
         .dot {
           background: #ef4444;
         }
@@ -375,7 +461,6 @@
       &.high {
         background: rgba(251, 191, 36, 0.15);
         color: #d97706;
-
         .dot {
           background: #d97706;
         }
@@ -384,7 +469,6 @@
       &.medium {
         background: rgba(249, 115, 22, 0.15);
         color: #ea580c;
-
         .dot {
           background: #ea580c;
         }
@@ -393,7 +477,6 @@
       &.low {
         background: rgba(34, 197, 94, 0.15);
         color: #16a34a;
-
         .dot {
           background: #16a34a;
         }
@@ -435,19 +518,15 @@
 
       .bar-fill {
         height: 100%;
-
         &.crit {
           background: #ef4444;
         }
-
         &.high {
           background: #fbbf24;
         }
-
         &.med {
           background: #f97316;
         }
-
         &.low {
           background: #4ade80;
         }
@@ -468,11 +547,9 @@
       &.up {
         color: #ef4444;
       }
-
       &.down {
         color: #10b981;
       }
-
       &.stable {
         color: var(--text-main);
         opacity: 0.5;
@@ -521,15 +598,12 @@
       .crit {
         background: #ef4444;
       }
-
       .high {
         background: #fbbf24;
       }
-
       .med {
         background: #fde68a;
       }
-
       .low {
         background: #dbeafe;
       }
@@ -559,7 +633,6 @@
     }
   }
 
-  // Slide toggle dark mode
   .mat-mdc-slide-toggle {
     .mdc-switch__track {
       background-color: rgba(128, 128, 128, 0.3) !important;
@@ -576,7 +649,6 @@
     }
   }
 
-  // Dropdown panel
   .cdk-overlay-pane .mat-mdc-select-panel {
     background-color: var(--surface-color) !important;
     border: 1px solid var(--border-color) !important;
@@ -599,4 +671,58 @@
       }
     }
   }
+
+  .mat-mdc-paginator {
+    background: transparent !important;
+    color: var(--text-main) !important;
+
+    .mat-mdc-paginator-container {
+      color: var(--text-main) !important;
+    }
+
+    .mat-mdc-paginator-range-label,
+    .mat-mdc-paginator-page-size-label {
+      color: var(--text-main) !important;
+      opacity: 0.9 !important; // Forced visibility for labels like "Items per page"
+    }
+
+    .mat-mdc-select-value {
+      color: var(--text-main) !important;
+    }
+
+    .mat-mdc-icon-button {
+      color: var(--text-main) !important;
+
+      &[disabled] {
+        opacity: 0.3;
+      }
+    }
+  }
+}
+
+// Transaction logging UI helpers
+.menu-divider {
+  height: 1px;
+  margin: 4px 0;
+  &.danger-divider {
+    background: rgba(244, 67, 54, 0.2);
+  }
+}
+
+.delete-action {
+  color: #f44336 !important;
+  mat-icon {
+    color: #f44336 !important;
+  }
+}
+
+// Graph context badges for logging
+.graph-context-pill {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(67, 109, 157, 0.1);
+  color: #436d9d;
+  font-weight: 700;
+  text-transform: uppercase;
 }

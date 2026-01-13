@@ -21,9 +21,11 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
+  // Changed to visible to allow floating labels to transition into header space if necessary
+  overflow: visible;
   animation: modalIn 0.25s ease-out;
   border: 1px solid #333;
+  position: relative;
 
   &.dark {
     background: #1e1e1e;
@@ -54,6 +56,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  z-index: 10;
+  position: relative;
+  border-radius: 12px 12px 0 0;
 
   .header-title {
     display: flex;
@@ -118,7 +123,10 @@
 .modal-body {
   padding: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
+  position: relative;
+
   &.dark {
     background: #1a1a1a;
   }
@@ -145,13 +153,17 @@
     background: #252525 !important;
     border-bottom: 1px solid #333;
     padding: 8px 16px;
+    position: relative;
+    z-index: 5;
   }
   ::ng-deep .mat-step-header {
     .mat-step-icon {
       background-color: #3a3a3a !important;
       color: #e0e0e0 !important;
     }
-    .mat-step-icon-selected {
+    // Updated: Combined selected and edit states with blue hex
+    .mat-step-icon-selected,
+    .mat-step-icon-state-edit {
       background-color: #5b9bd5 !important;
       color: #fff !important;
     }
@@ -161,10 +173,18 @@
     .mat-step-label-selected {
       color: #e0e0e0 !important;
     }
+    // Added: Hover interaction for dark mode
+    &:hover:not([aria-disabled='true']) {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+  }
+  ::ng-deep .mat-stepper-horizontal-line {
+    border-top-color: #333 !important;
   }
   ::ng-deep .mat-horizontal-content-container {
     padding: 0 !important;
     background: #1a1a1a;
+    overflow: visible !important; // Critical to stop labels from clipping
   }
 }
 
@@ -173,13 +193,17 @@
     background: #f5f5f5 !important;
     border-bottom: 1px solid #ddd;
     padding: 8px 16px;
+    position: relative;
+    z-index: 5;
   }
   ::ng-deep .mat-step-header {
     .mat-step-icon {
       background-color: #e0e0e0 !important;
       color: #333 !important;
     }
-    .mat-step-icon-selected {
+    // Updated: Combined selected and edit states with blue hex
+    .mat-step-icon-selected,
+    .mat-step-icon-state-edit {
       background-color: #1976d2 !important;
       color: #fff !important;
     }
@@ -189,10 +213,18 @@
     .mat-step-label-selected {
       color: #333 !important;
     }
+    // Added: Hover interaction for light mode
+    &:hover:not([aria-disabled='true']) {
+      background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+  }
+  ::ng-deep .mat-stepper-horizontal-line {
+    border-top-color: #ddd !important;
   }
   ::ng-deep .mat-horizontal-content-container {
     padding: 0 !important;
     background: #fff;
+    overflow: visible !important;
   }
 }
 
@@ -201,29 +233,48 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 24px 48px;
+  // Increased top padding to 36px so the first row's floating labels are not cut
+  padding: 36px 48px 24px 48px;
   min-height: 400px;
+  overflow: visible;
 }
 
 %field-label-fix {
   ::ng-deep {
+    .mat-mdc-form-field {
+      overflow: visible !important; // Stop the field itself from clipping the label
+    }
+
     .mat-mdc-text-field-wrapper {
-      height: 56px !important;
+      height: auto !important;
+      overflow: visible !important;
     }
-    .mdc-floating-label {
-      transform: translateY(-50%) !important;
-      top: 50% !important;
-      font-size: 15px !important;
+
+    .mdc-notched-outline {
+      .mdc-floating-label {
+        top: 28px !important; // Centered vertically in a 56px field
+        transform: translateY(-50%) !important;
+        font-size: 16px !important;
+        transition: all 0.2s ease !important;
+      }
+
+      .mdc-floating-label--float-above {
+        // Floating position adjusted to clear the top of the field
+        transform: translateY(-38px) scale(0.75) !important;
+        font-size: 16px !important;
+      }
     }
-    .mdc-floating-label--float-above {
-      top: 28px !important;
-      transform: translateY(-36px) scale(0.85) !important;
-    }
+
     .mat-mdc-form-field-infix {
-      padding: 0 !important;
+      padding-top: 16px !important;
+      padding-bottom: 16px !important;
       min-height: 56px !important;
-      display: flex !important;
-      align-items: center !important;
+    }
+
+    input,
+    .mat-mdc-select-trigger {
+      padding: 0 !important;
+      margin: 0 !important;
     }
   }
 }
@@ -280,8 +331,9 @@
   flex-direction: column;
   max-height: 280px;
   overflow-y: auto;
+  overflow-x: visible; // Crucial for property row labels
   margin-top: 16px;
-  padding-right: 8px;
+  padding: 8px 8px 0 0;
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -295,6 +347,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
+  overflow: visible;
   .flex-2 {
     flex: 2;
   }
@@ -311,14 +364,8 @@
   width: fit-content;
   margin-bottom: 24px;
   border-style: dashed !important;
-  &.dark {
-    color: #5b9bd5 !important;
-    border-color: #5b9bd5 !important;
-  }
-  &.light {
-    color: #1976d2 !important;
-    border-color: #1976d2 !important;
-  }
+  color: #5b9bd5 !important;
+  border-color: #5b9bd5 !important;
 }
 
 // 6. UTILITY ROWS
@@ -326,6 +373,7 @@
   display: flex;
   gap: 16px;
   width: 100%;
+  overflow: visible; // Ensures labels don't clip at row boundary
   .flex-2 {
     flex: 2;
   }
@@ -360,31 +408,97 @@
   border: 1px solid #333;
   border-radius: 4px;
   overflow: hidden;
+  background: #1a1a1a;
+
   table {
     width: 100%;
     border-collapse: collapse;
   }
-  .mat-mdc-header-row {
-    background: #252525;
+
+  thead {
+    tr {
+      background: #252525;
+    }
+    th {
+      color: #999 !important;
+      font-size: 12px;
+      text-transform: uppercase;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
   }
-  .mat-mdc-header-cell {
-    color: #999 !important;
-    font-size: 12px;
-    text-transform: uppercase;
-    padding: 12px;
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #333;
+      background: #1a1a1a;
+
+      &:hover {
+        background: #252525;
+      }
+    }
+
+    td {
+      padding: 12px;
+      color: #e0e0e0 !important;
+      font-size: 14px;
+
+      &:first-child {
+        color: #e0e0e0 !important;
+        font-weight: 500;
+      }
+
+      &:last-child {
+        .type-badge {
+          background: rgba(91, 155, 213, 0.15);
+          color: #5b9bd5;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-family: monospace;
+          font-size: 11px;
+        }
+      }
+    }
   }
-  .mat-mdc-cell {
-    padding: 12px;
-    color: inherit;
-    border-bottom: 1px solid #333;
-  }
+
   &.light-table {
     border-color: #ddd;
-    .mat-mdc-header-row {
-      background: #f5f5f5;
+    background: #fff;
+
+    thead {
+      tr {
+        background: #f5f5f5;
+      }
+      th {
+        color: #666 !important;
+      }
     }
-    .mat-mdc-cell {
-      border-bottom-color: #ddd;
+
+    tbody {
+      tr {
+        border-bottom-color: #ddd;
+        background: #fff;
+
+        &:hover {
+          background: #f9f9f9;
+        }
+      }
+
+      td {
+        color: #333 !important;
+
+        &:first-child {
+          color: #333 !important;
+        }
+
+        &:last-child {
+          .type-badge {
+            background: rgba(25, 118, 210, 0.1);
+            color: #1976d2;
+          }
+        }
+      }
     }
   }
 }
@@ -404,8 +518,11 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: auto;
-  padding-top: 16px;
+  padding: 16px 24px;
   border-top: 1px solid #333;
+  background: inherit;
+  z-index: 10;
+  position: relative;
   &.light {
     border-top-color: #ddd;
   }
@@ -420,6 +537,7 @@
     color: #e0e0e0 !important;
   }
 }
+
 .modal-container.light ::ng-deep {
   button[mat-flat-button][color='primary'] {
     background-color: #1976d2 !important;
@@ -428,4 +546,9 @@
   button[mat-button] {
     color: #333 !important;
   }
+}
+
+.modal-container.light .add-btn {
+  color: #1976d2 !important;
+  border-color: #1976d2 !important;
 }

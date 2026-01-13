@@ -10,7 +10,7 @@
       <mat-select [value]="selectedEnv()" (selectionChange)="selectedEnv.set($event.value)">
         <mat-option value="Production">Production</mat-option>
         <mat-option value="Staging">Staging</mat-option>
-        <mat-option value="Staging">Development</mat-option>
+        <mat-option value="Development">Development</mat-option>
       </mat-select>
     </mat-form-field>
   </header>
@@ -44,21 +44,57 @@
       <mat-tab label="Active Failures">
         <div class="tab-content">
           <div class="filter-actions">
-            <button mat-stroked-button class="filter-btn">
-              <mat-icon>filter_list</mat-icon> Severity
+            <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="sevMenu">
+              <mat-icon>filter_list</mat-icon>
+              {{ filterValues.severity || 'Severity' }}
               <mat-icon class="chevron">expand_more</mat-icon>
             </button>
-            <button mat-stroked-button class="filter-btn">
-              <mat-icon>business</mat-icon> Source <mat-icon class="chevron">expand_more</mat-icon>
+            <mat-menu #sevMenu="matMenu">
+              <button mat-menu-item (click)="applyFilter('', 'severity')">All Severities</button>
+              <button mat-menu-item (click)="applyFilter('Critical', 'severity')">Critical</button>
+              <button mat-menu-item (click)="applyFilter('High', 'severity')">High</button>
+              <button mat-menu-item (click)="applyFilter('Medium', 'severity')">Medium</button>
+            </mat-menu>
+
+            <button mat-stroked-button class="filter-btn" [matMenuTriggerFor]="sourceMenu">
+              <mat-icon>business</mat-icon>
+              {{ filterValues.source || 'Source' }}
+              <mat-icon class="chevron">expand_more</mat-icon>
             </button>
+            <mat-menu #sourceMenu="matMenu">
+              <button mat-menu-item (click)="applyFilter('', 'source')">All Sources</button>
+              <button mat-menu-item (click)="applyFilter('Epic Health', 'source')">
+                Epic Health
+              </button>
+              <button mat-menu-item (click)="applyFilter('QuestLab', 'source')">QuestLab</button>
+              <button mat-menu-item (click)="applyFilter('MediBridge', 'source')">
+                MediBridge
+              </button>
+            </mat-menu>
+
             <button mat-stroked-button class="filter-btn">
               <mat-icon>rule</mat-icon> Rule Type <mat-icon class="chevron">expand_more</mat-icon>
             </button>
+
+            <span style="flex: 1 1 auto"></span>
+
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                (keyup)="applyFilter($event, 'search')"
+                placeholder="Search failures..." />
+            </mat-form-field>
           </div>
 
-          <table mat-table [dataSource]="activeFailuresDS" class="full-width-table">
+          <table
+            mat-table
+            [dataSource]="activeFailuresDS"
+            matSort
+            #sortActive="matSort"
+            class="full-width-table">
             <ng-container matColumnDef="rule">
-              <th mat-header-cell *matHeaderCellDef>Rule / Check</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Rule / Check</th>
               <td mat-cell *matCellDef="let row">
                 <div class="rule-cell">
                   <span class="primary">{{ row.rule }}</span>
@@ -68,7 +104,7 @@
             </ng-container>
 
             <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef>Source</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
               <td mat-cell *matCellDef="let row">
                 <div class="source-cell">
                   <mat-icon>description</mat-icon><span>{{ row.source }}</span>
@@ -77,7 +113,7 @@
             </ng-container>
 
             <ng-container matColumnDef="severity">
-              <th mat-header-cell *matHeaderCellDef>Severity</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Severity</th>
               <td mat-cell *matCellDef="let row">
                 <span class="sev-badge" [ngClass]="row.severity.toLowerCase()">
                   <span class="dot"></span> {{ row.severity }}
@@ -86,25 +122,44 @@
             </ng-container>
 
             <ng-container matColumnDef="count">
-              <th mat-header-cell *matHeaderCellDef>Error Count</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Error Count</th>
               <td mat-cell *matCellDef="let row" class="count-cell">
                 {{ row.count }} <mat-icon class="info-icon">help_outline</mat-icon>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="firstSeen">
-              <th mat-header-cell *matHeaderCellDef>First Seen</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>First Seen</th>
               <td mat-cell *matCellDef="let row">{{ row.firstSeen }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td mat-cell *matCellDef="let row"><span class="status-pill">Active</span></td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="actionMenu"
+                  [matMenuTriggerData]="{ item: row }">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+              </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="columnsActive"></tr>
             <tr mat-row *matRowDef="let row; columns: columnsActive"></tr>
           </table>
+
+          <mat-paginator
+            #paginatorActive
+            [pageSize]="5"
+            [pageSizeOptions]="[5, 10, 20, 50]"
+            showFirstLastButtons>
+          </mat-paginator>
         </div>
       </mat-tab>
 
@@ -133,27 +188,47 @@
 
       <mat-tab label="By Source">
         <div class="tab-content">
-          <table mat-table [dataSource]="bySourceDS" class="full-width-table">
+          <div class="filter-actions">
+            <span style="flex: 1 1 auto"></span>
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-icon matPrefix>search</mat-icon>
+              <input
+                matInput
+                (keyup)="applyFilter($event, 'table-source')"
+                placeholder="Search sources..." />
+            </mat-form-field>
+          </div>
+
+          <table
+            mat-table
+            [dataSource]="bySourceDS"
+            matSort
+            #sortSource="matSort"
+            class="full-width-table">
             <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef>Source</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
               <td mat-cell *matCellDef="let row">
-                <div class="source-info">
-                  <mat-icon>business</mat-icon>
-                  <div>
-                    <span class="name">{{ row.source }}</span
-                    ><span class="type">{{ row.type }}</span>
+                <div class="source-info" style="display: flex; align-items: center; gap: 12px">
+                  <mat-icon style="color: #64748b">business</mat-icon>
+                  <div style="display: flex; flex-direction: column; line-height: 1.2">
+                    <span class="name" style="font-weight: 500; color: #1e293b">{{
+                      row.source
+                    }}</span>
+                    <span class="type" style="font-size: 11px; color: #94a3b8; margin-top: 2px">{{
+                      row.type
+                    }}</span>
                   </div>
                 </div>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="errors">
-              <th mat-header-cell *matHeaderCellDef>Errors</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Errors</th>
               <td mat-cell *matCellDef="let row" class="bold-text">{{ row.errors }}</td>
             </ng-container>
 
             <ng-container matColumnDef="critical">
-              <th mat-header-cell *matHeaderCellDef>Critical</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Critical</th>
               <td mat-cell *matCellDef="let row">
                 <div class="mini-bar-cell">
                   <span>{{ row.critical || '—' }}</span>
@@ -165,7 +240,7 @@
             </ng-container>
 
             <ng-container matColumnDef="high">
-              <th mat-header-cell *matHeaderCellDef>High</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>High</th>
               <td mat-cell *matCellDef="let row">
                 <div class="mini-bar-cell">
                   <span>{{ row.high || '—' }}</span>
@@ -177,7 +252,7 @@
             </ng-container>
 
             <ng-container matColumnDef="medium">
-              <th mat-header-cell *matHeaderCellDef>Medium</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Medium</th>
               <td mat-cell *matCellDef="let row">
                 <div class="mini-bar-cell">
                   <span>{{ row.medium || '—' }}</span>
@@ -189,7 +264,7 @@
             </ng-container>
 
             <ng-container matColumnDef="low">
-              <th mat-header-cell *matHeaderCellDef>Low</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Low</th>
               <td mat-cell *matCellDef="let row">
                 <div class="mini-bar-cell">
                   <span>{{ row.low || '—' }}</span>
@@ -201,7 +276,7 @@
             </ng-container>
 
             <ng-container matColumnDef="trend">
-              <th mat-header-cell *matHeaderCellDef>Trend</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Trend</th>
               <td mat-cell *matCellDef="let row">
                 <div class="spark-placeholder" [ngClass]="row.trend">
                   <mat-icon *ngIf="row.trend === 'up'">trending_up</mat-icon>
@@ -214,15 +289,53 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let row">
-                <button mat-icon-button><mat-icon>more_vert</mat-icon></button>
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="actionMenu"
+                  [matMenuTriggerData]="{ item: row }">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
               </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="columnsSource"></tr>
             <tr mat-row *matRowDef="let row; columns: columnsSource"></tr>
           </table>
+
+          <mat-paginator
+            #paginatorSource
+            [pageSize]="5"
+            [pageSizeOptions]="[5, 10, 20, 50]"
+            showFirstLastButtons>
+          </mat-paginator>
         </div>
       </mat-tab>
     </mat-tab-group>
   </div>
+
+  <mat-menu #actionMenu="matMenu" class="compact-list-menu" xPosition="before">
+    <ng-template matMenuContent let-item="item">
+      <button mat-menu-item (click)="onView(item)">
+        <mat-icon>visibility</mat-icon><span>View Details</span>
+      </button>
+
+      <button mat-menu-item (click)="onResolve(item)">
+        <mat-icon>build</mat-icon><span>Open Resolution Workflow</span>
+      </button>
+
+      <button mat-menu-item (click)="onMarkAsResolved(item)">
+        <mat-icon>check_circle</mat-icon><span>Mark As Resolved</span>
+      </button>
+
+      <button mat-menu-item (click)="onArchive(item)">
+        <mat-icon>archive</mat-icon><span>Archive Failure</span>
+      </button>
+
+      <div class="menu-divider danger-divider"></div>
+
+      <button mat-menu-item class="delete-action" (click)="onDelete(item)">
+        <mat-icon>delete_forever</mat-icon><span>Delete Transaction</span>
+      </button>
+    </ng-template>
+  </mat-menu>
 </div>

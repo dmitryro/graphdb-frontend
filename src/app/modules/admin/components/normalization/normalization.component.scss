@@ -14,7 +14,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
   width: 100%;
   background-color: var(--bg-color);
   color: var(--text-main);
-
   position: relative;
   z-index: 0;
 }
@@ -26,8 +25,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
   padding: 24px 40px;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-color) !important;
-
-  // ! IMPORTANT: NO sticky anymore – scrolls away like in your other component
   position: static;
   z-index: auto;
 
@@ -109,8 +106,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
   background: var(--surface-color);
   border-radius: 12px;
   border: 1px solid var(--border-color);
-
-  // FIX: Removed overflow: hidden to prevent clipping and allow sticky headers to work correctly
   position: relative;
   z-index: 1;
 }
@@ -118,10 +113,9 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
 .tabs-section {
   border-bottom: 1px solid var(--border-color);
   background-color: var(--surface-color) !important;
-
-  position: static; // REMOVED STICKY: scrolls with entire section
+  position: static;
   z-index: $z-tabs;
-  border-radius: 12px 12px 0 0; // Maintain radius on sticky header
+  border-radius: 12px 12px 0 0;
 
   .normalization-tabs {
     ::ng-deep {
@@ -162,8 +156,7 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
   padding: 16px 24px;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--surface-color) !important;
-
-  position: static; // REMOVED STICKY: scrolls with entire section
+  position: static;
   z-index: $z-search;
 
   .search-bar-container {
@@ -200,11 +193,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
           opacity: 0.4;
         }
       }
-
-      .clear-btn {
-        color: var(--text-main);
-        opacity: 0.5;
-      }
     }
 
     .add-source-btn {
@@ -233,8 +221,7 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
   gap: 12px;
   background: var(--surface-color) !important;
   border-bottom: 1px solid var(--border-color);
-
-  position: static; // REMOVED STICKY: scrolls with entire section
+  position: static;
   z-index: $z-filters;
 
   .filter-dropdown {
@@ -277,8 +264,7 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     padding: 16px 24px;
     background: var(--surface-color) !important;
     letter-spacing: 0.5px;
-
-    position: static; // REMOVED STICKY: scrolls with entire section
+    position: static;
     z-index: $z-table-header;
   }
 
@@ -292,17 +278,20 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
 
     &.primary-text {
       font-weight: 500;
+
+      code {
+        background: rgba(128, 128, 128, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 13px;
+        color: #436d9d;
+      }
     }
   }
 
-  .action-btn {
-    color: var(--text-main);
-    opacity: 0.6;
-
-    &:hover {
-      opacity: 1;
-      background-color: rgba(128, 128, 128, 0.05);
-    }
+  tr:hover td {
+    background-color: rgba(128, 128, 128, 0.02);
   }
 }
 
@@ -328,6 +317,11 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
   &.deployed {
     background: rgba(52, 152, 219, 0.15);
     color: #3498db;
+
+    &.latest {
+      border: 1px solid #3498db;
+      box-shadow: 0 0 8px rgba(52, 152, 219, 0.2);
+    }
   }
   &.deprecated {
     background: rgba(230, 126, 34, 0.15);
@@ -340,7 +334,386 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
 }
 
 // ────────────────────────────────────────────────
-// MATERIAL OVERLAYS – make sure they are above everything
+// UPDATED VERSIONS TAB (AUDIT LOG & TIMELINE)
+// ────────────────────────────────────────────────
+
+.version-controls-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-color);
+
+  .search-box-version {
+    flex: 1;
+    max-width: 600px;
+    display: flex;
+    align-items: center;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      opacity: 0.5;
+      margin-right: 8px;
+    }
+    input {
+      border: none;
+      background: transparent;
+      flex: 1;
+      color: var(--text-main);
+      outline: none;
+    }
+    .v-divider {
+      margin: 0 12px;
+      color: var(--border-color);
+    }
+    .date-range-display {
+      display: flex;
+      align-items: center;
+      color: #436d9d;
+      font-weight: 500;
+      cursor: pointer;
+    }
+  }
+
+  .version-meta-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    .v-count {
+      color: var(--text-main);
+      opacity: 0.5;
+      margin-right: 12px;
+      font-size: 13px;
+    }
+    button mat-icon {
+      opacity: 0.6;
+    }
+  }
+}
+
+.version-filters-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--surface-color);
+  font-size: 13px;
+
+  .filter-chip {
+    color: #436d9d;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .past-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 24px;
+    color: var(--text-main);
+    opacity: 0.6;
+    .range-box {
+      color: #436d9d;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    .p-nav {
+      cursor: pointer;
+      opacity: 0.6;
+      font-size: 20px;
+      &.disabled {
+        opacity: 0.2;
+        cursor: default;
+      }
+    }
+    .p-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--border-color);
+      &.active {
+        background: #436d9d;
+      }
+    }
+    .p-numbers {
+      font-weight: 500;
+      color: var(--text-main);
+    }
+  }
+}
+
+.timeline-container {
+  padding: 24px;
+  background: var(--bg-color);
+  min-height: 400px;
+
+  .timeline-card {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(128, 128, 128, 0.02);
+      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
+
+      .avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+      }
+      .rel-time {
+        font-weight: 700;
+        color: var(--text-main);
+        font-size: 13px;
+      }
+      .abs-time {
+        color: var(--text-main);
+        opacity: 0.5;
+        font-size: 12px;
+      }
+      .hash {
+        background: rgba(67, 109, 157, 0.1);
+        color: #436d9d;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 11px;
+      }
+      .author {
+        font-size: 13px;
+        font-weight: 500;
+        color: #436d9d;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 12px;
+        color: var(--text-main);
+        opacity: 0.4;
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
+          &:hover {
+            opacity: 1;
+          }
+        }
+        .toggle {
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+}
+
+.timeline-event {
+  display: flex;
+  padding: 16px 20px;
+  gap: 12px;
+
+  .event-icon {
+    &.added {
+      color: #2ecc71;
+    }
+    mat-icon {
+      font-size: 20px;
+    }
+  }
+
+  .event-text {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    .bold {
+      font-weight: 700;
+    }
+    .subject {
+      font-weight: 700;
+      text-decoration: underline;
+      color: #436d9d;
+      cursor: pointer;
+    }
+    .ver {
+      opacity: 0.5;
+      margin-left: 4px;
+      font-size: 12px;
+    }
+    .muted {
+      opacity: 0.6;
+    }
+    .sub-detail {
+      margin-top: 4px;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+  }
+
+  .event-time {
+    color: var(--text-main);
+    opacity: 0.4;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
+
+.tree-container {
+  padding-left: 54px;
+  padding-bottom: 16px;
+  position: relative;
+
+  .tree-line {
+    position: absolute;
+    left: 30px;
+    top: -10px;
+    bottom: 24px;
+    width: 2px;
+    background: var(--border-color);
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 14px;
+      height: 2px;
+      background: var(--border-color);
+    }
+  }
+
+  .tree-node {
+    display: flex;
+    align-items: center;
+    background: rgba(128, 128, 128, 0.05);
+    padding: 10px 16px;
+    border-radius: 6px;
+    gap: 12px;
+    font-size: 13px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      opacity: 0.6;
+    }
+    .node-title {
+      font-weight: 500;
+    }
+
+    .node-tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      &.rule {
+        background: #e2e8f0;
+        color: #475569;
+      }
+      &.mapping {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+    }
+
+    .node-time {
+      opacity: 0.4;
+      font-size: 11px;
+    }
+    .check {
+      color: #2ecc71;
+      opacity: 1;
+    }
+    .info {
+      color: #436d9d;
+      opacity: 1;
+    }
+  }
+}
+
+.timeline-row-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-color);
+  gap: 12px;
+  font-size: 13px;
+
+  .edit-icon {
+    color: #3498db;
+    font-size: 18px;
+  }
+  .type-icon {
+    font-size: 18px;
+    opacity: 0.6;
+    &.added {
+      color: #2ecc71;
+      opacity: 1;
+    }
+  }
+  .mini-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+  }
+  .label {
+    font-weight: 700;
+  }
+  .subject {
+    font-weight: 700;
+    color: #436d9d;
+  }
+  .muted {
+    opacity: 0.5;
+  }
+  .meta {
+    font-size: 11px;
+    opacity: 0.5;
+    font-style: italic;
+  }
+  .row-time {
+    margin-left: auto;
+    opacity: 0.4;
+    font-size: 11px;
+  }
+  .info {
+    font-size: 16px;
+    opacity: 0.4;
+  }
+}
+
+// ────────────────────────────────────────────────
+// MATERIAL OVERLAYS
 // ────────────────────────────────────────────────
 
 ::ng-deep {
@@ -359,7 +732,7 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
   }
 
   .compact-list-menu {
-    min-width: 180px !important;
+    min-width: 200px !important;
 
     .mat-mdc-menu-item {
       color: var(--text-main) !important;
@@ -407,4 +780,138 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     position: relative;
     z-index: 100;
   }
+}
+
+// ────────────────────────────────────────────────
+// MISSING LAYOUT & TAB CONTENT
+// ────────────────────────────────────────────────
+
+.tab-content {
+  background-color: var(--surface-color);
+  // Ensure the content fills the card appropriately
+  min-height: 200px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+// ────────────────────────────────────────────────
+// MISSING PAGINATOR & TABLE ALIGNMENT
+// ────────────────────────────────────────────────
+
+::ng-deep {
+  .mat-mdc-paginator-container {
+    justify-content: flex-end !important;
+    padding: 0 8px;
+  }
+
+  // Ensure sorting icons don't break header alignment
+  .mat-sort-header-container {
+    display: flex;
+    align-items: center;
+  }
+}
+
+// ────────────────────────────────────────────────
+// MISSING TIMELINE & TREE ENHANCEMENTS
+// ────────────────────────────────────────────────
+
+.timeline-container {
+  // Adds the vertical "spine" to the timeline if needed globally
+  position: relative;
+
+  .timeline-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .card-body {
+    padding-bottom: 8px;
+  }
+}
+
+.tree-node {
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--border-color);
+    background: rgba(128, 128, 128, 0.08);
+    transform: translateX(4px);
+  }
+
+  .node-tag {
+    &.model {
+      background: #fef3c7;
+      color: #92400e;
+    }
+  }
+}
+
+// ────────────────────────────────────────────────
+// MISSING STATUS & ACTION VARIANTS
+// ────────────────────────────────────────────────
+
+.status-pill {
+  // Extra specificity for the dynamic classes used in [ngClass]
+  &.production {
+    border: 1px solid #2ecc71;
+  }
+  &.staging {
+    border: 1px solid #3498db;
+  }
+  &.development {
+    border: 1px solid #9b59b6;
+  }
+
+  // Icon specific colors
+  mat-icon {
+    &.check_circle {
+      color: #2ecc71;
+    }
+    &.history {
+      color: #3498db;
+    }
+  }
+}
+
+.header-actions {
+  mat-icon {
+    transition: opacity 0.2s;
+    &:hover {
+      opacity: 1 !important;
+      color: #436d9d;
+    }
+  }
+}
+
+// ────────────────────────────────────────────────
+// GLOBAL MPI UTILITY CLASSES
+// ────────────────────────────────────────────────
+
+.primary-text {
+  // Styles for the Golden Record highlight
+  .golden-id {
+    font-weight: 700;
+    color: #e18840; // Matching the workspace select color
+    border-bottom: 1px dashed #e18840;
+  }
+}
+
+// Highlighting "Required" logic in the timeline
+strong {
+  color: var(--text-main);
+  font-weight: 600;
 }

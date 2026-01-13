@@ -30,6 +30,7 @@ import {
 import { environment } from '@env/environment';
 import { EventModule } from '@modules/events/event.module';
 import { eventReducer } from '@modules/events/reducers/event.reducer';
+import { UsersModule } from '@modules/users/users-module';
 import { StoreModule } from '@ngrx/store';
 import { PaginatorI18nService } from '@shared';
 import { SharedModule } from '@shared/shared.module';
@@ -58,6 +59,7 @@ export const appConfig: ApplicationConfig = {
       Actions,
       EventModule,
       SharedModule,
+      UsersModule,
       FormsModule,
       MatFormFieldModule,
       MatInputModule,

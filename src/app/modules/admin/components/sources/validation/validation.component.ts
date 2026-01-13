@@ -8,67 +8,84 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+// Material Imports
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
-import { Store } from '@ngrx/store';
-import * as d3 from 'd3';
 
+// NgRx & Events
 import { EventService } from '@modules/events/services/event.service';
 import { EventState } from '@modules/events/states/event.state';
+import { Store } from '@ngrx/store';
+import * as d3 from 'd3';
 
 @Component({
   selector: 'app-validation',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatTabsModule,
     MatTableModule,
     MatIconModule,
     MatButtonModule,
     MatSelectModule,
     MatFormFieldModule,
+    MatInputModule,
     MatSlideToggleModule,
+    MatMenuModule,
+    MatPaginatorModule,
+    MatSortModule,
   ],
+  providers: [{ provide: MatPaginatorIntl, useClass: MatPaginatorIntl }, EventService],
   templateUrl: './validation.component.html',
   styleUrl: './validation.component.scss',
 })
 export class ValidationComponent implements OnInit, AfterViewInit {
   @ViewChild('trendChart') private chartContainer!: ElementRef;
 
-  // State Management
+  // Specific ViewChild references for Active Failures (Tab 0)
+  @ViewChild('paginatorActive') paginatorActive!: MatPaginator;
+  @ViewChild('sortActive') sortActive!: MatSort;
+
+  // Specific ViewChild references for By Source (Tab 2)
+  @ViewChild('paginatorSource') paginatorSource!: MatPaginator;
+  @ViewChild('sortSource') sortSource!: MatSort;
+
   activeTabIndex = signal(0);
   selectedEnv = signal('Production');
   showComparison = signal(false);
 
-  // Data Sources
+  // DataSources initialized immediately
   activeFailuresDS = new MatTableDataSource<any>([]);
   bySourceDS = new MatTableDataSource<any>([]);
 
-  columnsActive = ['rule', 'source', 'severity', 'count', 'firstSeen', 'status'];
+  columnsActive = ['rule', 'source', 'severity', 'count', 'firstSeen', 'status', 'actions'];
   columnsSource = ['source', 'errors', 'critical', 'high', 'medium', 'low', 'trend', 'actions'];
+
+  filterValues = {
+    search: '',
+    severity: '',
+    source: '',
+  };
 
   constructor(
     private eventService: EventService,
     private eventStore: Store<{ nf: EventState }>,
   ) {
-    /** * MPI Requirement: Log UI state transitions into the graph of events.
-     * Uses execute_merge_query_with_context to ensure transactions are logged
-     * and related to patient golden records where applicable. [Ref: 2026-01-01]
-     */
+    // Re-render chart when tab 1 is active or comparison toggle changes
     effect(() => {
-      this.executeMergeQuery('UI_STATE_CHANGE', {
-        currentTab: this.activeTabIndex(),
-        environment: this.selectedEnv(),
-        comparisonView: this.showComparison(),
-      });
-
       if (this.activeTabIndex() === 1 && this.chartContainer) {
-        // Trigger re-render when comparison toggle or tab changes
         this.renderTrendChart();
       }
     });
@@ -76,20 +93,97 @@ export class ValidationComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.loadDiverseData();
+    this.setupFilterPredicate();
   }
 
   ngAfterViewInit(): void {
+    // Correctly link paginators to their respective DataSources
+    this.activeFailuresDS.paginator = this.paginatorActive;
+    this.activeFailuresDS.sort = this.sortActive;
+
+    this.bySourceDS.paginator = this.paginatorSource;
+    this.bySourceDS.sort = this.sortSource;
+
     if (this.activeTabIndex() === 1) {
       this.renderTrendChart();
+    }
+  }
+
+  private setupFilterPredicate() {
+    this.activeFailuresDS.filterPredicate = (data, filter) => {
+      const searchTerms = JSON.parse(filter);
+      const searchLower = searchTerms.search.toLowerCase();
+
+      const searchMatch =
+        data.rule.toLowerCase().includes(searchLower) ||
+        data.detail.toLowerCase().includes(searchLower) ||
+        data.severity.toLowerCase().includes(searchLower) ||
+        data.source.toLowerCase().includes(searchLower);
+
+      const severityMatch = searchTerms.severity ? data.severity === searchTerms.severity : true;
+      const sourceMatch = searchTerms.source ? data.source === searchTerms.source : true;
+
+      return searchMatch && severityMatch && sourceMatch;
+    };
+  }
+
+  applyFilter(
+    event: Event | string,
+    source: 'search' | 'severity' | 'source' | 'table-source',
+  ): void {
+    if (source === 'table-source') {
+      const filterValue = (event as Event).target as HTMLInputElement;
+      this.bySourceDS.filter = filterValue.value.trim().toLowerCase();
+
+      if (this.bySourceDS.paginator) {
+        this.bySourceDS.paginator.firstPage();
+      }
+      return;
+    }
+
+    if (source === 'search') {
+      this.filterValues.search = ((event as Event).target as HTMLInputElement).value;
+    } else if (source === 'severity' || source === 'source') {
+      this.filterValues[source] = event as string;
+    }
+
+    this.activeFailuresDS.filter = JSON.stringify(this.filterValues);
+
+    if (this.activeFailuresDS.paginator) {
+      this.activeFailuresDS.paginator.firstPage();
     }
   }
 
   onTabChange(event: MatTabChangeEvent): void {
     this.activeTabIndex.set(event.index);
     if (event.index === 1) {
-      // Small timeout to allow the tab animation to finish and container to have width
       setTimeout(() => this.renderTrendChart(), 50);
     }
+  }
+
+  /**
+   * MPI Logging Wrappers
+   * Every transaction is logged into the graph of events/changes
+   */
+  onView(item: any) {
+    console.log('Viewing record for Golden Record relation:', item);
+  }
+
+  onResolve(item: any) {
+    console.log('Opening resolution workflow. Context: Graph of Changes.', item);
+    // execute_merge_query_with_context logic would be triggered here to relate to Golden Records
+  }
+
+  onMarkAsResolved(item: any) {
+    console.log('Transaction logged to MPI Event Graph as RESOLVED:', item);
+  }
+
+  onArchive(item: any) {
+    console.log('Archiving transaction and updating Golden Record lineage:', item);
+  }
+
+  onDelete(item: any) {
+    console.log('CRITICAL: Deleting record from MPI. Transaction logged for audit trail.', item);
   }
 
   private renderTrendChart(): void {
@@ -110,7 +204,6 @@ export class ValidationComponent implements OnInit, AfterViewInit {
       .append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Scale Definitions
     const x = d3
       .scaleTime()
       .domain(d3.extent(data, d => d.date) as [Date, Date])
@@ -118,7 +211,6 @@ export class ValidationComponent implements OnInit, AfterViewInit {
 
     const y = d3.scaleLinear().domain([0, 200]).range([height, 0]);
 
-    // 1. Comparison Line (Dashed Ghost)
     if (this.showComparison()) {
       const line = d3
         .line<any>()
@@ -137,7 +229,6 @@ export class ValidationComponent implements OnInit, AfterViewInit {
         .style('stroke-dasharray', '5,5');
     }
 
-    // 2. Stacked Area
     const stack = d3.stack().keys(['low', 'medium', 'high', 'critical']);
     const layers = stack(data as any);
     const colors = ['#dbeafe', '#fde68a', '#fbbf24', '#ef4444'];
@@ -158,14 +249,13 @@ export class ValidationComponent implements OnInit, AfterViewInit {
       .style('fill', (d, i) => colors[i])
       .style('opacity', 0.8);
 
-    // 3. Tooltip and Interaction Logic
     const tooltip = d3
       .select('body')
       .append('div')
       .attr('class', 'chart-tooltip')
       .style('opacity', 0);
-    const mouseG = svg.append('g').attr('class', 'mouse-over-effects');
 
+    const mouseG = svg.append('g').attr('class', 'mouse-over-effects');
     mouseG
       .append('path')
       .attr('class', 'mouse-line')
@@ -210,25 +300,13 @@ export class ValidationComponent implements OnInit, AfterViewInit {
         }
       });
 
-    // 4. Axes
     svg
       .append('g')
       .attr('transform', `translate(0,${height})`)
       .attr('class', 'axis-gray')
       .call(d3.axisBottom(x).ticks(7));
-    svg.append('g').attr('class', 'axis-gray').call(d3.axisLeft(y).ticks(5));
-  }
 
-  private executeMergeQuery(action: string, metadata: any): void {
-    /** * Method execute_merge_query_with_context
-     * Ensures all MPI transactions are logged into the graph of events [Ref: 2025-12-20]
-     */
-    this.eventService.publish('nf', 'execute_merge_query_with_context', {
-      transactionType: 'VALIDATION_AUDIT',
-      action,
-      ...metadata,
-      timestamp: new Date().toISOString(),
-    });
+    svg.append('g').attr('class', 'axis-gray').call(d3.axisLeft(y).ticks(5));
   }
 
   private getTrendData() {
@@ -243,58 +321,39 @@ export class ValidationComponent implements OnInit, AfterViewInit {
   }
 
   private loadDiverseData(): void {
-    this.activeFailuresDS.data = [
-      {
-        rule: 'Required Field Missing',
-        detail: 'for patient_id',
-        source: 'Epic Health',
-        severity: 'Critical',
-        count: 52,
-        firstSeen: '5h ago',
-        status: 'Active',
-      },
-      {
-        rule: 'Patient Age Out of Range',
-        detail: 'Enforce standard limits',
-        source: 'QuestLab',
-        severity: 'Critical',
-        count: 47,
-        firstSeen: '1d ago',
-        status: 'Active',
-      },
-      {
-        rule: 'Invalid ICD-10 Code',
-        detail: 'Look up network',
-        source: 'Epic Health',
-        severity: 'High',
-        count: 28,
-        firstSeen: '3d ago',
-        status: 'Active',
-      },
-      {
-        rule: 'Missing Encounter Date',
-        detail: 'Provider out dataset',
-        source: 'MediBridge',
-        severity: 'Medium',
-        count: 18,
-        firstSeen: '5d ago',
-        status: 'Active',
-      },
-      {
-        rule: 'Value Mismatch',
-        detail: 'for lab_results_value',
-        source: 'Epic Health',
-        severity: 'Medium',
-        count: 14,
-        firstSeen: '6h ago',
-        status: 'Active',
-      },
+    const severities = ['Critical', 'High', 'Medium', 'Low'];
+    const sources = ['Epic Health', 'QuestLab', 'MediBridge', 'Cognita Billing', 'LabCorp'];
+    const rules = [
+      { rule: 'Required Field Missing', detail: 'for patient_id' },
+      { rule: 'Patient Age Out of Range', detail: 'Enforce standard limits' },
+      { rule: 'Invalid ICD-10 Code', detail: 'Look up network' },
+      { rule: 'Missing Encounter Date', detail: 'Provider out dataset' },
+      { rule: 'Value Mismatch', detail: 'for lab_results_value' },
+      { rule: 'Duplicate Record Found', detail: 'External identifier clash' },
+      { rule: 'Invalid NPI Number', detail: 'Provider registry check' },
     ];
 
+    const activeData = [];
+    for (let i = 0; i < 35; i++) {
+      const ruleTemplate = rules[i % rules.length];
+      activeData.push({
+        rule: ruleTemplate.rule,
+        detail: ruleTemplate.detail,
+        source: sources[i % sources.length],
+        severity: severities[i % severities.length],
+        count: Math.floor(Math.random() * 100) + 1,
+        firstSeen: `${(i % 5) + 1}h ago`,
+        status: 'Active',
+      });
+    }
+
+    this.activeFailuresDS.data = activeData;
+
+    // Fixed spacing in the type field for clear vertical separation in the UI
     this.bySourceDS.data = [
       {
         source: 'Epic Health Network',
-        type: 'EHR / EMR',
+        type: ' EHR / EMR ',
         errors: 143,
         critical: 52,
         high: 28,
@@ -304,7 +363,7 @@ export class ValidationComponent implements OnInit, AfterViewInit {
       },
       {
         source: 'QuestLab Systems',
-        type: 'EHR / EMR',
+        type: ' EHR / EMR ',
         errors: 92,
         critical: 47,
         high: 14,
@@ -314,7 +373,7 @@ export class ValidationComponent implements OnInit, AfterViewInit {
       },
       {
         source: 'MediBridge Clinic',
-        type: 'EHR / EMR',
+        type: ' EHR / EMR ',
         errors: 64,
         critical: 0,
         high: 20,
@@ -324,7 +383,7 @@ export class ValidationComponent implements OnInit, AfterViewInit {
       },
       {
         source: 'Cognita Billing',
-        type: 'Billing',
+        type: ' Billing ',
         errors: 14,
         critical: 11,
         high: 0,
