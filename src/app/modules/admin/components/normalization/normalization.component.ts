@@ -8,6 +8,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import * as _ from 'lodash';
 import { Subscription } from 'rxjs';
 
 // NgRx & Events
@@ -18,7 +19,6 @@ import { Store } from '@ngrx/store';
 // Material Imports
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -35,6 +35,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
+// Add these specific imports at the top
+import {
+  DateAdapter,
+  MAT_DATE_FORMATS,
+  MAT_DATE_LOCALE,
+  MatNativeDateModule,
+  NativeDateAdapter,
+} from '@angular/material/core';
 
 // User & Version Models
 import { IVersionCommit } from '@modules/admin/models/version.model';
@@ -63,7 +71,26 @@ import { UsersModule } from '@modules/users/users-module';
     MatNativeDateModule,
     UsersModule,
   ],
-  providers: [{ provide: MatPaginatorIntl, useClass: MatPaginatorIntl }, EventService],
+  // ADD THIS SECTION BELOW
+  // Add MAT_DATE_LOCALE to your existing providers in the @Component decorator
+  providers: [
+    { provide: MatPaginatorIntl, useClass: MatPaginatorIntl },
+    EventService,
+    { provide: MAT_DATE_LOCALE, useValue: 'en-US' }, // This is the missing piece for "January" vs "1/13"
+    { provide: DateAdapter, useClass: NativeDateAdapter },
+    {
+      provide: MAT_DATE_FORMATS,
+      useValue: {
+        parse: { dateInput: 'MM/DD/YYYY' },
+        display: {
+          dateInput: 'MM/DD/YYYY',
+          monthYearLabel: 'MMMM YYYY', // Replaces the single date with "January 2026"
+          dateA11yLabel: 'LL',
+          monthYearA11yLabel: 'MMMM YYYY',
+        },
+      },
+    },
+  ],
   templateUrl: './normalization.component.html',
   styleUrl: './normalization.component.scss',
 })
@@ -76,9 +103,12 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   selectedEnv = 'Production';
   tempAvatar = 'assets/images/avatar.png';
 
-  // Pagination State for Versions (Custom Timeline) - FIXED: Match template default
+  // Date Range Picker
+  startView: 'month' | 'year' | 'multi-year' = 'month';
+
+  // Pagination State for Versions
   public currentPage = 0;
-  public pageSize = 5; // Changed from 10 to match template
+  public pageSize = 5;
 
   public filteredVersionHistory: IVersionCommit[] = [];
 
@@ -117,7 +147,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   versionDataSource = new MatTableDataSource<any>([]);
   codeDataSource = new MatTableDataSource<any>([]);
 
-  // Versions as a list for the Timeline View using IVersionCommit
+  // Versions timeline data
   versionHistory: IVersionCommit[] = [];
 
   private tabOrder: string[] = ['Models', 'Mappings', 'Rules', 'Versions', 'Codes'];
@@ -139,7 +169,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.loadAllData();
     this.subscribeEvents();
 
-    // Re-filter when date range changes
     this.range.valueChanges.subscribe(() => {
       this.applyVersionFilter();
     });
@@ -162,7 +191,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.refreshTablePointers();
 
     if (this.versionPaginator) {
-      // Sync initial pageSize from paginator
       this.pageSize = this.versionPaginator.pageSize;
 
       this.versionPaginator.page.subscribe((event: PageEvent) => {
@@ -172,17 +200,14 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       });
     }
 
-    // Initial filter to populate filteredVersionHistory
     this.applyVersionFilter();
   }
 
-  // --- Version Pagination Getters ---
   get totalPages(): number {
     return Math.ceil(this.filteredVersionHistory.length / this.pageSize);
   }
 
   get pagedVersionHistory(): IVersionCommit[] {
-    // Use paginator values if available, otherwise use component state
     const page = this.versionPaginator?.pageIndex ?? this.currentPage;
     const size = this.versionPaginator?.pageSize ?? this.pageSize;
     const startIndex = page * size;
@@ -220,44 +245,44 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   applyModelFilter(): void {
     this.filterDS(this.modelDataSource, this.modelSearch);
   }
+
   applyMappingFilter(): void {
     this.filterDS(this.mappingDataSource, this.mappingSearch);
   }
+
   applyRuleFilter(): void {
     this.filterDS(this.ruleDataSource, this.ruleSearch);
   }
 
   applyVersionFilter(): void {
     const { start, end } = this.range.value;
+    const search = this.versionSearch?.trim()?.toLowerCase();
 
-    // 1. Filter based on Search AND Date Range
     this.filteredVersionHistory = this.versionHistory.filter(commit => {
-      // Date Filter logic
+      // Date range filter
       if (start || end) {
         const commitDate = new Date(commit.absoluteTime);
-        if (start && commitDate < start) return false;
+        if (start) {
+          const startDate = new Date(start);
+          startDate.setHours(0, 0, 0, 0);
+          if (commitDate < startDate) return false;
+        }
         if (end) {
-          // Set end date to end of day for inclusive filtering
-          const adjustedEnd = new Date(end);
-          adjustedEnd.setHours(23, 59, 59, 999);
-          if (commitDate > adjustedEnd) return false;
+          const endDate = new Date(end);
+          endDate.setHours(23, 59, 59, 999);
+          if (commitDate > endDate) return false;
         }
       }
 
-      // Text Search Filter logic
-      if (!this.versionSearch) return true;
-      const search = this.versionSearch.toLowerCase();
-      return (
-        commit.author.name.toLowerCase().includes(search) ||
-        commit.hash.toLowerCase().includes(search) ||
-        commit.events.some(e => e.subject.toLowerCase().includes(search))
-      );
+      // Text search
+      if (!search) return true;
+
+      return this.deepMatch(commit, search);
     });
 
-    // 2. Reset to first page
+    this.versionDataSource.data = [...this.filteredVersionHistory];
     this.currentPage = 0;
     if (this.versionPaginator) {
-      this.versionPaginator.length = this.filteredVersionHistory.length;
       this.versionPaginator.firstPage();
     }
 
@@ -275,6 +300,25 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   private filterDS(ds: MatTableDataSource<any>, val: string): void {
     ds.filter = val.trim().toLowerCase();
     if (ds.paginator) ds.paginator.firstPage();
+  }
+
+  private deepMatch(obj: any, term: string): boolean {
+    if (_.isNil(obj)) return false;
+
+    // Primitive values
+    if (!_.isObject(obj)) {
+      return String(obj).toLowerCase().includes(term);
+    }
+
+    // Arrays
+    if (_.isArray(obj)) {
+      return _.some(obj, item => this.deepMatch(item, term));
+    }
+
+    // Objects - check both keys and values
+    return _.some(_.entries(obj), ([key, value]) => {
+      return key.toLowerCase().includes(term) || this.deepMatch(value, term);
+    });
   }
 
   // --- Actions ---
@@ -401,6 +445,12 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.versionHistory = Array.from({ length: 26 }, (_, i): IVersionCommit => {
       const isBrianna = i % 3 === 0;
+
+      // Generate dynamic subjects with multiple Epic mentions to match screenshot
+      let testSubject = i % 3 === 0 ? 'Epic Integration Mapping' : 'Missing Required Field (v4)';
+      if (i % 4 === 1) testSubject = 'Epic - Patient (v3) Model';
+      if (i % 5 === 2) testSubject = 'Age Under 18 Rule';
+
       return {
         id: `commit-${i}`,
         hash: Math.random().toString(16).substring(2, 9).toUpperCase(),
@@ -409,11 +459,13 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
           avatar: `https://i.pravatar.cc/150?u=${i + 10}`,
         },
         relativeTime: `${i + 1} days ago`,
-        absoluteTime: `January ${Math.max(1, 12 - i)}, 2026 10:30 AM`,
+        absoluteTime: `2026-01-${Math.max(1, 12 - i)
+          .toString()
+          .padStart(2, '0')}T10:30:00`,
         events: [
           {
             action: 'Added',
-            subject: 'Missing Required Field (v4)',
+            subject: testSubject,
             version: `v2.${i}.0`,
             type: 'Model',
             timestamp: '10:30 AM',
@@ -421,7 +473,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
             statusIcon: 'check_circle',
             nested: {
               title: 'System Validation Check',
-              tag: 'Normalization',
+              tag: i % 5 === 2 ? 'Age-Tag' : 'Normalization',
               time: '10:31 AM',
             },
           },
@@ -444,7 +496,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       };
     });
 
-    // Initialize filtered version history
     this.applyVersionFilter();
   }
 

@@ -249,12 +249,14 @@
             <span class="v-divider">|</span>
 
             <div class="date-range-container">
+              <!-- ✅ FIXED: Define #picker BEFORE input and toggle -->
+              <mat-date-range-picker #picker startView="month"></mat-date-range-picker>
+
               <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
                 <input matStartDate formControlName="start" placeholder="Start date" />
                 <input matEndDate formControlName="end" placeholder="End date" />
               </mat-date-range-input>
               <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-date-range-picker #picker></mat-date-range-picker>
 
               <button
                 mat-icon-button
@@ -361,7 +363,7 @@
                 </div>
 
                 <div class="timeline-row-item">
-                  <img src="https://ui-avatars.com/api/?name=U" class="mini-avatar" />
+                  <img src="https://ui-avatars.com/api/?name=U  " class="mini-avatar" />
                   <span class="label">Added</span>
                   <mat-icon class="type-icon added">add_box</mat-icon>
                   <span class="subject">Epic → Patient (v3)</span>
