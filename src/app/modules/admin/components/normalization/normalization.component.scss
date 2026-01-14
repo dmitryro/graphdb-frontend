@@ -933,9 +933,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     z-index: 1 !important;
   }
 
-  // ✅ DO NOT TOUCH .mat-calendar-body-cell-content — it controls day rendering
-  // We only style selection, hover, and today
-
   // ═══ SELECTION STATES ═══
   .mat-calendar-body-selected,
   .mat-calendar-body-range-start,
@@ -973,13 +970,7 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     }
   }
 
-  // ✅ DO NOT HIDE LABELS — they contain the day numbers
-  // .mat-calendar-body-label { display: none !important; } ← REMOVED
-
-  // Optional: If you want to center day numbers, use this safe version:
   .mat-calendar-body-cell-content {
-    // Do NOT override position, transform, or size unless you know exactly what you're doing
-    // Instead, adjust padding/size if needed
     padding: 0 !important;
     width: 32px !important;
     height: 32px !important;
@@ -1020,25 +1011,14 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
   }
 }
 
-// ═══ MDC DATEPICKER ICON VISIBILITY FIX ═══
-// ────────────────────────────────────────────────
-// MDC DATEPICKER ICON VISIBILITY FIX - Dark mode bulletproof
-// ────────────────────────────────────────────────
-
-// ────────────────────────────────────────────────
-// MDC DATEPICKER ICON VISIBILITY FIX - Final dark mode #646464 solution
-// ────────────────────────────────────────────────
-
 // ────────────────────────────────────────────────────────────────
 // MDC DATEPICKER ICON VISIBILITY FIX - Dark #646464 / Light #868A8D
 // ────────────────────────────────────────────────────────────────
 
 ::ng-deep {
   .mat-mdc-datepicker-toggle {
-    // Force base visibility for Dark Mode (#646464)
     color: #646464 !important;
 
-    // Target every possible icon layer in Material 3 MDC
     .mat-datepicker-toggle-default-icon,
     mat-icon,
     .mdc-icon-button__icon,
@@ -1049,10 +1029,9 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     *[fill] {
       color: #646464 !important;
       fill: #646464 !important;
-      opacity: 0.4 !important; // default semi-transparent matching placeholders
+      opacity: 0.4 !important;
     }
 
-    // LIGHT MODE: Force #868A8D (Your specific gray for Light Mode)
     @media (prefers-color-scheme: light) {
       .mat-datepicker-toggle-default-icon,
       mat-icon,
@@ -1065,7 +1044,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
       }
     }
 
-    // DARK MODE: Explicitly re-enforce #646464 to prevent any theme inheritance
     @media (prefers-color-scheme: dark) {
       .mat-datepicker-toggle-default-icon,
       mat-icon,
@@ -1078,7 +1056,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
       }
     }
 
-    // Hover → full visibility
     &:hover {
       .mat-datepicker-toggle-default-icon,
       mat-icon,
@@ -1088,14 +1065,12 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
       }
     }
 
-    // Prevent any MDC background/container from covering the icon
     button.mdc-icon-button {
       background: transparent !important;
       border: none !important;
       --mdc-icon-button-icon-color: inherit;
     }
 
-    // Focus/active states
     &:focus,
     &:active {
       .mat-datepicker-toggle-default-icon,
@@ -1107,23 +1082,24 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     }
   }
 
-  // Ultimate safety net: Override any global styles killing icons
-  .mdc-icon-button svg,
-  .mat-icon,
-  svg[mat-icon],
-  .mat-mdc-datepicker-toggle svg {
-    // If prefers light, use light color, otherwise default to dark #646464
-    fill: #646464 !important;
-    color: #646464 !important;
-  }
-
-  @media (prefers-color-scheme: light) {
+  // SCOPED safety net: Only target icons within normalization component context
+  .normalization-main-container {
     .mdc-icon-button svg,
     .mat-icon,
     svg[mat-icon],
     .mat-mdc-datepicker-toggle svg {
-      fill: #868a8d !important;
-      color: #868a8d !important;
+      fill: #646464 !important;
+      color: #646464 !important;
+    }
+
+    @media (prefers-color-scheme: light) {
+      .mdc-icon-button svg,
+      .mat-icon,
+      svg[mat-icon],
+      .mat-mdc-datepicker-toggle svg {
+        fill: #868a8d !important;
+        color: #868a8d !important;
+      }
     }
   }
 }
@@ -1133,72 +1109,66 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
 // ────────────────────────────────────────────────
 
 ::ng-deep {
-  .add-source-btn {
-    background-color: #436d9d !important;
-    color: white !important;
-    height: 44px;
-    padding: 0 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    font-family: 'Roboto', sans-serif !important; // Force Roboto font
-    letter-spacing: 0.25px !important; // subtle Roboto spacing
+  .normalization-main-container {
+    .add-source-btn {
+      background-color: #436d9d !important;
+      color: white !important;
+      height: 44px;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      font-family: 'Roboto', sans-serif !important;
+      letter-spacing: 0.25px !important;
 
-    // Force white color on ALL text & icon layers
-    color: white !important;
-    fill: white !important;
-
-    // Target the + icon specifically (Material 3 MDC nesting)
-    mat-icon,
-    .mat-icon,
-    svg,
-    path,
-    *[fill] {
       color: white !important;
       fill: white !important;
-      opacity: 1 !important; // no dimming
-      font-size: 20px !important;
-      width: 20px !important;
-      height: 20px !important;
-      margin-right: 8px !important;
-    }
 
-    // Hover & active states - keep white + slight lift
-    &:hover,
-    &:active,
-    &:focus {
-      background-color: #355a8c !important; // darker blue hover
-      color: white !important;
       mat-icon,
+      .mat-icon,
       svg,
-      path {
+      path,
+      *[fill] {
         color: white !important;
         fill: white !important;
+        opacity: 1 !important;
+        font-size: 20px !important;
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: 8px !important;
       }
-    }
 
-    // Prevent any MDC internal override from blackening the icon
-    .mdc-button__label {
-      color: white !important;
-    }
+      &:hover,
+      &:active,
+      &:focus {
+        background-color: #355a8c !important;
+        color: white !important;
+        mat-icon,
+        svg,
+        path {
+          color: white !important;
+          fill: white !important;
+        }
+      }
 
-    .mdc-icon-button__icon {
-      fill: white !important;
-      color: white !important;
+      .mdc-button__label {
+        color: white !important;
+      }
+
+      .mdc-icon-button__icon {
+        fill: white !important;
+        color: white !important;
+      }
     }
   }
 }
 
 // ────────────────────────────────────────────────────────────────
 // MDC DATEPICKER & CALENDAR: UNIFIED THEME & LAYOUT ENGINE
-// Logic: Fixes overflow, enforces grays (#646464/#868A8D), and
-// ensures day-grid visibility for MPI event graph filtering.
 // ────────────────────────────────────────────────────────────────
 
 ::ng-deep {
-  // 1. POPUP PANEL & CONTAINMENT
-  // Solves the "Black Frame" in light mode and "Year Overflow"
   .mat-datepicker-content {
     background-color: var(--surface-color, var(--bg-surface, #1e1e1e)) !important;
     color: var(--text-main) !important;
@@ -1209,14 +1179,12 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     overflow: hidden !important;
     max-height: 420px !important;
 
-    // Theme-aware shadow
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
     @media (prefers-color-scheme: dark) {
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
     }
   }
 
-  // 2. SCROLLABLE CALENDAR AREA
   .mat-calendar-content {
     height: 320px !important;
     min-height: 300px !important;
@@ -1225,18 +1193,15 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     overflow-x: hidden !important;
     outline: none !important;
 
-    // Unified Scrollbar
     &::-webkit-scrollbar {
       width: 5px;
     }
     &::-webkit-scrollbar-thumb {
-      background: #646464; // Dark Default
+      background: #646464;
       border-radius: 10px;
     }
   }
 
-  // 3. COLOR & SVG ENFORCEMENT
-  // Dark Mode: #646464 | Light Mode: #868A8D
   .mat-calendar,
   .mat-calendar-table,
   .mat-calendar-header,
@@ -1274,7 +1239,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     }
   }
 
-  // 4. GRID & ROW VISIBILITY (Fixes "Empty Month" injection issue)
   mat-month-view {
     display: block !important;
     min-height: 280px !important;
@@ -1304,7 +1268,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     border: none !important;
   }
 
-  // 5. SELECTION & RANGE STATES (Branding Blue)
   .mat-calendar-body-selected,
   .mat-calendar-body-range-start,
   .mat-calendar-body-range-end {
@@ -1326,7 +1289,6 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     }
   }
 
-  // Nuclear Inheritance Protection
   .mat-calendar-body-cell-content *,
   .mat-calendar-table-header th * {
     color: inherit !important;
@@ -1339,18 +1301,15 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
 // ────────────────────────────────────────────────────────────────
 
 ::ng-deep {
-  // Target the clear button container
   .mat-mdc-button-base.mat-mdc-icon-button {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 
-    // Reset internal MDC padding that causes the "X" to shift
     .mat-mdc-button-touch-target {
-      display: none !important; // Removes invisible padding area
+      display: none !important;
     }
 
-    // Force the internal span/icon to center perfectly
     .mdc-icon-button__icon,
     mat-icon,
     svg {
@@ -1365,13 +1324,278 @@ $z-overlay: 2000; // Menus, selects, dialogs etc. – must be way above
     }
   }
 
-  // Ensure the circle background (if using a custom one) is centered
   .mat-datepicker-toggle {
     button.mat-mdc-icon-button {
-      // Matches the height/width to ensure the "circle" is a perfect square
       width: 40px !important;
       height: 40px !important;
       padding: 0 !important;
+    }
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// MDC DATEPICKER - INPUT AND ICON FIXES (MINIMAL FOCUSED FIX)
+// ────────────────────────────────────────────────────────────────
+::ng-deep {
+  // Main wrapper of the entire range input field
+
+  .mat-mdc-date-range-input {
+    display: flex !important;
+
+    align-items: center !important;
+
+    min-height: 44px !important; // give it breathing room
+
+    padding: 0 12px !important;
+
+    overflow: visible !important;
+
+    gap: 4px;
+
+    width: 100%;
+
+    max-width: 340px; // ← adjust to your layout
+
+    // The critical internal container that squeezes everything
+
+    .mat-mdc-date-range-input-container {
+      display: flex !important;
+
+      align-items: center !important;
+
+      flex: 1 1 auto !important;
+
+      overflow: visible !important; // ← must win
+
+      min-width: 0;
+
+      gap: 6px;
+
+      // Start & End date segments
+
+      .mat-mdc-date-range-input-start-wrapper,
+      .mat-mdc-date-range-input-end-wrapper {
+        flex: 1 1 45% !important; // ← the single most effective fix in recent versions
+
+        min-width: 110px !important; // protects last characters (especially year)
+
+        max-width: 150px !important;
+
+        overflow: visible !important;
+
+        // The actual <input> elements
+
+        input.mat-mdc-date-range-input-inner {
+          flex: 1 1 auto !important;
+
+          min-width: 100px !important; // ← strong protection against clipping
+
+          width: 100% !important;
+
+          padding: 0 6px !important; // more left/right breathing room
+
+          font-size: 13px !important;
+
+          line-height: 1.45 !important;
+
+          color: var(--text-main) !important;
+
+          background: transparent !important;
+
+          border: none !important;
+
+          overflow: visible !important;
+
+          text-overflow: clip !important; // better than ellipsis for dates
+
+          white-space: nowrap !important;
+        }
+      }
+
+      // The " – " separator
+
+      .mat-date-range-input-separator {
+        flex: 0 0 auto !important;
+
+        min-width: 24px;
+
+        color: var(--text-main) !important;
+
+        opacity: 0.6;
+
+        font-size: 14px;
+
+        margin: 0 4px;
+      }
+    }
+
+    // Calendar toggle icon – make sure it doesn't eat space
+
+    .mat-mdc-datepicker-toggle {
+      margin-left: 4px !important;
+
+      flex: 0 0 auto !important;
+
+      .mdc-icon-button {
+        width: 36px !important;
+
+        height: 36px !important;
+
+        padding: 0 !important;
+      }
+    }
+
+    // Optional: your clear button
+
+    .clear-date-btn {
+      margin-left: 4px;
+
+      flex: 0 0 auto;
+    }
+  }
+
+  // Safety net for parent containers
+
+  .date-range-container,
+  .search-box-version {
+    overflow: visible !important;
+
+    min-width: 360px !important; // ← prevent parent squeeze
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// FINAL FIX: DATE RANGE & ICONS POSITIONING ENGINE
+// ────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────
+// FINAL CONSOLIDATED FIX: VERTICAL CENTERING & ALIGNED HIT AREAS
+// ────────────────────────────────────────────────────────────────
+
+::ng-deep {
+  .version-controls-row {
+    .search-box-version {
+      display: flex !important;
+      align-items: center !important; // Absolute vertical center for all elements
+      justify-content: flex-start !important;
+      height: 44px !important;
+      max-width: 850px !important;
+      padding: 0 12px !important;
+      border: 1px solid rgba(128, 128, 128, 0.4) !important;
+      border-radius: 8px !important;
+      overflow: visible !important;
+      box-sizing: border-box !important;
+
+      // 1. Search Icon & Input: Center-aligned
+      .mat-icon,
+      mat-icon[role='img'] {
+        flex: 0 0 auto !important;
+        font-size: 20px !important;
+        height: 20px !important;
+        width: 20px !important;
+        margin-right: 10px !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+
+      input[type='text'] {
+        flex: 1 1 auto !important;
+        font-size: 14px !important;
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+        height: 100% !important;
+      }
+
+      // 2. The Pipe: Locked to center
+      .v-divider {
+        margin: 0 10px !important;
+        height: 18px !important;
+        opacity: 0.3 !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+
+      // 3. Date Hit Areas: Alignment, Centered Dash, and Spacing
+      .date-range-container {
+        display: flex !important;
+        align-items: center !important;
+        flex: 0 0 auto !important;
+        margin-left: auto !important;
+
+        .mat-date-range-input {
+          display: flex !important;
+          align-items: center !important;
+
+          .mat-date-range-input-container {
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            height: 32px !important;
+
+            .mat-date-range-input-wrapper {
+              flex: 0 0 auto !important;
+              width: 82px !important;
+              height: 32px !important;
+              display: flex !important;
+              align-items: center !important;
+
+              input.mat-date-range-input-inner {
+                height: 32px !important;
+                font-size: 12px !important;
+                text-align: center !important;
+                line-height: 32px !important;
+                border-radius: 6px !important;
+                background: rgba(128, 128, 128, 0.15) !important;
+                padding: 0 6px !important;
+                border: none !important;
+
+                &:hover {
+                  background: rgba(128, 128, 128, 0.25) !important;
+                }
+              }
+            }
+
+            // RESTORED DASH: Centered exactly with protection against overlap
+            .mat-date-range-input-separator {
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              width: 24px !important; // Increased width to prevent overlap
+              margin: 0 4px !important; // Horizontal buffer
+              color: inherit !important;
+              font-weight: bold !important;
+              opacity: 0.7 !important;
+              padding-left: 0.7em;
+            }
+            .mat-date-range-input-separator-hidden {
+            }
+          }
+        }
+
+        // 4. Icons: End-Date Spacing and axis alignment
+        .mat-datepicker-toggle {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          height: 32px !important;
+          width: 32px !important;
+          margin-left: 12px !important; // Space between end date and calendar
+          transform: scale(0.8) !important;
+        }
+
+        button[aria-label*='Clear'],
+        .mat-mdc-icon-button {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          height: 32px !important;
+          width: 32px !important;
+          margin: 0 !important;
+          transform: scale(0.8) !important;
+        }
+
+        padding-right: 8px !important;
+      }
     }
   }
 }

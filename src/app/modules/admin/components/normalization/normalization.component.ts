@@ -3,8 +3,10 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   OnDestroy,
   OnInit,
+  Renderer2,
   ViewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -35,7 +37,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
-// Add these specific imports at the top
+
+// Core Date Imports
 import {
   DateAdapter,
   MAT_DATE_FORMATS,
@@ -71,12 +74,10 @@ import { UsersModule } from '@modules/users/users-module';
     MatNativeDateModule,
     UsersModule,
   ],
-  // ADD THIS SECTION BELOW
-  // Add MAT_DATE_LOCALE to your existing providers in the @Component decorator
   providers: [
     { provide: MatPaginatorIntl, useClass: MatPaginatorIntl },
     EventService,
-    { provide: MAT_DATE_LOCALE, useValue: 'en-US' }, // This is the missing piece for "January" vs "1/13"
+    { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
     { provide: DateAdapter, useClass: NativeDateAdapter },
     {
       provide: MAT_DATE_FORMATS,
@@ -84,7 +85,7 @@ import { UsersModule } from '@modules/users/users-module';
         parse: { dateInput: 'MM/DD/YYYY' },
         display: {
           dateInput: 'MM/DD/YYYY',
-          monthYearLabel: 'MMMM YYYY', // Replaces the single date with "January 2026"
+          monthYearLabel: 'MMMM YYYY',
           dateA11yLabel: 'LL',
           monthYearA11yLabel: 'MMMM YYYY',
         },
@@ -163,6 +164,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     protected eventService: EventService,
     protected eventStore: Store<{ nf: EventState }>,
     private cdr: ChangeDetectorRef,
+    private renderer: Renderer2,
+    private el: ElementRef,
   ) {}
 
   ngOnInit(): void {
@@ -189,6 +192,10 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngAfterViewInit(): void {
     this.refreshTablePointers();
+    this.applyVersionFilter();
+
+    // DOM Fix: Ensure clipping is removed and alignment is forced
+    setTimeout(() => this.fixDateInputLayout(), 500);
 
     if (this.versionPaginator) {
       this.pageSize = this.versionPaginator.pageSize;
@@ -197,10 +204,55 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         this.currentPage = event.pageIndex;
         this.pageSize = event.pageSize;
         this.cdr.detectChanges();
+        // Re-apply fix if pagination triggers re-render
+        setTimeout(() => this.fixDateInputLayout(), 100);
+      });
+    }
+  }
+
+  /**
+   * Manual DOM manipulation to override Material internal styling
+   * Targeted Fix: version-controls-row flex + search-box-version expansion
+   */
+  private fixDateInputLayout(): void {
+    const root = this.el.nativeElement;
+
+    // 1. Force the parent container to flex
+    const controlsRow = root.querySelector('.version-controls-row');
+    if (controlsRow) {
+      this.renderer.setStyle(controlsRow, 'display', 'flex', 1);
+      this.renderer.setStyle(controlsRow, 'align-items', 'center', 1);
+      this.renderer.setStyle(controlsRow, 'gap', '0', 1); // Remove the ugly gap
+    }
+
+    // 2. Make the search box span until the start date
+    const searchBox = root.querySelector('.search-box-version');
+    if (searchBox) {
+      this.renderer.setStyle(searchBox, 'flex', '1 1 auto', 1);
+      this.renderer.setStyle(searchBox, 'width', 'auto', 1); // Override the fixed 30em
+      this.renderer.setStyle(searchBox, 'overflow', 'visible', 1);
+    }
+
+    // 3. Fix the internal Material Date Container (The 12em fix and overflow)
+    const container = root.querySelector('.mat-date-range-input-container');
+    if (container) {
+      this.renderer.setStyle(container, 'overflow', 'visible', 1);
+      this.renderer.setStyle(container, 'padding-left', '12em', 1);
+
+      const internalWrappers = root.querySelectorAll('.mat-date-range-input-wrapper');
+      internalWrappers.forEach((w: HTMLElement) => {
+        this.renderer.setStyle(w, 'overflow', 'visible', 1);
+        this.renderer.setStyle(w, 'max-width', 'none', 1);
+        this.renderer.setStyle(w, 'flex', '0 0 auto', 1);
       });
     }
 
-    this.applyVersionFilter();
+    // 4. Ensure the actual input text (like the '0') is never clipped
+    const dateInputs = root.querySelectorAll('.mat-date-range-input-inner');
+    dateInputs.forEach((i: HTMLElement) => {
+      this.renderer.setStyle(i, 'overflow', 'visible', 1);
+      this.renderer.setStyle(i, 'width', '100%', 1);
+    });
   }
 
   get totalPages(): number {
@@ -227,6 +279,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.activeTabLabel = this.tabOrder[this.activeTabIndex];
     setTimeout(() => {
       this.refreshTablePointers();
+      this.fixDateInputLayout(); // Re-apply fix on tab switch
       this.cdr.detectChanges();
     });
   }
@@ -259,7 +312,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     const search = this.versionSearch?.trim()?.toLowerCase();
 
     this.filteredVersionHistory = this.versionHistory.filter(commit => {
-      // Date range filter
       if (start || end) {
         const commitDate = new Date(commit.absoluteTime);
         if (start) {
@@ -273,10 +325,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
           if (commitDate > endDate) return false;
         }
       }
-
-      // Text search
       if (!search) return true;
-
       return this.deepMatch(commit, search);
     });
 
@@ -285,7 +334,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     if (this.versionPaginator) {
       this.versionPaginator.firstPage();
     }
-
     this.cdr.detectChanges();
   }
 
@@ -304,18 +352,12 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   private deepMatch(obj: any, term: string): boolean {
     if (_.isNil(obj)) return false;
-
-    // Primitive values
     if (!_.isObject(obj)) {
       return String(obj).toLowerCase().includes(term);
     }
-
-    // Arrays
     if (_.isArray(obj)) {
       return _.some(obj, item => this.deepMatch(item, term));
     }
-
-    // Objects - check both keys and values
     return _.some(_.entries(obj), ([key, value]) => {
       return key.toLowerCase().includes(term) || this.deepMatch(value, term);
     });
@@ -358,26 +400,17 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   onEdit(row: any): void {
-    let signalName = '';
-    switch (this.activeTabIndex) {
-      case 0:
-        signalName = 'add_normalization_model';
-        break;
-      case 1:
-        signalName = 'add_normalization_mapping';
-        break;
-      case 2:
-        signalName = 'add_normalization_rule';
-        break;
-      case 3:
-        signalName = 'add_normalization_version';
-        break;
-      case 4:
-        signalName = 'add_normalization_code';
-        break;
-      default:
-        signalName = `open_${this.activeTabLabel.toLowerCase().slice(0, -1)}_modal`;
-    }
+    const signals = [
+      'add_normalization_model',
+      'add_normalization_mapping',
+      'add_normalization_rule',
+      'add_normalization_version',
+      'add_normalization_code',
+    ];
+    const signalName =
+      signals[this.activeTabIndex] ||
+      `open_${this.activeTabLabel.toLowerCase().slice(0, -1)}_modal`;
+
     this.eventService.publish('nf', signalName, {
       theme: this.getActiveTheme(),
       mode: 'edit',
@@ -445,8 +478,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.versionHistory = Array.from({ length: 26 }, (_, i): IVersionCommit => {
       const isBrianna = i % 3 === 0;
-
-      // Generate dynamic subjects with multiple Epic mentions to match screenshot
       let testSubject = i % 3 === 0 ? 'Epic Integration Mapping' : 'Missing Required Field (v4)';
       if (i % 4 === 1) testSubject = 'Epic - Patient (v3) Model';
       if (i % 5 === 2) testSubject = 'Age Under 18 Rule';
@@ -485,16 +516,13 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     const systems = ['SNOMED', 'LOINC', 'ICD-10', 'OMOP', 'MEDDRA'];
     const standardTypes = ['Clinical', 'Lab', 'Diagnosis', 'Research', 'Safety'];
-    this.codeDataSource.data = Array.from({ length: 35 }, (_, i) => {
-      const sysIdx = Math.floor(i / 7);
-      return {
-        id: `code-${i}`,
-        codeSystem: systems[sysIdx % systems.length],
-        standard: standardTypes[sysIdx % standardTypes.length],
-        oid: `2.16.840.1.113883.6.${100 + i}`,
-        status: 'Active',
-      };
-    });
+    this.codeDataSource.data = Array.from({ length: 35 }, (_, i) => ({
+      id: `code-${i}`,
+      codeSystem: systems[Math.floor(i / 7) % systems.length],
+      standard: standardTypes[Math.floor(i / 7) % standardTypes.length],
+      oid: `2.16.840.1.113883.6.${100 + i}`,
+      status: 'Active',
+    }));
 
     this.applyVersionFilter();
   }
