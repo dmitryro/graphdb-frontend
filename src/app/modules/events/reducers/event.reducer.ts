@@ -206,6 +206,24 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.AddRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.EditRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.DeleteRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     default:
       return state;
   }

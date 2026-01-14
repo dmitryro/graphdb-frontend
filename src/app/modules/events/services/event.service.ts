@@ -57,6 +57,9 @@ export class EventService {
     m.set('open_registration', EventActionTypes.OpenRegistrationModal);
     m.set('close_registration', EventActionTypes.CloseRegistrationModal);
 
+    m.set('add_rule', EventActionTypes.AddRule);
+    m.set('edit_rule', EventActionTypes.EditRule);
+    m.set('delete_rule', EventActionTypes.DeleteRule);
     // Source signals
     m.set('add_source', EventActionTypes.AddSource);
     m.set('edit_source', EventActionTypes.EditSource);

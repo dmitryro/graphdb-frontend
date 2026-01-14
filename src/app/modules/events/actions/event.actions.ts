@@ -63,6 +63,24 @@ export enum EventActionTypes {
   AddNormalizationVersion = '[Event] Add Normalization Version',
   AddNormalizationRule = '[Event] Add Normalization Rule',
   AddNormalizationCode = '[Event] Add Normalization Code',
+  AddRule = '[Event] Add Rule',
+  DeleteRule = '[Event] Delete Rule',
+  EditRule = '[Event] Edit Rule',
+}
+
+export class AddRule implements Action {
+  readonly type = EventActionTypes.AddRule;
+  constructor(public payload: any) {}
+}
+
+export class DeleteRule implements Action {
+  readonly type = EventActionTypes.DeleteRule;
+  constructor(public payload: any) {}
+}
+
+export class EditRule implements Action {
+  readonly type = EventActionTypes.EditRule;
+  constructor(public payload: any) {}
 }
 
 export class AddNormalizationModel implements Action {
@@ -427,6 +445,9 @@ export type EventActions =
   | AddSource
   | EditSource
   | DeleteSource
+  | AddRule
+  | DeleteRule
+  | EditRule
   | InspectSource
   | SyncSource
   | PauseIngestion

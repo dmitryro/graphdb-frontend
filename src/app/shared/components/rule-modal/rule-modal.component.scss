@@ -1,0 +1,562 @@
+// 1. OVERLAY & CONTAINER
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  width: 900px;
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: modalIn 0.25s ease-out;
+  border: 1px solid #333;
+
+  &.dark {
+    background: #1e1e1e;
+    color: #e0e0e0;
+  }
+
+  &.light {
+    background: #fff;
+    color: #333;
+    border-color: #ddd;
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 2. HEADER
+.modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  button {
+    color: inherit;
+  }
+
+  &.dark {
+    background: #252525;
+    border-color: #333;
+    .header-title {
+      mat-icon {
+        color: #5b9bd5;
+      }
+      h2 {
+        color: #e0e0e0;
+      }
+      .subtitle {
+        color: #999;
+      }
+    }
+    button {
+      color: #e0e0e0;
+    }
+  }
+
+  &.light {
+    background: #f5f5f5;
+    border-color: #ddd;
+    .header-title {
+      mat-icon {
+        color: #1976d2;
+      }
+      h2 {
+        color: #333;
+      }
+      .subtitle {
+        color: #666;
+      }
+    }
+    button {
+      color: #333;
+    }
+  }
+}
+
+// 3. BODY & STEPPER
+.modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #fff;
+  }
+}
+
+.dark-stepper {
+  background: transparent !important;
+  ::ng-deep .mat-horizontal-stepper-header-container {
+    padding: 8px 16px;
+    background: #252525 !important;
+    border-bottom: 1px solid #333;
+  }
+  ::ng-deep .mat-step-header {
+    .mat-step-icon {
+      background-color: #3a3a3a !important;
+      color: #e0e0e0 !important;
+    }
+    .mat-step-icon-selected,
+    .mat-step-icon-state-edit {
+      background-color: #5b9bd5 !important;
+      color: #fff !important;
+    }
+    .mat-step-label {
+      color: #999 !important;
+    }
+    .mat-step-label-selected {
+      color: #e0e0e0 !important;
+    }
+  }
+  ::ng-deep .mat-stepper-horizontal-line {
+    border-top-color: #333 !important;
+  }
+  ::ng-deep .mat-horizontal-content-container {
+    padding: 0 !important;
+    background: #1a1a1a;
+  }
+}
+
+.light-stepper {
+  background: transparent !important;
+  ::ng-deep .mat-horizontal-stepper-header-container {
+    padding: 8px 16px;
+    background: #f5f5f5 !important;
+    border-bottom: 1px solid #ddd;
+  }
+  ::ng-deep .mat-step-header {
+    .mat-step-icon {
+      background-color: #e0e0e0 !important;
+      color: #333 !important;
+    }
+    .mat-step-icon-selected,
+    .mat-step-icon-state-edit {
+      background-color: #1976d2 !important;
+      color: #fff !important;
+    }
+    .mat-step-label {
+      color: #666 !important;
+    }
+    .mat-step-label-selected {
+      color: #333 !important;
+    }
+  }
+  ::ng-deep .mat-stepper-horizontal-line {
+    border-top-color: #ddd !important;
+  }
+  ::ng-deep .mat-horizontal-content-container {
+    padding: 0 !important;
+    background: #fff;
+  }
+}
+
+// 4. FORM CONTENT & FIELDS
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 48px;
+  min-height: 400px;
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #fff;
+  }
+}
+
+%field-label-fix {
+  ::ng-deep {
+    .mat-mdc-form-field-flex {
+      align-items: center !important;
+    }
+    .mat-mdc-text-field-wrapper {
+      height: 56px !important;
+    }
+    .mdc-floating-label {
+      transform: translateY(-50%) !important;
+      top: 50% !important;
+      font-size: 15px !important;
+    }
+    .mdc-floating-label--float-above {
+      top: 28px !important;
+      transform: translateY(-36px) scale(0.85) !important;
+    }
+    input.mat-mdc-input-element,
+    .mat-mdc-select-value {
+      font-size: 15px !important;
+      margin-top: 10px !important;
+    }
+    .mat-mdc-form-field-infix {
+      padding: 0 !important;
+      min-height: 56px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+  }
+}
+
+.dark-field {
+  @extend %field-label-fix;
+  ::ng-deep {
+    .mdc-text-field,
+    .mdc-text-field--filled {
+      background-color: #252525 !important;
+    }
+    .mdc-text-field--outlined .mdc-notched-outline__leading,
+    .mdc-text-field--outlined .mdc-notched-outline__notch,
+    .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: #444 !important;
+    }
+    label,
+    .mat-mdc-floating-label {
+      color: #999 !important;
+    }
+    input,
+    textarea {
+      color: #e0e0e0 !important;
+    }
+    .mat-mdc-select-value {
+      color: #e0e0e0 !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #999 !important;
+    }
+  }
+}
+
+.light-field {
+  @extend %field-label-fix;
+  ::ng-deep {
+    .mdc-text-field,
+    .mdc-text-field--filled {
+      background-color: #fafafa !important;
+    }
+    .mdc-text-field--outlined .mdc-notched-outline__leading,
+    .mdc-text-field--outlined .mdc-notched-outline__notch,
+    .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: #ccc !important;
+    }
+    label,
+    .mat-mdc-floating-label {
+      color: #666 !important;
+    }
+    input,
+    textarea {
+      color: #333 !important;
+    }
+    .mat-mdc-select-value {
+      color: #333 !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #666 !important;
+    }
+  }
+}
+
+// 5. CHIPS, TOGGLES, CHECKBOXES
+.dark-field ::ng-deep .mat-mdc-chip-grid {
+  .mat-mdc-chip {
+    background-color: #3a3a3a !important; // Slightly lighter than field background for visibility
+    border: 1px solid #444 !important;
+
+    // Target the internal MDC label specifically to prevent "blacked out" text
+    .mdc-evolution-chip__text-label {
+      color: #e0e0e0 !important;
+    }
+
+    .mat-mdc-chip-remove,
+    .mat-icon {
+      color: #999 !important;
+      opacity: 0.8;
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
+  // Ensure the input cursor/text inside the chip grid is also visible
+  input.mat-mdc-chip-input {
+    color: #e0e0e0 !important;
+  }
+}
+
+.light-field ::ng-deep .mat-mdc-chip-grid {
+  .mat-mdc-chip {
+    background-color: #e0e0e0 !important;
+    border: 1px solid #ccc !important;
+
+    .mdc-evolution-chip__text-label {
+      color: #333 !important;
+    }
+
+    .mat-mdc-chip-remove,
+    .mat-icon {
+      color: #666 !important;
+    }
+  }
+}
+
+.dark-checkbox ::ng-deep {
+  .mdc-label {
+    color: #e0e0e0 !important;
+  }
+  .mdc-checkbox__background {
+    border-color: #666 !important;
+  }
+  .mdc-checkbox--selected .mdc-checkbox__background {
+    background-color: #5b9bd5 !important;
+    border-color: #5b9bd5 !important;
+  }
+}
+
+.light-checkbox ::ng-deep {
+  .mdc-label {
+    color: #333 !important;
+  }
+  .mdc-checkbox__background {
+    border-color: #ccc !important;
+  }
+  .mdc-checkbox--selected .mdc-checkbox__background {
+    background-color: #1976d2 !important;
+    border-color: #1976d2 !important;
+  }
+}
+
+// 6. UTILITY ROWS
+.form-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.mb-3 {
+  margin-bottom: 16px;
+}
+
+// 7. RULE ENGINE SPECIFIC STYLES
+.code-font {
+  font-family: 'Fira Code', 'Courier New', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+}
+
+.info-text {
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  &.light-info {
+    color: #666;
+  }
+}
+
+.audit-box,
+.final-summary {
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  border-left: 4px solid #ff9800;
+
+  mat-icon {
+    color: #ff9800;
+  }
+  strong {
+    color: #fff;
+  }
+
+  &.dark-summary {
+    background: rgba(255, 152, 0, 0.1);
+    color: #ccc;
+  }
+  &.light-summary {
+    background: rgba(255, 152, 0, 0.05);
+    color: #444;
+    strong {
+      color: #000;
+    }
+  }
+}
+
+.audit-box {
+  background: rgba(91, 155, 213, 0.1);
+  border-left-color: #5b9bd5;
+  mat-icon {
+    color: #5b9bd5;
+  }
+}
+
+// 8. BUTTON TOGGLE STYLING (Centered & Theme-Aware)
+::ng-deep .mat-button-toggle-group {
+  display: flex !important; // Force flexbox for alignment
+  width: 100% !important; // Take same space as fields below
+  border: 1px solid #444 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  margin-bottom: 16px;
+
+  .mat-button-toggle {
+    flex: 1 !important; // Split exactly in the center
+    border-left: 1px solid #444 !important;
+    color: #999 !important;
+    background: transparent !important;
+
+    &:first-child {
+      border-left: none !important;
+    }
+
+    &.mat-button-toggle-checked {
+      background: rgba(91, 155, 213, 0.15) !important;
+      color: #5b9bd5 !important;
+    }
+  }
+
+  // Light Mode Fixes
+  .light & {
+    border-color: #ccc !important;
+    background: #fff !important;
+
+    .mat-button-toggle {
+      border-left-color: #ccc !important;
+      color: #666 !important;
+
+      &.mat-button-toggle-checked {
+        background: rgba(25, 118, 210, 0.08) !important;
+        color: #1976d2 !important;
+      }
+    }
+  }
+
+  // Dark Mode Fixes
+  .dark & {
+    background: #252525 !important;
+    border-color: #444 !important;
+  }
+}
+
+// Ensure the container padding in Step 3 matches the others
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; // Uniform spacing between toggle and fields
+  padding: 24px 48px;
+}
+
+// 9. ACTIONS & BUTTONS
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #333;
+  &.dark {
+    border-top-color: #333;
+  }
+  &.light {
+    border-top-color: #ddd;
+  }
+}
+
+.modal-container {
+  &.dark ::ng-deep {
+    button[mat-flat-button][color='primary'] {
+      background-color: #5b9bd5 !important;
+      color: #fff !important;
+    }
+    button[mat-flat-button][color='warn'] {
+      background-color: #d32f2f !important;
+      color: #fff !important;
+    }
+    button[mat-button] {
+      color: #e0e0e0 !important;
+    }
+  }
+  &.light ::ng-deep {
+    button[mat-flat-button][color='primary'] {
+      background-color: #1976d2 !important;
+      color: #fff !important;
+    }
+    button[mat-flat-button][color='warn'] {
+      background-color: #d32f2f !important;
+      color: #fff !important;
+    }
+    button[mat-button] {
+      color: #333 !important;
+    }
+  }
+}
+
+// 10. SCROLLBARS
+.modal-body {
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+  }
+  &.dark::-webkit-scrollbar-thumb {
+    background: #444;
+  }
+  &.light::-webkit-scrollbar-thumb {
+    background: #ccc;
+  }
+}

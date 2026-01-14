@@ -6,6 +6,7 @@ import { StepHeaderDirective } from './directives/step-header.directive';
 
 // Existing Imports
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -38,6 +39,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     MatChipsModule, // Restored
     MatProgressSpinnerModule, // Restored
     MatSlideToggleModule, // Restored
+    MatButtonToggleModule,
   ],
   exports: [...fromComponents.components, StepHeaderDirective],
 })

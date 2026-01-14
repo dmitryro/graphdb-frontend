@@ -1,0 +1,304 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="close()">
+  <div
+    class="modal-container"
+    [class.dark]="theme === 'dark'"
+    [class.light]="theme === 'light'"
+    (click)="$event.stopPropagation()">
+    <header class="modal-header" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+      <div class="header-title">
+        <mat-icon>gavel</mat-icon>
+        <div>
+          <h2>{{ currentAction === 'EDIT' ? 'Update' : 'Create' }} Governance Rule</h2>
+          <span class="subtitle">Deterministic Clinical & Data Logic</span>
+        </div>
+      </div>
+      <button mat-icon-button (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <div class="modal-body" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+      <mat-stepper
+        [linear]="true"
+        #stepper
+        [class.dark-stepper]="theme === 'dark'"
+        [class.light-stepper]="theme === 'light'">
+        <mat-step [stepControl]="identityForm">
+          <form
+            [formGroup]="identityForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Identity & Intent</ng-template>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Rule Name</mat-label>
+              <input
+                matInput
+                formControlName="name"
+                placeholder="e.g. Duplicate Patient Identity Detected" />
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" rows="2"></textarea>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Rule Type</mat-label>
+                <mat-select formControlName="type">
+                  <mat-option *ngFor="let t of ruleTypes" [value]="t">{{ t }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Severity</mat-label>
+                <mat-select formControlName="severity">
+                  <mat-option *ngFor="let s of severities" [value]="s">{{ s }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Tags</mat-label>
+              <mat-chip-grid #chipGrid>
+                <mat-chip-row *ngFor="let tag of tags" (removed)="removeTag(tag)">
+                  {{ tag }}
+                  <button matChipRemove><mat-icon>cancel</mat-icon></button>
+                </mat-chip-row>
+                <input
+                  [matChipInputFor]="chipGrid"
+                  [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="addTag($event)" />
+              </mat-chip-grid>
+            </mat-form-field>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-flat-button color="primary" matStepperNext>Next: Triggers</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="triggerForm">
+          <form
+            [formGroup]="triggerForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Events & Triggers</ng-template>
+            <div class="info-text" [class.light-info]="theme === 'light'">
+              <mat-icon>info</mat-icon>
+              <span>Define the temporal or event-based context for evaluation.</span>
+            </div>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Trigger Types</mat-label>
+              <mat-select formControlName="triggerType" multiple>
+                <mat-option *ngFor="let tr of triggerTypes" [value]="tr">{{ tr }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Entity Scope</mat-label>
+              <mat-select formControlName="eventScope">
+                <mat-option value="Patient">Patient</mat-option>
+                <mat-option value="Encounter">Encounter</mat-option>
+                <mat-option value="Graph-wide">Graph-wide</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-button matStepperPrevious>Back</button>
+              <button mat-flat-button color="primary" matStepperNext>Next: Logic</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="logicForm">
+          <form
+            [formGroup]="logicForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Conditions</ng-template>
+
+            <mat-button-toggle-group formControlName="logicType" class="mb-3">
+              <mat-button-toggle value="Pattern">Graph Pattern</mat-button-toggle>
+              <mat-button-toggle value="Advanced">Cypher Expert</mat-button-toggle>
+            </mat-button-toggle-group>
+
+            <mat-form-field
+              appearance="outline"
+              *ngIf="logicForm.value.logicType === 'Advanced'"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Cypher Expression</mat-label>
+              <textarea
+                matInput
+                formControlName="cypherQuery"
+                rows="5"
+                class="code-font"></textarea>
+            </mat-form-field>
+
+            <div class="form-row">
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Violation Threshold</mat-label>
+                <input matInput formControlName="threshold" />
+              </mat-form-field>
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Min. Confidence</mat-label>
+                <input
+                  type="number"
+                  matInput
+                  formControlName="confidenceThreshold"
+                  step="0.05"
+                  min="0"
+                  max="1" />
+              </mat-form-field>
+            </div>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-button matStepperPrevious>Back</button>
+              <button mat-flat-button color="primary" matStepperNext>Next: Actions</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="actionForm">
+          <form
+            [formGroup]="actionForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Actions</ng-template>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Primary Action</mat-label>
+              <mat-select formControlName="primaryAction">
+                <mat-option *ngFor="let a of actionTypes" [value]="a">{{ a }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Escalation Path</mat-label>
+              <mat-select formControlName="escalationPolicy">
+                <mat-option value="HumanReview">Manual Steward Review</mat-option>
+                <mat-option value="Block">Immediate Pipeline Block</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-button matStepperPrevious>Back</button>
+              <button mat-flat-button color="primary" matStepperNext>Next: Governance</button>
+            </div>
+          </form>
+        </mat-step>
+
+        <mat-step [stepControl]="governanceForm">
+          <form
+            [formGroup]="governanceForm"
+            class="step-content"
+            [class.dark]="theme === 'dark'"
+            [class.light]="theme === 'light'">
+            <ng-template matStepLabel>Governance</ng-template>
+
+            <div
+              class="final-summary"
+              [class.dark-summary]="theme === 'dark'"
+              [class.light-summary]="theme === 'light'">
+              <div class="summary-header">
+                <mat-icon>security</mat-icon>
+                <h3>Governance & Audit</h3>
+              </div>
+              <p>
+                Rule <strong>{{ identityForm.get('name')?.value || 'Unnamed Rule' }}</strong> will
+                be logged to the <strong>MPI Graph of Changes</strong> via
+                <em>execute_merge_query_with_context</em>.
+              </p>
+            </div>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme === 'dark'"
+              [class.light-field]="theme === 'light'">
+              <mat-label>Execution Mode</mat-label>
+              <mat-select formControlName="activationMode">
+                <mat-option value="Simulation">Simulation (Dry-run)</mat-option>
+                <mat-option value="Active">Live Execution</mat-option>
+                <mat-option value="Draft">Save as Draft</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-checkbox
+              formControlName="reviewed"
+              color="warn"
+              [class.dark-checkbox]="theme === 'dark'"
+              [class.light-checkbox]="theme === 'light'">
+              I confirm clinical/compliance review is complete and authorize event graph logging.
+            </mat-checkbox>
+
+            <div
+              class="step-actions"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <button mat-button matStepperPrevious>Back</button>
+              <button
+                mat-flat-button
+                color="warn"
+                (click)="confirmAction()"
+                [disabled]="governanceForm.invalid">
+                Activate Rule
+              </button>
+            </div>
+          </form>
+        </mat-step>
+      </mat-stepper>
+    </div>
+  </div>
+</div>

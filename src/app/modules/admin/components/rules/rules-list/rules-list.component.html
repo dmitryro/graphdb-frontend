@@ -1,1 +1,231 @@
-<p>rules-list.component works!</p>
+<div class="validation-container" [class.dark-theme]="theme === 'dark'">
+  <header class="page-header">
+    <div class="title-area">
+      <h1>Rules & Conflicts</h1>
+      <p class="subtitle">Define constraints, detect breakage, and resolve conflicts safely.</p>
+    </div>
+
+    <mat-form-field class="env-select" appearance="outline">
+      <mat-select [(value)]="selectedEnv">
+        <mat-option value="Production">Production</mat-option>
+        <mat-option value="Staging">Staging</mat-option>
+        <mat-option value="Development">Development</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </header>
+
+  <div class="filter-bar">
+    <div class="filter-group">
+      <mat-form-field appearance="outline" class="filter-dropdown mini">
+        <mat-select
+          [(value)]="selectedFilter"
+          (selectionChange)="applyRuleFilter()"
+          panelClass="type-filter-panel">
+          <mat-select-trigger>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <mat-icon style="font-size: 18px; width: 18px; height: 18px">
+                {{
+                  selectedFilter === 'All'
+                    ? 'filter_list'
+                    : selectedFilter === 'Structural'
+                      ? 'account_tree'
+                      : 'badge'
+                }}
+              </mat-icon>
+              <span>{{ selectedFilter }}</span>
+            </div>
+          </mat-select-trigger>
+
+          <mat-option value="All"> <mat-icon>filter_list</mat-icon> All </mat-option>
+          <mat-option value="Structural"> <mat-icon>account_tree</mat-icon> Structural </mat-option>
+          <mat-option value="Identity"> <mat-icon>badge</mat-icon> Identity </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-dropdown medium">
+        <mat-label>Scope</mat-label>
+        <mat-select [(value)]="selectedScope" (selectionChange)="applyRuleFilter()">
+          <mat-option value="All">All</mat-option>
+          <mat-option value="Entity">Entity</mat-option>
+          <mat-option value="Patient">Patient</mat-option>
+          <mat-option value="Encounter">Encounter</mat-option>
+          <mat-option value="Graph-wide">Graph-wide</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-dropdown medium">
+        <mat-label>Status</mat-label>
+        <mat-select [(value)]="selectedStatus" (selectionChange)="applyRuleFilter()">
+          <mat-option value="Any">Any</mat-option>
+          <mat-option value="Enabled">Enabled</mat-option>
+          <mat-option value="Disabled">Disabled</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="search-box">
+        <mat-icon>search</mat-icon>
+        <input
+          type="text"
+          placeholder="Search name, owner, or logic..."
+          [(ngModel)]="ruleSearch"
+          (keyup)="applyRuleFilter()" />
+      </div>
+    </div>
+
+    <button mat-flat-button class="new-rule-btn" (click)="addNewRule()">
+      <mat-icon>add</mat-icon> New Rule
+    </button>
+  </div>
+
+  <div class="main-layout">
+    <div class="content-card">
+      <table mat-table [dataSource]="dataSource" matSort class="full-width-table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Rule Name</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="bold-text">{{ row.name }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+          <td mat-cell *matCellDef="let row">{{ row.type }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="scope">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
+          <td mat-cell *matCellDef="let row">{{ row.definition.scope }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="severity">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Severity</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="sev-icon" [ngClass]="getSeverityClass(row.severity)">
+              <mat-icon>{{ getSeverityIcon(row.severity) }}</mat-icon>
+              {{ row.severity }}
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="threshold">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Threshold</th>
+          <td mat-cell *matCellDef="let row">{{ row.definition.threshold }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="status-pill" [ngClass]="row.status.toLowerCase()">
+              {{ row.status }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="owner">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Owner</th>
+          <td mat-cell *matCellDef="let row">{{ row.ownerName }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          [class.active-row]="selectedRule?.id === row.id"
+          (click)="onSelectRule(row)"></tr>
+      </table>
+
+      <mat-paginator
+        [pageSize]="5"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        showFirstLastButtons
+        aria-label="Select page">
+      </mat-paginator>
+
+      <div class="table-footer">
+        <div>
+          Total rules: <strong>{{ totalRules }}</strong> | Enabled:
+          <strong>{{ enabledCount }}</strong> | Disabled: <strong>{{ disabledCount }}</strong> |
+          Rules with active conflicts: <strong class="danger-text">{{ conflictCount }}</strong>
+        </div>
+        <div class="footer-icons">
+          <mat-icon>drag_indicator</mat-icon>
+        </div>
+      </div>
+    </div>
+
+    <aside class="detail-panel" *ngIf="selectedRule">
+      <div class="panel-header">
+        <h3>{{ selectedRule.name }}</h3>
+        <button mat-icon-button [matMenuTriggerFor]="ruleMenu">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+      </div>
+
+      <div class="panel-section">
+        <span class="section-label">Rule Summary</span>
+        <div class="summary-item">
+          <label>Type:</label> <span>{{ selectedRule.type }}</span>
+        </div>
+        <div class="summary-item">
+          <label>Scope:</label> <span>{{ selectedRule.definition.scope }}</span>
+        </div>
+        <div class="summary-item">
+          <label>Severity:</label>
+          <span [style.color]="getSeverityColor(selectedRule.severity)">{{
+            selectedRule.severity
+          }}</span>
+        </div>
+
+        <div class="status-toggle-row">
+          <label>Status:</label>
+          <span class="badge-enabled" [ngClass]="selectedRule.status.toLowerCase()">{{
+            selectedRule.status
+          }}</span>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <span class="section-label">Definition</span>
+        <p class="def-desc">
+          {{
+            selectedRule.definition.description ||
+              'Each Patient entity must have a unique medical record number (MRN).'
+          }}
+        </p>
+        <div class="definition-box">
+          <code>{{ selectedRule.definition.logic }}</code>
+        </div>
+      </div>
+
+      <div class="provenance-info">
+        <span class="section-label">Provenance</span>
+        <p>Author by: {{ selectedRule.ownerName }}</p>
+        <p>Created: {{ selectedRule.created || 'Mar 29, 2024' }}</p>
+        <p>Effective from: {{ selectedRule.effectiveDate || 'Mar 31, 2024' }}</p>
+
+        <div class="last-tested-row">
+          <span>Last tested: {{ selectedRule.lastTested || 'Apr 9, 2024' }}</span>
+          <button mat-stroked-button class="run-test-btn" (click)="runConflictTest()">
+            Run Test <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<mat-menu #ruleMenu="matMenu">
+  <button mat-menu-item (click)="editRule()">
+    <mat-icon>edit</mat-icon>
+    <span>Edit Logic</span>
+  </button>
+  <button mat-menu-item (click)="viewHistory()">
+    <mat-icon>history</mat-icon>
+    <span>View History</span>
+  </button>
+  <div class="menu-divider danger-divider"></div>
+  <button mat-menu-item class="delete-action" (click)="disableRule()">
+    <mat-icon>delete_outline</mat-icon>
+    <span>Disable Rule</span>
+  </button>
+</mat-menu>
