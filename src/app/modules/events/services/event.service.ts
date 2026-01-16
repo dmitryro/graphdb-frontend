@@ -12,6 +12,7 @@ export class EventService {
   publish(id: string, event: string, payload: any): void {
     const m = new Map();
     m.set('open_modal', EventActionTypes.OpenModal);
+    m.set('theme_change', EventActionTypes.ThemeChange);
     m.set('close_modal', EventActionTypes.CloseModal);
     m.set('open_user_menu', EventActionTypes.OpenUserMenu);
     m.set('close_user_menu', EventActionTypes.CloseUserMenu);

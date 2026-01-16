@@ -5,6 +5,7 @@ export enum EventActionTypes {
   PilotContactFormUpdated = '[Event] Pilot Contact Form Updated',
   ToggleHeader = '[Event] Toggle Header',
   ToggleDrawer = '[Event] Toggle Drawer',
+  ThemeChange = '[Event] Theme Change',
   NonHealthcareUser = '[Event] Non Healthcare User',
   OpenDrawer = '[Event] Open Drawer',
   CloseDrawer = '[Event] Close Drawer',
@@ -66,6 +67,11 @@ export enum EventActionTypes {
   AddRule = '[Event] Add Rule',
   DeleteRule = '[Event] Delete Rule',
   EditRule = '[Event] Edit Rule',
+}
+
+export class ThemeChange implements Action {
+  readonly type = EventActionTypes.ThemeChange;
+  constructor(public payload: any) {}
 }
 
 export class AddRule implements Action {
@@ -425,6 +431,7 @@ export type EventActions =
   | SucceededAuthentication
   | CloseUserOptionsMenu
   | OpenUserOptionsMenu
+  | ThemeChange
   | TriggerLogout
   | TwitterAuthSuccess
   | TwitterAuthFailure

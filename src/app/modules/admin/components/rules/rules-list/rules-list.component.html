@@ -131,6 +131,7 @@
           mat-row
           *matRowDef="let row; columns: displayedColumns"
           [class.active-row]="selectedRule?.id === row.id"
+          [class.disabled-row]="row.status === 'Disabled'"
           (click)="onSelectRule(row)"></tr>
       </table>
 
@@ -178,9 +179,9 @@
 
         <div class="status-toggle-row">
           <label>Status:</label>
-          <span class="badge-enabled" [ngClass]="selectedRule.status.toLowerCase()">{{
-            selectedRule.status
-          }}</span>
+          <span class="badge-status" [ngClass]="selectedRule.status.toLowerCase()">
+            {{ selectedRule.status }}
+          </span>
         </div>
       </div>
 
@@ -223,9 +224,13 @@
     <mat-icon>history</mat-icon>
     <span>View History</span>
   </button>
-  <div class="menu-divider danger-divider"></div>
-  <button mat-menu-item class="delete-action" (click)="disableRule()">
-    <mat-icon>delete_outline</mat-icon>
-    <span>Disable Rule</span>
+  <div class="menu-divider" [class.danger-divider]="selectedRule?.status === 'Enabled'"></div>
+
+  <button
+    mat-menu-item
+    [class.delete-action]="selectedRule?.status === 'Enabled'"
+    (click)="toggleRuleStatus()">
+    <mat-icon>{{ selectedRule?.status === 'Enabled' ? 'block' : 'check_circle_outline' }}</mat-icon>
+    <span>{{ selectedRule?.status === 'Enabled' ? 'Disable Rule' : 'Enable Rule' }}</span>
   </button>
 </mat-menu>

@@ -188,6 +188,12 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.ThemeChange: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     case EventActionTypes.AddNormalizationRule: {
       return {
         ...state,

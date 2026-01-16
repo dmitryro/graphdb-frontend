@@ -36,86 +36,166 @@
       </mat-tab-group>
     </div>
 
-    <div class="tab-content" *ngIf="activeTabIndex === 0">
-      <div class="search-section">
-        <div class="search-bar-container">
-          <div class="search-box">
-            <mat-icon class="search-icon">search</mat-icon>
-            <input
-              type="text"
-              class="search-input"
-              placeholder="Search models..."
-              [(ngModel)]="modelSearch"
-              (input)="applyModelFilter()" />
+    @if (activeTabIndex === 0) {
+      <div class="tab-content models-tab-wrapper">
+        <div class="search-section">
+          <div class="search-bar-container">
+            <div class="search-box">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input
+                type="text"
+                class="search-input"
+                placeholder="{{ modelsPlaceholder }}"
+                [(ngModel)]="modelSearch"
+                (input)="applyModelFilter()" />
+              @if (modelSearch) {
+                <button mat-icon-button (click)="modelSearch = ''; applyModelFilter()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+            <button mat-flat-button class="add-source-btn" (click)="addNewModel()">
+              <mat-icon>add</mat-icon> New Model
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="statusMenu">
+            <mat-icon>list</mat-icon>
+            Status: <strong>{{ selectedStatus === 'All' ? 'All*' : selectedStatus }}</strong>
+            <mat-icon class="chevron">expand_more</mat-icon>
+          </button>
+          <mat-menu #statusMenu="matMenu" class="governance-menu">
+            <button mat-menu-item (click)="setStatusFilter('All')">All*</button>
+            <button mat-menu-item (click)="setStatusFilter('Active')">Active</button>
+            <button mat-menu-item (click)="setStatusFilter('Deprecated')">Deprecated</button>
+            <button mat-menu-item (click)="setStatusFilter('Draft')">Draft</button>
+            <button mat-menu-item (click)="setStatusFilter('Archived')">Archived</button>
+          </mat-menu>
+
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="typeMenu">
+            <mat-icon>layers</mat-icon>
+            Type: <strong>{{ selectedType === 'Any' ? 'Canonical*' : selectedType }}</strong>
+            <mat-icon class="chevron">expand_more</mat-icon>
+          </button>
+          <mat-menu #typeMenu="matMenu" class="governance-menu">
+            <button mat-menu-item (click)="setTypeFilter('All')">All</button>
+            <button mat-menu-item (click)="setTypeFilter('Canonical')">Canonical</button>
+            <button mat-menu-item (click)="setTypeFilter('Derived')">Derived</button>
+            <button mat-menu-item (click)="setTypeFilter('External / Imported')">
+              External / Imported
+            </button>
+          </mat-menu>
+
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="usageMenu">
+            <mat-icon>account_tree</mat-icon>
+            Usage: <strong>{{ selectedUsage === 'Any' ? 'Any*' : selectedUsage }}</strong>
+            <mat-icon class="chevron">expand_more</mat-icon>
+          </button>
+          <mat-menu #usageMenu="matMenu" class="governance-menu">
+            <button mat-menu-item (click)="setUsageFilter('Any')">Any*</button>
+            <button mat-menu-item (click)="setUsageFilter('Used in Rules')">Used in Rules</button>
+            <button mat-menu-item (click)="setUsageFilter('Used in Pipelines')">
+              Used in Pipelines
+            </button>
+            <button mat-menu-item (click)="setUsageFilter('Exposed via API')">
+              Exposed via API
+            </button>
+            <button mat-menu-item (click)="setUsageFilter('Used in Graph')">Used in Graph</button>
+            <button mat-menu-item (click)="setUsageFilter('Unused / Orphaned')">
+              Unused / Orphaned
+            </button>
+          </mat-menu>
+
+          <div class="filter-date-range">
+            <mat-form-field appearance="outline" class="custom-pill-date">
+              <mat-date-range-input [formGroup]="modelDateRange" [rangePicker]="modelPicker">
+                <input matStartDate formControlName="start" placeholder="Start date" />
+                <input matEndDate formControlName="end" placeholder="End date" />
+              </mat-date-range-input>
+
+              <mat-datepicker-toggle matIconSuffix [for]="modelPicker"></mat-datepicker-toggle>
+              <mat-date-range-picker #modelPicker></mat-date-range-picker>
+            </mat-form-field>
+
             <button
+              *ngIf="modelDateRange.value.start || modelDateRange.value.end"
               mat-icon-button
-              *ngIf="modelSearch"
-              (click)="modelSearch = ''; applyModelFilter()">
+              class="clear-date-btn"
+              (click)="clearModelDateRange()">
               <mat-icon>close</mat-icon>
             </button>
           </div>
-          <button mat-flat-button class="add-source-btn" (click)="addNewModel()">
-            <mat-icon>add</mat-icon> New Model
-          </button>
         </div>
+
+        <table mat-table [dataSource]="modelDataSource" matSort class="full-width-table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
+            <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+            <td mat-cell *matCellDef="let element">
+              <span class="type-label" [class.canonical]="element.type === 'Canonical'">
+                {{ element.type }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="usage">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Usage</th>
+            <td mat-cell *matCellDef="let element" class="usage-cell">{{ element.usage }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let element">
+              <div class="status-pill" [ngClass]="element.status.toLowerCase()">
+                <mat-icon>check_circle</mat-icon>{{ element.status }}
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="fields">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Fields</th>
+            <td mat-cell *matCellDef="let element">{{ element.fields }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="dependencies">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Dependencies</th>
+            <td mat-cell *matCellDef="let element">{{ element.dependencies }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="lastModified">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+            <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let element">
+              <button
+                mat-icon-button
+                [matMenuTriggerFor]="modelMenu"
+                [matMenuTriggerData]="{ item: element }">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="modelColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: modelColumns"></tr>
+        </table>
+
+        <mat-paginator
+          #modelPaginator
+          [pageSize]="10"
+          [pageSizeOptions]="[5, 10, 20, 50]"
+          showFirstLastButtons></mat-paginator>
       </div>
-      <div class="filter-actions">
-        <button mat-button class="filter-dropdown">
-          <mat-icon>list</mat-icon> Status <mat-icon class="chevron">expand_more</mat-icon>
-        </button>
-        <button mat-button class="filter-dropdown">
-          <mat-icon>layers</mat-icon> Type <mat-icon class="chevron">expand_more</mat-icon>
-        </button>
-      </div>
-      <table mat-table [dataSource]="modelDataSource" matSort class="full-width-table">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
-          <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
-        </ng-container>
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-          <td mat-cell *matCellDef="let element">{{ element.type }}</td>
-        </ng-container>
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-          <td mat-cell *matCellDef="let element">
-            <div class="status-pill" [ngClass]="element.status.toLowerCase()">
-              <mat-icon>check_circle</mat-icon>{{ element.status }}
-            </div>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="fields">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fields</th>
-          <td mat-cell *matCellDef="let element">{{ element.fields }}</td>
-        </ng-container>
-        <ng-container matColumnDef="dependencies">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Dependencies</th>
-          <td mat-cell *matCellDef="let element">{{ element.dependencies }}</td>
-        </ng-container>
-        <ng-container matColumnDef="lastModified">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
-          <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let element">
-            <button
-              mat-icon-button
-              [matMenuTriggerFor]="modelMenu"
-              [matMenuTriggerData]="{ item: element }">
-              <mat-icon>more_vert</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="modelColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: modelColumns"></tr>
-      </table>
-      <mat-paginator
-        #modelPaginator
-        [pageSize]="5"
-        [pageSizeOptions]="[5, 10, 20, 50]"
-        showFirstLastButtons></mat-paginator>
-    </div>
+    }
 
     <div class="tab-content" *ngIf="activeTabIndex === 1">
       <div class="search-section">
@@ -125,7 +205,7 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Search mappings..."
+              placeholder="{{ mappingsPlaceholder }}"
               [(ngModel)]="mappingSearch"
               (input)="applyMappingFilter()" />
           </div>
@@ -186,7 +266,7 @@
             <input
               type="text"
               class="search-input"
-              placeholder="Search rules..."
+              placeholder="{{ rulesPlaceholder }}"
               [(ngModel)]="ruleSearch"
               (input)="applyRuleFilter()" />
           </div>
@@ -242,7 +322,7 @@
             <mat-icon>search</mat-icon>
             <input
               type="text"
-              placeholder="Search by model, mapping, rule, or user..."
+              placeholder="{{ versionsPlaceholder }}"
               [(ngModel)]="versionSearch"
               (input)="applyVersionFilter()" />
 

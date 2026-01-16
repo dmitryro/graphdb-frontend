@@ -70,8 +70,12 @@ export class RulesListComponent implements OnInit, AfterViewInit {
     'status',
     'owner',
   ];
+
   dataSource: MatTableDataSource<IRuleRecord>;
   selectedRule: IRuleRecord | null = null;
+
+  // Persistence dictionary for status states
+  private ruleStatusMap: Record<string, 'Enabled' | 'Disabled'> = {};
 
   selectedEnv = 'Production';
   selectedFilter = 'All';
@@ -231,6 +235,7 @@ export class RulesListComponent implements OnInit, AfterViewInit {
   ) {
     this.dataSource = new MatTableDataSource(this.rules);
     this.setupFilterPredicate();
+    this.initializeStatusMap();
   }
 
   ngOnInit(): void {
@@ -252,9 +257,14 @@ export class RulesListComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * RECURSIVE DEEP MATCH (Logic from Normalization Component)
-   * Ensures search strings match nested object properties and labels.
+   * Initializes the internal state dictionary from the raw rules array.
    */
+  private initializeStatusMap(): void {
+    this.rules.forEach(rule => {
+      this.ruleStatusMap[rule.id] = rule.status as 'Enabled' | 'Disabled';
+    });
+  }
+
   private deepMatch(obj: any, term: string): boolean {
     if (_.isNil(obj)) return false;
     if (!_.isObject(obj)) {
@@ -268,21 +278,18 @@ export class RulesListComponent implements OnInit, AfterViewInit {
     });
   }
 
-  /**
-   * UPDATED FILTER PREDICATE
-   * Uses deepMatch to allow search by Severity, Status, and Nested Logic.
-   */
   setupFilterPredicate() {
     this.dataSource.filterPredicate = (data: IRuleRecord, filter: string) => {
       const searchTerms = JSON.parse(filter);
       const searchStr = (searchTerms.search || '').trim().toLowerCase();
 
-      // DEEP SEARCH FIX: Verify if search term exists anywhere in the record
-      const matchesDeepSearch = !searchStr || this.deepMatch(data, searchStr);
+      // Dictionary lookup ensures the filter matches the current toggled state
+      const currentStatus = this.ruleStatusMap[data.id] || data.status;
 
+      const matchesDeepSearch = !searchStr || this.deepMatch(data, searchStr);
       const typeMatch = searchTerms.type === 'All' || data.type === searchTerms.type;
       const scopeMatch = searchTerms.scope === 'All' || data.definition.scope === searchTerms.scope;
-      const statusMatch = searchTerms.status === 'Any' || data.status === searchTerms.status;
+      const statusMatch = searchTerms.status === 'Any' || currentStatus === searchTerms.status;
 
       return matchesDeepSearch && typeMatch && scopeMatch && statusMatch;
     };
@@ -308,9 +315,10 @@ export class RulesListComponent implements OnInit, AfterViewInit {
   }
 
   updateSummaryCounts() {
+    const statuses = Object.values(this.ruleStatusMap);
     this.totalRules = this.rules.length;
-    this.enabledCount = this.rules.filter(r => r.status === 'Enabled').length;
-    this.disabledCount = this.rules.filter(r => r.status === 'Disabled').length;
+    this.enabledCount = statuses.filter(s => s === 'Enabled').length;
+    this.disabledCount = statuses.filter(s => s === 'Disabled').length;
   }
 
   onSelectRule(rule: IRuleRecord): void {
@@ -335,20 +343,6 @@ export class RulesListComponent implements OnInit, AfterViewInit {
 
   viewHistory(): void {
     console.log('View history:', this.selectedRule);
-  }
-
-  disableRule(): void {
-    if (this.selectedRule) {
-      this.selectedRule.status = 'Disabled';
-      this.updateSummaryCounts();
-      this.applyRuleFilter();
-
-      this.eventService.publish('RulesList', 'delete_rule', {
-        action: 'delete_rule',
-        theme: this.getActiveTheme(),
-        ruleData: this.selectedRule,
-      });
-    }
   }
 
   runConflictTest(): void {
@@ -380,5 +374,48 @@ export class RulesListComponent implements OnInit, AfterViewInit {
     if (sev === 'warning') return '#ff9800';
     if (sev === 'failing' || sev === 'critical' || sev === 'high') return '#f44336';
     return '#2196f3';
+  }
+
+  /**
+   * PERSISTENT TOGGLE LOGIC
+   * Uses ruleStatusMap to ensure state is remembered.
+   */
+  toggleRuleStatus(): void {
+    if (!this.selectedRule) return;
+
+    // 1. Get current state from dictionary, fallback to record
+    const currentStatus = this.ruleStatusMap[this.selectedRule.id] || this.selectedRule.status;
+    const nextStatus = currentStatus === 'Enabled' ? 'Disabled' : 'Enabled';
+
+    // 2. Update the Dictionary (The Source of Truth)
+    this.ruleStatusMap[this.selectedRule.id] = nextStatus;
+
+    // 3. Update the Record Object (For Binding)
+    this.selectedRule.status = nextStatus;
+
+    // 4. Update UI Components
+    this.updateSummaryCounts();
+    this.applyRuleFilter();
+
+    // 5. Log transaction into the graph of events (MPI Context)
+    const action = nextStatus === 'Enabled' ? 'enable_rule' : 'disable_rule';
+    this.eventService.publish('RulesList', action, {
+      action: action,
+      ruleId: this.selectedRule.id,
+      ruleName: this.selectedRule.name,
+      theme: this.getActiveTheme(),
+      timestamp: new Date().toISOString(),
+      context: 'execute_merge_query_with_context', // Explicitly logging for golden record traceability
+    });
+  }
+
+  disableRule(): void {
+    // Consolidated to use toggle logic to ensure dictionary state is updated
+    if (
+      this.selectedRule &&
+      (this.ruleStatusMap[this.selectedRule.id] || this.selectedRule.status) === 'Enabled'
+    ) {
+      this.toggleRuleStatus();
+    }
   }
 }
