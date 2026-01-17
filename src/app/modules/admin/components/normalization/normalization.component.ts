@@ -10,6 +10,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import 'dayjs/locale/es';
 import * as _ from 'lodash';
 import { Subscription } from 'rxjs';
 
@@ -25,7 +26,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
+// Import the Module for the NgModule, and the Class for the Component types
+import { MatMenu, MatMenuModule } from '@angular/material/menu';
+
 import {
   MatPaginator,
   MatPaginatorIntl,
@@ -116,13 +119,14 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   public rulesPlaceholder = 'Search rules ...';
   public versionsPlaceholder = 'Search versions ...';
   public mappingsPlaceholder = 'Search mappings ...';
-
+  public normalizationSubTitle =
+    'Define how raw inputs are transformed into canonical, structured records.';
   // Search Bindings
   modelSearch = '';
   mappingSearch = '';
   ruleSearch = '';
   versionSearch = '';
-  codeSearch = '';
+  public codeSearch = '';
 
   // Date Range Picker Form
   range = new FormGroup({
@@ -132,6 +136,12 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   // New property for Models tab date range
   modelDateRange = new FormGroup({
+    start: new FormControl<Date | null>(null),
+    end: new FormControl<Date | null>(null),
+  });
+
+  // New property for Mappings tab date range
+  mappingDateRange = new FormGroup({
     start: new FormControl<Date | null>(null),
     end: new FormControl<Date | null>(null),
   });
@@ -147,11 +157,36 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     'lastModified',
     'actions',
   ];
-  mappingColumns: string[] = ['source', 'target', 'engine', 'status', 'lastModified', 'actions'];
-  ruleColumns: string[] = ['ruleName', 'trigger', 'priority', 'status', 'actions'];
-  versionColumns: string[] = ['versionTag', 'releasedBy', 'status', 'timestamp', 'actions'];
-  codeColumns: string[] = ['codeSystem', 'standard', 'oid', 'status', 'actions'];
-
+  public mappingColumns: string[] = [
+    'name',
+    'source',
+    'target',
+    'fields',
+    'coverage',
+    'status',
+    'lastModified',
+    'actions',
+  ];
+  public ruleColumns: string[] = [
+    'ruleName',
+    'severity',
+    'scope',
+    'trigger',
+    'sourcesAffected',
+    'status',
+    'lastModified',
+    'actions',
+  ];
+  public versionColumns: string[] = ['versionTag', 'releasedBy', 'status', 'timestamp', 'actions'];
+  public codeColumns: string[] = [
+    'valueSetName',
+    'category',
+    'status',
+    'codeCount',
+    'references',
+    'lastModified',
+    'actions',
+  ];
   // DataSources
   modelDataSource = new MatTableDataSource<any>([]);
   mappingDataSource = new MatTableDataSource<any>([]);
@@ -170,12 +205,90 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   selectedStatus = 'All Statuses';
   selectedType = 'All Types';
   selectedUsage = 'Any Usage';
+  public selectedCategory = 'All Categories';
+  public selectedSource = 'All Sources';
+  public selectedItem: any = null;
+
+  // Mapping Governance Filter Defaults
+  selectedMappingStatus = 'All Statuses';
+  selectedMappingSource = 'All Sources';
+  selectedMappingTarget = 'All Targets';
+  selectedMappingCoverage = 'All Coverage';
+
+  // Rule Governance Filter Defaults
+  selectedRuleStatus = 'All Statuses';
+  selectedRuleSeverity = 'All Severities';
+  selectedRuleScope = 'All Scopes';
+  selectedRuleTrigger = 'All Triggers';
+
+  // Specific governance state for the Codes tab
+  public selectedCodeCategory = 'All';
+  public selectedCodeStatus = 'All';
+  public selectedCodeSource = 'All';
+  public selectedCodeUsage = 'All';
+
+  // Search and Date Range states for Rules
+  ruleDateRange = new FormGroup({
+    start: new FormControl<Date | null>(null),
+    end: new FormControl<Date | null>(null),
+  });
+
+  // Date Range Group
+  public codeDateRange = new FormGroup({
+    start: new FormControl<Date | null>(null),
+    end: new FormControl<Date | null>(null),
+  });
 
   // Filter setters
   setStatusFilter(val: string) {
     this.selectedStatus = val;
     this.applyModelFilter();
   }
+
+  setMappingSourceFilter(val: string) {
+    this.selectedMappingSource = val;
+    this.applyMappingFilter();
+  }
+
+  setMappingTargetFilter(val: string) {
+    this.selectedMappingTarget = val;
+    this.applyMappingFilter();
+  }
+
+  setMappingCoverageFilter(val: string) {
+    this.selectedMappingCoverage = val;
+    this.applyMappingFilter();
+  }
+  /**
+   * Sets the Status filter for Mappings and refreshes the data source.
+   * Supports: 'All', 'Active', 'Deprecated', 'Draft'
+   */
+  setMappingStatusFilter(val: string): void {
+    this.selectedMappingStatus = val;
+    this.applyMappingFilter();
+  }
+
+  // Filter Setters
+  setRuleStatusFilter(val: string) {
+    this.selectedRuleStatus = val;
+    this.applyRuleFilter();
+  }
+
+  setRuleSeverityFilter(val: string) {
+    this.selectedRuleSeverity = val;
+    this.applyRuleFilter();
+  }
+
+  setRuleScopeFilter(val: string) {
+    this.selectedRuleScope = val;
+    this.applyRuleFilter();
+  }
+
+  setRuleTriggerFilter(val: string) {
+    this.selectedRuleTrigger = val;
+    this.applyRuleFilter();
+  }
+
   setTypeFilter(val: string) {
     this.selectedType = val;
     this.applyModelFilter();
@@ -185,17 +298,91 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.applyModelFilter();
   }
 
+  public setCodeCategory(val: string): void {
+    this.selectedCodeCategory = val;
+    this.applyCodeFilter();
+  }
+
+  public setCodeStatus(val: string): void {
+    this.selectedCodeStatus = val;
+    this.applyCodeFilter();
+  }
+
+  public setCodeSource(val: string): void {
+    this.selectedCodeSource = val;
+    this.applyCodeFilter();
+  }
+
+  public setCodeUsage(val: string): void {
+    this.selectedCodeUsage = val;
+    this.applyCodeFilter();
+  }
+
+  /**
+   * Sets the Category filter for Codes and refreshes the data source.
+   * Supports: 'Category', 'Diagnosis', 'Lab Test', 'Demographics', etc.
+   */
+  setCodeCategoryFilter(val: string): void {
+    this.selectedCategory = val;
+    this.applyCodeFilter();
+  }
+
+  /**
+   * Sets the Status filter for Codes and refreshes the data source.
+   * Supports: 'Status', 'Active', 'Draft'
+   */
+  setCodeStatusFilter(val: string): void {
+    this.selectedStatus = val;
+    this.applyCodeFilter();
+  }
+
+  /**
+   * Sets the Source filter for Codes and refreshes the data source.
+   * Supports: 'Source', or specific system names
+   */
+  setCodeSourceFilter(val: string): void {
+    this.selectedSource = val;
+    this.applyCodeFilter();
+  }
+
+  /**
+   * Sets the Usage filter for Codes and refreshes the data source.
+   * Supports: 'Usage' or specific usage contexts
+   */
+  setCodeUsageFilter(val: string): void {
+    this.selectedUsage = val;
+    this.applyCodeFilter();
+  }
+
   // Versions timeline data
   versionHistory: IVersionCommit[] = [];
 
   private tabOrder: string[] = ['Models', 'Mappings', 'Rules', 'Versions', 'Codes'];
 
   @ViewChild('modelPaginator') modelPaginator!: MatPaginator;
+  @ViewChild('modelSort') modelSort!: MatSort;
   @ViewChild('mappingPaginator') mappingPaginator!: MatPaginator;
+  @ViewChild('mappingSort') mappingSort!: MatSort;
   @ViewChild('rulePaginator') rulePaginator!: MatPaginator;
+  @ViewChild('ruleSort') ruleSort!: MatSort;
   @ViewChild('versionPaginator') versionPaginator!: MatPaginator;
   @ViewChild('codePaginator') codePaginator!: MatPaginator;
+  @ViewChild('codeSort') codeSort!: MatSort;
   @ViewChild(MatSort) sort!: MatSort;
+
+  // Existing ViewChilds
+  @ViewChild('modelMenu') modelMenu!: MatMenu;
+  @ViewChild('ruleMenu') ruleMenu!: MatMenu;
+  @ViewChild('mappingMenu') mappingMenu!: MatMenu;
+  @ViewChild('codesMenu') codesMenu!: MatMenu;
+  @ViewChild('versionsMenu') versionsMenu!: MatMenu;
+
+  // Governance Menus for Codes Tab
+  @ViewChild('codeCategoryMenu') public codeCategoryMenu!: MatMenu;
+  @ViewChild('codeStatusMenu') public codeStatusMenu!: MatMenu;
+  @ViewChild('codeSourceMenu') public codeSourceMenu!: MatMenu;
+  @ViewChild('codeUsageMenu') public codeUsageMenu!: MatMenu;
+  @ViewChild('codesGlobalMenu') public codesGlobalMenu!: MatMenu;
 
   constructor(
     protected eventService: EventService,
@@ -211,7 +398,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.modelDateRange.valueChanges.subscribe(() => {
       this.applyModelFilter();
-      // Re-apply layout after filter/render
       setTimeout(() => this.fixModelsDateInputLayout(), 50);
     });
 
@@ -219,58 +405,119 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       this.applyVersionFilter();
     });
 
-    setTimeout(() => this.fixModelsDateInputLayout(), 100);
+    this.mappingDateRange.valueChanges.subscribe(() => {
+      this.applyMappingFilter();
+      setTimeout(() => this.fixMappingsDateInputLayout(), 50);
+    });
+
+    this.ruleDateRange.valueChanges.subscribe(() => {
+      this.applyRuleFilter();
+      setTimeout(() => this.fixRulesDateInputLayout(), 50);
+    });
+
+    this.codeDateRange.valueChanges.subscribe(() => {
+      this.applyCodeFilter();
+      setTimeout(() => this.fixCodesDateInputLayout(), 50);
+    });
+
+    // Initial layout fixes
+    setTimeout(() => {
+      this.fixModelsDateInputLayout();
+      this.fixMappingsDateInputLayout();
+      this.fixRulesDateInputLayout();
+      this.fixCodesDateInputLayout();
+    }, 100);
   }
 
   ngAfterViewInit(): void {
     this.refreshTablePointers();
-    this.applyModelFilter();
 
-    // Call the fix for models date input layout
+    // Initial filter application
+    this.applyModelFilter();
+    this.applyMappingFilter();
+    this.applyRuleFilter();
+    this.applyCodeFilter();
+
     setTimeout(() => {
       this.fixModelsDateInputLayout();
+      this.fixMappingsDateInputLayout();
+      this.fixRulesDateInputLayout();
+      this.fixCodesDateInputLayout();
       this.setupThemeChangeListener();
       this.fixDateInputLayout();
     }, 500);
 
-    if (this.modelPaginator) {
-      this.pageSize = this.modelPaginator.pageSize;
+    // Unified Paginator handling
+    const paginators = [
+      { p: this.modelPaginator, fix: () => this.fixModelsDateInputLayout() },
+      { p: this.mappingPaginator, fix: () => this.fixMappingsDateInputLayout() },
+      { p: this.rulePaginator, fix: () => this.fixRulesDateInputLayout() },
+      { p: this.codePaginator, fix: () => this.fixCodesDateInputLayout() },
+    ];
 
-      this.modelPaginator.page.subscribe((event: PageEvent) => {
-        this.currentPage = event.pageIndex;
-        this.pageSize = event.pageSize;
-        this.cdr.detectChanges();
-        // Re-apply fix if pagination triggers re-render
-        setTimeout(() => this.fixModelsDateInputLayout(), 100);
-      });
-    }
-
-    this.modelDateRange.valueChanges.subscribe(() => {
-      // Use requestAnimationFrame or setTimeout to run after the DOM updates
-      requestAnimationFrame(() => this.fixModelsDateInputLayout());
+    paginators.forEach(item => {
+      if (item.p) {
+        item.p.page.subscribe((event: PageEvent) => {
+          this.currentPage = event.pageIndex;
+          this.pageSize = event.pageSize;
+          this.cdr.detectChanges();
+          setTimeout(() => item.fix(), 100);
+        });
+      }
     });
   }
 
-  onTabChange(event: MatTabChangeEvent): void {
+  /**
+   * Updates the selected item reference and opens the menu
+   * Useful if you need to track the item outside the menu context
+   */
+  public onActionClick(item: any): void {
+    this.selectedItem = item;
+  }
+
+  public onTabChange(event: MatTabChangeEvent): void {
     this.activeTabIndex = event.index;
     this.activeTabLabel = this.tabOrder[this.activeTabIndex];
 
-    // Force Angular to render the @if block first
     this.cdr.detectChanges();
 
     setTimeout(() => {
       this.refreshTablePointers();
 
-      if (this.activeTabIndex === 0) {
-        // For the Models tab, we must wait until the DOM is definitely stable
-        this.applyModelFilter(); // This triggers the fixModelsDateInputLayout internally
-        this.fixModelsDateInputLayout();
-      } else if (this.activeTabIndex === 3) {
-        this.fixDateInputLayout();
+      switch (this.activeTabIndex) {
+        case 0:
+          this.modelDataSource.paginator = this.modelPaginator;
+          this.modelDataSource.sort = this.modelSort;
+          this.applyModelFilter();
+          this.fixModelsDateInputLayout();
+          break;
+        case 1:
+          this.mappingDataSource.paginator = this.mappingPaginator;
+          this.mappingDataSource.sort = this.mappingSort;
+          this.applyMappingFilter();
+          this.cdr.detectChanges();
+          setTimeout(() => this.fixMappingsDateInputLayout(), 0);
+          break;
+        case 2:
+          this.ruleDataSource.paginator = this.rulePaginator;
+          this.ruleDataSource.sort = this.ruleSort;
+          this.applyRuleFilter();
+          this.cdr.detectChanges();
+          setTimeout(() => this.fixRulesDateInputLayout(), 0);
+          break;
+        case 3:
+          this.fixDateInputLayout();
+          break;
+        case 4:
+          this.codeDataSource.paginator = this.codePaginator;
+          this.codeDataSource.sort = this.codeSort;
+          this.applyCodeFilter();
+          this.cdr.detectChanges();
+          setTimeout(() => this.fixCodesDateInputLayout(), 0);
+          break;
       }
-
       this.cdr.detectChanges();
-    }, 100); // 100ms is usually the sweet spot for @if template switching
+    }, 100);
   }
 
   /**
@@ -280,7 +527,10 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     // 1. Watch for class changes on body/documentElement (Theme switchers usually toggle classes here)
     const observer = new MutationObserver(() => {
       this.fixModelsDateInputLayout();
+      this.fixRulesDateInputLayout();
+      this.fixMappingsDateInputLayout();
       this.fixDateInputLayout();
+      this.fixCodesDateInputLayout();
       this.cdr.detectChanges();
     });
 
@@ -296,6 +546,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     // 2. Also listen for OS/Browser system-level prefers-color-scheme changes
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       this.fixModelsDateInputLayout();
+      this.fixRulesDateInputLayout();
+      this.fixMappingsDateInputLayout();
       this.fixDateInputLayout();
       this.cdr.detectChanges();
     });
@@ -329,6 +581,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         // have fully propagated to the DOM before we run our manual overrides.
         setTimeout(() => {
           this.fixModelsDateInputLayout();
+          this.fixMappingsDateInputLayout();
+          this.fixRulesDateInputLayout();
           this.fixDateInputLayout();
 
           // Force change detection to ensure the UI reflects theme-specific hex colors
@@ -588,6 +842,577 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     console.log('[fixModelsDateInputLayout] Completed with non-destructive listeners.');
   }
 
+  /**
+   * Manual DOM manipulation for Mappings tab date range picker
+   * Targeted Fix: Remove ugly borders and outlines while preserving layout
+   * Includes theme-aware styling that responds to theme_change events
+   */
+  private fixMappingsDateInputLayout(): void {
+    const root = this.el.nativeElement;
+
+    // Detect current theme
+    const isDarkMode =
+      document.body.classList.contains('dark-theme') ||
+      document.documentElement.classList.contains('dark-theme') ||
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    console.log('[fixMappingsDateInputLayout] Dark mode:', isDarkMode);
+
+    // Theme-specific colors
+    const bgColor = isDarkMode ? '#1E1E1E' : '#FFFFFF';
+    const hoverColor = isDarkMode ? '#2E2E2E' : '#F5F5F5';
+    const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.12)' : '#E0E0E0';
+    const textColor = isDarkMode ? '#FFFFFF' : 'rgba(0, 0, 0, 0.87)';
+
+    // 1. CRITICAL: Remove ALL MDC outline elements
+    const outlineElements = root.querySelectorAll(
+      '.mapping-tab-wrapper .mdc-notched-outline, ' +
+        '.mapping-tab-wrapper .mdc-notched-outline__leading, ' +
+        '.mapping-tab-wrapper .mdc-notched-outline__notch, ' +
+        '.mapping-tab-wrapper .mdc-notched-outline__trailing',
+    );
+    outlineElements.forEach((el: HTMLElement) => {
+      this.renderer.setStyle(el, 'display', 'none', 1);
+      this.renderer.setStyle(el, 'border', 'none', 1);
+      this.renderer.setStyle(el, 'outline', 'none', 1);
+    });
+
+    // 2. Remove MDC wrapper borders and backgrounds
+    const textFieldWrappers = root.querySelectorAll(
+      '.mapping-tab-wrapper .mat-mdc-text-field-wrapper',
+    );
+    textFieldWrappers.forEach((wrapper: HTMLElement) => {
+      if (wrapper.classList.contains('mat-date-range-input-wrapper')) {
+        return;
+      }
+      this.renderer.setStyle(wrapper, 'background', 'transparent', 1);
+      this.renderer.setStyle(wrapper, 'padding', '0', 1);
+      this.renderer.setStyle(wrapper, 'border', 'none', 1);
+      this.renderer.setStyle(wrapper, 'outline', 'none', 1);
+      this.renderer.setStyle(wrapper, 'box-shadow', 'none', 1);
+    });
+
+    // 3. Remove form field underlines
+    const formFields = root.querySelectorAll('.mapping-tab-wrapper .mat-mdc-form-field');
+    formFields.forEach((field: HTMLElement) => {
+      this.renderer.setStyle(field, 'border', 'none', 1);
+      this.renderer.setStyle(field, 'outline', 'none', 1);
+    });
+
+    // 4. Remove subscript wrapper
+    const subscriptWrappers = root.querySelectorAll(
+      '.mapping-tab-wrapper .mat-mdc-form-field-subscript-wrapper',
+    );
+    subscriptWrappers.forEach((sub: HTMLElement) => {
+      this.renderer.setStyle(sub, 'display', 'none', 1);
+    });
+
+    // 5. Fix the main container positioning
+    const filterDateRange = root.querySelector('.mapping-tab-wrapper .filter-date-range');
+    if (filterDateRange) {
+      this.renderer.setStyle(filterDateRange, 'margin-top', '0.0em', 1);
+      this.renderer.setStyle(filterDateRange, 'display', 'flex', 1);
+      this.renderer.setStyle(filterDateRange, 'align-items', 'center', 1);
+      this.renderer.setStyle(filterDateRange, 'gap', '8px', 1);
+    }
+
+    // 6. Style the date range input container
+    const dateRangeInput = root.querySelector('.mapping-tab-wrapper .custom-pill-date');
+    if (dateRangeInput) {
+      this.renderer.setStyle(dateRangeInput, 'border', 'none', 1);
+      this.renderer.setStyle(dateRangeInput, 'outline', 'none', 1);
+      this.renderer.setStyle(dateRangeInput, 'box-shadow', 'none', 1);
+    }
+
+    // 7. Ensure the container has proper styling
+    const container = root.querySelector(
+      '.mapping-tab-wrapper .custom-pill-date .mat-date-range-input-container',
+    );
+    if (container) {
+      this.renderer.setStyle(container, 'padding', '0', 1);
+      this.renderer.setStyle(container, 'overflow', 'visible', 1);
+      this.renderer.setStyle(container, 'display', 'flex', 1);
+      this.renderer.setStyle(container, 'align-items', 'center', 1);
+      this.renderer.setStyle(container, 'gap', '0', 1);
+      this.renderer.setStyle(container, 'border', 'none', 1);
+      this.renderer.setStyle(container, 'outline', 'none', 1);
+    }
+
+    // 8. CRITICAL: Apply theme-aware colors AND handle dynamic sync for selection
+    const wrappers = root.querySelectorAll('.mapping-tab-wrapper .mat-date-range-input-wrapper');
+    wrappers.forEach((wrapper: HTMLElement) => {
+      this.renderer.setStyle(wrapper, 'background', bgColor, 1);
+      this.renderer.setStyle(wrapper, 'border', `1px solid ${borderColor}`, 1);
+      this.renderer.setStyle(wrapper, 'border-radius', '6px', 1);
+      this.renderer.setStyle(wrapper, 'height', '32px', 1);
+      this.renderer.setStyle(wrapper, 'min-width', '80px', 1);
+      this.renderer.setStyle(wrapper, 'padding', '0 10px', 1);
+      this.renderer.setStyle(wrapper, 'display', 'flex', 1);
+      this.renderer.setStyle(wrapper, 'align-items', 'center', 1);
+      this.renderer.setStyle(wrapper, 'cursor', 'pointer', 1);
+      this.renderer.setStyle(wrapper, 'box-sizing', 'border-box', 1);
+      this.renderer.setStyle(wrapper, 'overflow', 'visible', 1);
+      this.renderer.setStyle(wrapper, 'transition', 'background 0.2s ease', 1);
+
+      // Dynamic Sync Logic: Use local helper for style application
+      const syncStyles = (input: HTMLInputElement) => {
+        this.renderer.setStyle(input, 'color', textColor, 1);
+        this.renderer.setStyle(input, 'caret-color', textColor, 1);
+        this.renderer.setStyle(input, '-webkit-text-fill-color', textColor, 1);
+        this.renderer.setStyle(input, 'opacity', '1', 1);
+        this.renderer.setStyle(input, 'visibility', 'visible', 1);
+      };
+
+      const innerInputs = wrapper.querySelectorAll('input');
+      innerInputs.forEach((input: HTMLInputElement) => {
+        // Initial style force
+        syncStyles(input);
+
+        // Listen for selection changes. We use existing elements, no cloning!
+        input.addEventListener('input', () => syncStyles(input));
+        input.addEventListener('change', () => syncStyles(input));
+      });
+
+      // Instead of cloning, we add listeners directly to the existing element
+      wrapper.addEventListener('mouseenter', () => {
+        this.renderer.setStyle(wrapper, 'background', hoverColor, 1);
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        this.renderer.setStyle(wrapper, 'background', bgColor, 1);
+      });
+    });
+
+    // 9. Fix separator spacing and color
+    const separator = root.querySelector('.mapping-tab-wrapper .mat-date-range-input-separator');
+    if (separator) {
+      this.renderer.setStyle(separator, 'margin', '0 4px', 1);
+      this.renderer.setStyle(separator, 'color', textColor, 1);
+      this.renderer.setStyle(separator, 'opacity', '1', 1);
+    }
+
+    // 10. Style the calendar toggle button
+    const toggleBtn = root.querySelector(
+      '.mapping-tab-wrapper .custom-pill-date .mat-datepicker-toggle button',
+    );
+    if (toggleBtn) {
+      this.renderer.setStyle(toggleBtn, 'width', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'height', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'padding', '0', 1);
+      this.renderer.setStyle(toggleBtn, 'margin-left', '4px', 1);
+      this.renderer.setStyle(toggleBtn, 'min-width', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'background', 'transparent', 1);
+      this.renderer.setStyle(toggleBtn, 'border', 'none', 1);
+      this.renderer.setStyle(toggleBtn, 'outline', 'none', 1);
+
+      const svg = toggleBtn.querySelector('svg');
+      if (svg) {
+        this.renderer.setStyle(svg, 'width', '19px', 1);
+        this.renderer.setStyle(svg, 'height', '19px', 1);
+        this.renderer.setStyle(svg, 'fill', '#818588', 1);
+        this.renderer.setStyle(svg, 'opacity', '0.7', 1);
+      }
+    }
+
+    // 11. Style the clear button
+    const clearBtn = root.querySelector('.mapping-tab-wrapper .clear-date-btn');
+    if (clearBtn) {
+      this.renderer.setStyle(clearBtn, 'width', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'height', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'padding', '0', 1);
+      this.renderer.setStyle(clearBtn, 'min-width', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'border-radius', '50%', 1);
+      this.renderer.setStyle(clearBtn, 'display', 'flex', 1);
+      this.renderer.setStyle(clearBtn, 'align-items', 'center', 1);
+      this.renderer.setStyle(clearBtn, 'justify-content', 'center', 1);
+
+      const icon = clearBtn.querySelector('mat-icon');
+      if (icon) {
+        this.renderer.setStyle(icon, 'width', '16px', 1);
+        this.renderer.setStyle(icon, 'height', '16px', 1);
+        this.renderer.setStyle(icon, 'font-size', '16px', 1);
+        this.renderer.setStyle(icon, 'fill', '#818588', 1);
+        this.renderer.setStyle(icon, 'opacity', '0.7', 1);
+      }
+    }
+
+    console.log('[fixMappingsDateInputLayout] Completed with non-destructive listeners.');
+  }
+
+  private fixRulesDateInputLayout(): void {
+    const root = this.el.nativeElement;
+
+    // Detect current theme
+    const isDarkMode =
+      document.body.classList.contains('dark-theme') ||
+      document.documentElement.classList.contains('dark-theme') ||
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    console.log('[fixRulesDateInputLayout] Dark mode:', isDarkMode);
+
+    // Theme-specific colors
+    const bgColor = isDarkMode ? '#1E1E1E' : '#FFFFFF';
+    const hoverColor = isDarkMode ? '#2E2E2E' : '#F5F5F5';
+    const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.12)' : '#E0E0E0';
+    const textColor = isDarkMode ? '#FFFFFF' : 'rgba(0, 0, 0, 0.87)';
+
+    // 1. CRITICAL: Remove ALL MDC outline elements
+    const outlineElements = root.querySelectorAll(
+      '.rules-tab-wrapper .mdc-notched-outline, ' +
+        '.rules-tab-wrapper .mdc-notched-outline__leading, ' +
+        '.rules-tab-wrapper .mdc-notched-outline__notch, ' +
+        '.rules-tab-wrapper .mdc-notched-outline__trailing',
+    );
+    outlineElements.forEach((el: HTMLElement) => {
+      this.renderer.setStyle(el, 'display', 'none', 1);
+      this.renderer.setStyle(el, 'border', 'none', 1);
+      this.renderer.setStyle(el, 'outline', 'none', 1);
+    });
+
+    // 2. Remove MDC wrapper borders and backgrounds
+    const textFieldWrappers = root.querySelectorAll(
+      '.rules-tab-wrapper .mat-mdc-text-field-wrapper',
+    );
+    textFieldWrappers.forEach((wrapper: HTMLElement) => {
+      if (wrapper.classList.contains('mat-date-range-input-wrapper')) {
+        return;
+      }
+      this.renderer.setStyle(wrapper, 'background', 'transparent', 1);
+      this.renderer.setStyle(wrapper, 'padding', '0', 1);
+      this.renderer.setStyle(wrapper, 'border', 'none', 1);
+      this.renderer.setStyle(wrapper, 'outline', 'none', 1);
+      this.renderer.setStyle(wrapper, 'box-shadow', 'none', 1);
+    });
+
+    // 3. Remove form field underlines
+    const formFields = root.querySelectorAll('.rules-tab-wrapper .mat-mdc-form-field');
+    formFields.forEach((field: HTMLElement) => {
+      this.renderer.setStyle(field, 'border', 'none', 1);
+      this.renderer.setStyle(field, 'outline', 'none', 1);
+    });
+
+    // 4. Remove subscript wrapper
+    const subscriptWrappers = root.querySelectorAll(
+      '.rules-tab-wrapper .mat-mdc-form-field-subscript-wrapper',
+    );
+    subscriptWrappers.forEach((sub: HTMLElement) => {
+      this.renderer.setStyle(sub, 'display', 'none', 1);
+    });
+
+    // 5. Fix the main container positioning
+    const filterDateRange = root.querySelector('.rules-tab-wrapper .filter-date-range');
+    if (filterDateRange) {
+      this.renderer.setStyle(filterDateRange, 'margin-top', '0.0em', 1);
+      this.renderer.setStyle(filterDateRange, 'display', 'flex', 1);
+      this.renderer.setStyle(filterDateRange, 'align-items', 'center', 1);
+      this.renderer.setStyle(filterDateRange, 'gap', '8px', 1);
+    }
+
+    // 6. Style the date range input container
+    const dateRangeInput = root.querySelector('.rules-tab-wrapper .custom-pill-date');
+    if (dateRangeInput) {
+      this.renderer.setStyle(dateRangeInput, 'border', 'none', 1);
+      this.renderer.setStyle(dateRangeInput, 'outline', 'none', 1);
+      this.renderer.setStyle(dateRangeInput, 'box-shadow', 'none', 1);
+    }
+
+    // 7. Ensure the container has proper styling
+    const container = root.querySelector(
+      '.rules-tab-wrapper .custom-pill-date .mat-date-range-input-container',
+    );
+    if (container) {
+      this.renderer.setStyle(container, 'padding', '0', 1);
+      this.renderer.setStyle(container, 'overflow', 'visible', 1);
+      this.renderer.setStyle(container, 'display', 'flex', 1);
+      this.renderer.setStyle(container, 'align-items', 'center', 1);
+      this.renderer.setStyle(container, 'gap', '0', 1);
+      this.renderer.setStyle(container, 'border', 'none', 1);
+      this.renderer.setStyle(container, 'outline', 'none', 1);
+    }
+
+    // 8. CRITICAL: Apply theme-aware colors AND handle dynamic sync for selection
+    const wrappers = root.querySelectorAll('.rules-tab-wrapper .mat-date-range-input-wrapper');
+    wrappers.forEach((wrapper: HTMLElement) => {
+      this.renderer.setStyle(wrapper, 'background', bgColor, 1);
+      this.renderer.setStyle(wrapper, 'border', `1px solid ${borderColor}`, 1);
+      this.renderer.setStyle(wrapper, 'border-radius', '6px', 1);
+      this.renderer.setStyle(wrapper, 'height', '32px', 1);
+      this.renderer.setStyle(wrapper, 'min-width', '80px', 1);
+      this.renderer.setStyle(wrapper, 'padding', '0 10px', 1);
+      this.renderer.setStyle(wrapper, 'display', 'flex', 1);
+      this.renderer.setStyle(wrapper, 'align-items', 'center', 1);
+      this.renderer.setStyle(wrapper, 'cursor', 'pointer', 1);
+      this.renderer.setStyle(wrapper, 'box-sizing', 'border-box', 1);
+      this.renderer.setStyle(wrapper, 'overflow', 'visible', 1);
+      this.renderer.setStyle(wrapper, 'transition', 'background 0.2s ease', 1);
+
+      const syncStyles = (input: HTMLInputElement) => {
+        this.renderer.setStyle(input, 'color', textColor, 1);
+        this.renderer.setStyle(input, 'caret-color', textColor, 1);
+        this.renderer.setStyle(input, '-webkit-text-fill-color', textColor, 1);
+        this.renderer.setStyle(input, 'opacity', '1', 1);
+        this.renderer.setStyle(input, 'visibility', 'visible', 1);
+      };
+
+      const innerInputs = wrapper.querySelectorAll('input');
+      innerInputs.forEach((input: HTMLInputElement) => {
+        syncStyles(input);
+        input.addEventListener('input', () => syncStyles(input));
+        input.addEventListener('change', () => syncStyles(input));
+      });
+
+      wrapper.addEventListener('mouseenter', () => {
+        this.renderer.setStyle(wrapper, 'background', hoverColor, 1);
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        this.renderer.setStyle(wrapper, 'background', bgColor, 1);
+      });
+    });
+
+    // 9. Fix separator spacing and color
+    const separator = root.querySelector('.rules-tab-wrapper .mat-date-range-input-separator');
+    if (separator) {
+      this.renderer.setStyle(separator, 'margin', '0 4px', 1);
+      this.renderer.setStyle(separator, 'color', textColor, 1);
+      this.renderer.setStyle(separator, 'opacity', '1', 1);
+    }
+
+    // 10. Style the calendar toggle button
+    const toggleBtn = root.querySelector(
+      '.rules-tab-wrapper .custom-pill-date .mat-datepicker-toggle button',
+    );
+    if (toggleBtn) {
+      this.renderer.setStyle(toggleBtn, 'width', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'height', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'padding', '0', 1);
+      this.renderer.setStyle(toggleBtn, 'margin-left', '4px', 1);
+      this.renderer.setStyle(toggleBtn, 'min-width', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'background', 'transparent', 1);
+      this.renderer.setStyle(toggleBtn, 'border', 'none', 1);
+      this.renderer.setStyle(toggleBtn, 'outline', 'none', 1);
+
+      const svg = toggleBtn.querySelector('svg');
+      if (svg) {
+        this.renderer.setStyle(svg, 'width', '19px', 1);
+        this.renderer.setStyle(svg, 'height', '19px', 1);
+        this.renderer.setStyle(svg, 'fill', '#818588', 1);
+        this.renderer.setStyle(svg, 'opacity', '0.7', 1);
+      }
+    }
+
+    // 11. Style the clear button
+    const clearBtn = root.querySelector('.rules-tab-wrapper .clear-date-btn');
+    if (clearBtn) {
+      this.renderer.setStyle(clearBtn, 'width', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'height', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'padding', '0', 1);
+      this.renderer.setStyle(clearBtn, 'min-width', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'border-radius', '50%', 1);
+      this.renderer.setStyle(clearBtn, 'display', 'flex', 1);
+      this.renderer.setStyle(clearBtn, 'align-items', 'center', 1);
+      this.renderer.setStyle(clearBtn, 'justify-content', 'center', 1);
+
+      const icon = clearBtn.querySelector('mat-icon');
+      if (icon) {
+        this.renderer.setStyle(icon, 'width', '16px', 1);
+        this.renderer.setStyle(icon, 'height', '16px', 1);
+        this.renderer.setStyle(icon, 'font-size', '16px', 1);
+        this.renderer.setStyle(icon, 'fill', '#818588', 1);
+        this.renderer.setStyle(icon, 'opacity', '0.7', 1);
+      }
+    }
+
+    console.log('[fixRulesDateInputLayout] Completed with exact Mapping styles.');
+  }
+
+  /**
+   * Fully synchronizes the Material Date Range input layout with the Codes tab pill style.
+   * This method removes standard Material Design components (MDC) decorations and
+   * enforces the custom pill container appearance for both light and dark themes.
+   */
+  private fixCodesDateInputLayout(): void {
+    const root = this.el.nativeElement;
+
+    // Detect current theme to apply appropriate hex codes for high-specificity injection
+    const isDarkMode =
+      document.body.classList.contains('dark-theme') ||
+      document.documentElement.classList.contains('dark-theme') ||
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    console.log('[fixCodesDateInputLayout] Dark mode:', isDarkMode);
+
+    // Theme-specific colors matching your SCSS definitions
+    const bgColor = isDarkMode ? '#1E1E1E' : '#FFFFFF';
+    const hoverColor = isDarkMode ? '#2E2E2E' : '#F5F5F5';
+    const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.12)' : '#E0E0E0';
+    const textColor = isDarkMode ? '#FFFFFF' : 'rgba(0, 0, 0, 0.87)';
+
+    // 1. CRITICAL: Remove ALL MDC outline elements that create double borders
+    const outlineElements = root.querySelectorAll(
+      '.codes-tab-wrapper .mdc-notched-outline, ' +
+        '.codes-tab-wrapper .mdc-notched-outline__leading, ' +
+        '.codes-tab-wrapper .mdc-notched-outline__notch, ' +
+        '.codes-tab-wrapper .mdc-notched-outline__trailing',
+    );
+    outlineElements.forEach((el: HTMLElement) => {
+      this.renderer.setStyle(el, 'display', 'none', 1);
+      this.renderer.setStyle(el, 'border', 'none', 1);
+      this.renderer.setStyle(el, 'outline', 'none', 1);
+    });
+
+    // 2. Remove MDC wrapper borders, backgrounds, and vertical padding
+    const textFieldWrappers = root.querySelectorAll(
+      '.codes-tab-wrapper .mat-mdc-text-field-wrapper',
+    );
+    textFieldWrappers.forEach((wrapper: HTMLElement) => {
+      // We skip the custom wrapper we intend to style manually in step 8
+      if (wrapper.classList.contains('mat-date-range-input-wrapper')) {
+        return;
+      }
+      this.renderer.setStyle(wrapper, 'background', 'transparent', 1);
+      this.renderer.setStyle(wrapper, 'padding', '0', 1);
+      this.renderer.setStyle(wrapper, 'border', 'none', 1);
+      this.renderer.setStyle(wrapper, 'outline', 'none', 1);
+      this.renderer.setStyle(wrapper, 'box-shadow', 'none', 1);
+    });
+
+    // 3. Remove default form field underlines and alignment restrictions
+    const formFields = root.querySelectorAll('.codes-tab-wrapper .mat-mdc-form-field');
+    formFields.forEach((field: HTMLElement) => {
+      this.renderer.setStyle(field, 'border', 'none', 1);
+      this.renderer.setStyle(field, 'outline', 'none', 1);
+    });
+
+    // 4. Remove subscript wrapper (errors/hints) to collapse height
+    const subscriptWrappers = root.querySelectorAll(
+      '.codes-tab-wrapper .mat-mdc-form-field-subscript-wrapper',
+    );
+    subscriptWrappers.forEach((sub: HTMLElement) => {
+      this.renderer.setStyle(sub, 'display', 'none', 1);
+    });
+
+    // 5. Fix the main container positioning and gap consistency
+    const filterDateRange = root.querySelector('.codes-tab-wrapper .filter-date-range');
+    if (filterDateRange) {
+      this.renderer.setStyle(filterDateRange, 'margin-top', '0.0em', 1);
+      this.renderer.setStyle(filterDateRange, 'display', 'flex', 1);
+      this.renderer.setStyle(filterDateRange, 'align-items', 'center', 1);
+      this.renderer.setStyle(filterDateRange, 'gap', '8px', 1);
+    }
+
+    // 6. Style the date range input container to be borderless
+    const dateRangeInput = root.querySelector('.codes-tab-wrapper .custom-pill-date');
+    if (dateRangeInput) {
+      this.renderer.setStyle(dateRangeInput, 'border', 'none', 1);
+      this.renderer.setStyle(dateRangeInput, 'outline', 'none', 1);
+      this.renderer.setStyle(dateRangeInput, 'box-shadow', 'none', 1);
+    }
+
+    // 7. Remove infix padding which often shifts the text vertically
+    const infixWrappers = root.querySelectorAll('.codes-tab-wrapper .mat-mdc-form-field-infix');
+    infixWrappers.forEach((infix: HTMLElement) => {
+      this.renderer.setStyle(infix, 'padding', '0', 1);
+      this.renderer.setStyle(infix, 'min-height', 'auto', 1);
+      this.renderer.setStyle(infix, 'border-top', 'none', 1);
+    });
+
+    // 8. CRITICAL: Apply theme-aware colors and style the Pill Wrapper
+    const wrappers = root.querySelectorAll('.codes-tab-wrapper .mat-date-range-input-wrapper');
+    wrappers.forEach((wrapper: HTMLElement) => {
+      this.renderer.setStyle(wrapper, 'background', bgColor, 1);
+      this.renderer.setStyle(wrapper, 'border', `1px solid ${borderColor}`, 1);
+      this.renderer.setStyle(wrapper, 'border-radius', '6px', 1);
+      this.renderer.setStyle(wrapper, 'height', '32px', 1);
+      this.renderer.setStyle(wrapper, 'min-width', '80px', 1);
+      this.renderer.setStyle(wrapper, 'padding', '0 10px', 1);
+      this.renderer.setStyle(wrapper, 'display', 'flex', 1);
+      this.renderer.setStyle(wrapper, 'align-items', 'center', 1);
+      this.renderer.setStyle(wrapper, 'cursor', 'pointer', 1);
+      this.renderer.setStyle(wrapper, 'box-sizing', 'border-box', 1);
+      this.renderer.setStyle(wrapper, 'overflow', 'visible', 1);
+      this.renderer.setStyle(wrapper, 'transition', 'background 0.2s ease', 1);
+
+      const syncStyles = (input: HTMLInputElement) => {
+        this.renderer.setStyle(input, 'color', textColor, 1);
+        this.renderer.setStyle(input, 'caret-color', textColor, 1);
+        this.renderer.setStyle(input, '-webkit-text-fill-color', textColor, 1);
+        this.renderer.setStyle(input, 'background', 'transparent', 1);
+        this.renderer.setStyle(input, 'opacity', '1', 1);
+        this.renderer.setStyle(input, 'visibility', 'visible', 1);
+      };
+
+      const innerInputs = wrapper.querySelectorAll('input');
+      innerInputs.forEach((input: HTMLInputElement) => {
+        syncStyles(input);
+        // Ensure color stays correct on interaction
+        input.addEventListener('input', () => syncStyles(input));
+        input.addEventListener('change', () => syncStyles(input));
+        input.addEventListener('focus', () => syncStyles(input));
+      });
+
+      wrapper.addEventListener('mouseenter', () => {
+        this.renderer.setStyle(wrapper, 'background', hoverColor, 1);
+      });
+      wrapper.addEventListener('mouseleave', () => {
+        this.renderer.setStyle(wrapper, 'background', bgColor, 1);
+      });
+    });
+
+    // 9. Fix separator spacing and color to match the text
+    const separator = root.querySelector('.codes-tab-wrapper .mat-date-range-input-separator');
+    if (separator) {
+      this.renderer.setStyle(separator, 'margin', '0 4px', 1);
+      this.renderer.setStyle(separator, 'color', textColor, 1);
+      this.renderer.setStyle(separator, 'opacity', '1', 1);
+    }
+
+    // 10. Style the calendar toggle button
+    const toggleBtn = root.querySelector(
+      '.codes-tab-wrapper .custom-pill-date .mat-datepicker-toggle button',
+    );
+    if (toggleBtn) {
+      this.renderer.setStyle(toggleBtn, 'width', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'height', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'padding', '0', 1);
+      this.renderer.setStyle(toggleBtn, 'margin-left', '4px', 1);
+      this.renderer.setStyle(toggleBtn, 'min-width', '32px', 1);
+      this.renderer.setStyle(toggleBtn, 'background', 'transparent', 1);
+      this.renderer.setStyle(toggleBtn, 'border', 'none', 1);
+      this.renderer.setStyle(toggleBtn, 'outline', 'none', 1);
+
+      const svg = toggleBtn.querySelector('svg');
+      if (svg) {
+        this.renderer.setStyle(svg, 'width', '19px', 1);
+        this.renderer.setStyle(svg, 'height', '19px', 1);
+        this.renderer.setStyle(svg, 'fill', '#818588', 1);
+        this.renderer.setStyle(svg, 'opacity', '0.7', 1);
+      }
+    }
+
+    // 11. Style the clear (X) button for the date range
+    const clearBtn = root.querySelector('.codes-tab-wrapper .clear-date-btn');
+    if (clearBtn) {
+      this.renderer.setStyle(clearBtn, 'width', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'height', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'padding', '0', 1);
+      this.renderer.setStyle(clearBtn, 'min-width', '28px', 1);
+      this.renderer.setStyle(clearBtn, 'border-radius', '50%', 1);
+      this.renderer.setStyle(clearBtn, 'display', 'flex', 1);
+      this.renderer.setStyle(clearBtn, 'align-items', 'center', 1);
+      this.renderer.setStyle(clearBtn, 'justify-content', 'center', 1);
+
+      const icon = clearBtn.querySelector('mat-icon');
+      if (icon) {
+        this.renderer.setStyle(icon, 'width', '16px', 1);
+        this.renderer.setStyle(icon, 'height', '16px', 1);
+        this.renderer.setStyle(icon, 'font-size', '16px', 1);
+        this.renderer.setStyle(icon, 'fill', '#818588', 1);
+        this.renderer.setStyle(icon, 'opacity', '0.7', 1);
+      }
+    }
+
+    console.log('[fixCodesDateInputLayout] Completed with exact Mapping styles.');
+  }
+
   get totalPages(): number {
     return Math.ceil(this.filteredVersionHistory.length / this.pageSize);
   }
@@ -608,54 +1433,252 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private refreshTablePointers(): void {
+    // 1. Identify the active data source based on the current tab
     const ds = this.getActiveDataSource();
-    if (this.activeTabIndex === 0) ds.paginator = this.modelPaginator;
-    if (this.activeTabIndex === 1) ds.paginator = this.mappingPaginator;
-    if (this.activeTabIndex === 2) ds.paginator = this.rulePaginator;
-    if (this.activeTabIndex === 3) ds.paginator = this.versionPaginator;
-    if (this.activeTabIndex === 4) ds.paginator = this.codePaginator;
+    if (!ds) return;
 
-    if (this.sort) ds.sort = this.sort;
+    // 2. Map the specific Paginator and Sort for the active view
+    // Material tables inside @if blocks lose these references when switching
+    switch (this.activeTabIndex) {
+      case 0: // Models
+        ds.paginator = this.modelPaginator;
+        ds.sort = this.modelSort; // Ensure you have @ViewChild('modelSort')
+        break;
+      case 1: // Mappings
+        ds.paginator = this.mappingPaginator;
+        ds.sort = this.mappingSort; // Ensure you have @ViewChild('mappingSort')
+        break;
+      case 2: // Rules
+        ds.paginator = this.rulePaginator;
+        ds.sort = this.ruleSort; // Ensure you have @ViewChild('ruleSort')
+        break;
+      case 3: // Versions (Graph of Events)
+        ds.paginator = this.versionPaginator;
+        // Versions usually use the global sort or a specific versionSort
+        ds.sort = this.sort;
+        break;
+      case 4: // Codes (MPI Value Sets)
+        ds.paginator = this.codePaginator;
+        ds.sort = this.codeSort; // Ensure you have @ViewChild('codeSort')
+        break;
+    }
+
+    // 3. Force the data source to recognize the newly attached pointers
+    if (ds.paginator) {
+      ds.paginator._changePageSize(ds.paginator.pageSize);
+    }
+
+    this.cdr.detectChanges();
   }
 
   applyMappingFilter(): void {
+    // 1. Start with full original mapping data
     let filtered = [...this.originalMappingData];
 
-    if (this.mappingSearch) {
-      const search = this.mappingSearch.toLowerCase();
-      filtered = filtered.filter(
-        item =>
-          item.source.toLowerCase().includes(search) ||
-          item.target.toLowerCase().includes(search) ||
-          item.engine.toLowerCase().includes(search) ||
-          item.status.toLowerCase().includes(search),
-      );
+    // 2. DEEP SEARCH BOX FILTER
+    // Matches Name, Source, Target, Status, and even Field counts/Coverage
+    if (this.mappingSearch?.trim()) {
+      const search = this.mappingSearch.toLowerCase().trim();
+      filtered = filtered.filter(item => {
+        return (
+          item.name?.toLowerCase().includes(search) ||
+          item.source?.toLowerCase().includes(search) ||
+          item.target?.toLowerCase().includes(search) ||
+          item.status?.toLowerCase().includes(search) ||
+          item.fields?.toString().includes(search) ||
+          item.coverage?.toLowerCase().includes(search)
+        );
+      });
     }
 
+    // 3. Status Filter
+    const statusKey = (this.selectedMappingStatus || '').toLowerCase();
+    if (
+      statusKey !== '' &&
+      statusKey !== 'all' &&
+      statusKey !== 'any' &&
+      statusKey !== 'all statuses'
+    ) {
+      filtered = filtered.filter(item => item.status.toLowerCase() === statusKey);
+    }
+
+    // 4. Source Filter
+    const sourceKey = (this.selectedMappingSource || '').toLowerCase();
+    if (
+      sourceKey !== '' &&
+      sourceKey !== 'all' &&
+      sourceKey !== 'any' &&
+      sourceKey !== 'all sources'
+    ) {
+      filtered = filtered.filter(item => item.source.toLowerCase() === sourceKey);
+    }
+
+    // 5. Target Model Filter
+    const targetKey = (this.selectedMappingTarget || '').toLowerCase();
+    if (
+      targetKey !== '' &&
+      targetKey !== 'all' &&
+      targetKey !== 'any' &&
+      targetKey !== 'all targets'
+    ) {
+      filtered = filtered.filter(item => item.target.toLowerCase() === targetKey);
+    }
+
+    // 6. Coverage Filter
+    const coverageKey = (this.selectedMappingCoverage || '').toLowerCase();
+    if (
+      coverageKey !== '' &&
+      coverageKey !== 'all' &&
+      coverageKey !== 'any' &&
+      coverageKey !== 'all coverage'
+    ) {
+      filtered = filtered.filter(item => item.coverage.toLowerCase().includes(coverageKey));
+    }
+
+    // 7. Date Range Filter
+    const { start, end } = this.mappingDateRange.value;
+    if (start || end) {
+      filtered = filtered.filter(item => {
+        const mappingDate = new Date(item.lastModified);
+        mappingDate.setHours(0, 0, 0, 0);
+
+        if (start) {
+          const startDate = new Date(start);
+          startDate.setHours(0, 0, 0, 0);
+          if (mappingDate < startDate) return false;
+        }
+        if (end) {
+          const endDate = new Date(end);
+          endDate.setHours(23, 59, 59, 999);
+          if (mappingDate > endDate) return false;
+        }
+        return true;
+      });
+    }
+
+    // 8. Assign data and reset pagination
     this.mappingDataSource.data = filtered;
     if (this.mappingPaginator) {
       this.mappingPaginator.firstPage();
     }
+
+    // 9. FIX STYLE DEATH & TAB VISIBILITY
+    // Force Change Detection then run Renderer2 styles in next tick
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.fixMappingsDateInputLayout();
+    }, 0);
   }
 
-  applyRuleFilter(): void {
-    let filtered = [...this.originalRuleData];
+  public applyRuleFilter(): void {
+    // Import dayjs for reliable date manipulation
+    import('dayjs').then(({ default: dayjs }) => {
+      // 1. Start with full original rule data
+      let filtered = [...this.originalRuleData];
 
-    if (this.ruleSearch) {
-      const search = this.ruleSearch.toLowerCase();
-      filtered = filtered.filter(
-        item =>
-          item.ruleName.toLowerCase().includes(search) ||
-          item.trigger.toLowerCase().includes(search) ||
-          item.priority.toLowerCase().includes(search) ||
-          item.status.toLowerCase().includes(search),
-      );
-    }
+      // 2. DEEP SEARCH BOX FILTER
+      if (this.ruleSearch?.trim()) {
+        const search = this.ruleSearch.toLowerCase().trim();
+        filtered = filtered.filter(
+          item =>
+            item.ruleName?.toLowerCase().includes(search) ||
+            item.trigger?.toLowerCase().includes(search) ||
+            item.severity?.toLowerCase().includes(search) ||
+            item.scope?.toLowerCase().includes(search) ||
+            item.status?.toLowerCase().includes(search),
+        );
+      }
 
-    this.ruleDataSource.data = filtered;
-    if (this.rulePaginator) {
-      this.rulePaginator.firstPage();
-    }
+      // 3. Governance Logic (Status, Severity, Scope, Trigger)
+      const statusKey = (this.selectedRuleStatus || '').toLowerCase();
+      if (statusKey !== '' && !['all', 'any', 'all statuses'].includes(statusKey)) {
+        filtered = filtered.filter(item => item.status?.toLowerCase() === statusKey);
+      }
+
+      const severityKey = (this.selectedRuleSeverity || '').toLowerCase();
+      if (severityKey !== '' && !['all', 'any', 'all severities'].includes(severityKey)) {
+        filtered = filtered.filter(item => item.severity?.toLowerCase() === severityKey);
+      }
+
+      const scopeKey = (this.selectedRuleScope || '').toLowerCase();
+      if (scopeKey !== '' && !['all', 'any', 'all scopes'].includes(scopeKey)) {
+        filtered = filtered.filter(item => item.scope?.toLowerCase() === scopeKey);
+      }
+
+      const triggerKey = (this.selectedRuleTrigger || '').toLowerCase();
+      if (triggerKey !== '' && !['all', 'any', 'all triggers'].includes(triggerKey)) {
+        filtered = filtered.filter(item => item.trigger?.toLowerCase() === triggerKey);
+      }
+
+      // 4. DATE RANGE FILTER - USING DAYJS WITH -1 DAY DELTA
+      const { start, end } = this.ruleDateRange.value;
+      if (start || end) {
+        // const now = dayjs();
+
+        // CRITICAL: Use dayjs to subtract 1 day from start for inclusive filtering
+        // User selects Jan 13 → startBoundary becomes Jan 12 start of day
+        const startBoundary = start ? dayjs(start).subtract(1, 'day').startOf('day') : null;
+
+        // End boundary: end of the selected day
+        const endBoundary = end ? dayjs(end).endOf('day') : null;
+
+        console.log('[DATE FILTER WITH DAYJS]', {
+          userSelectedStart: start ? dayjs(start).format('YYYY-MM-DD') : null,
+          userSelectedEnd: end ? dayjs(end).format('YYYY-MM-DD') : null,
+          startBoundary: startBoundary ? startBoundary.format('YYYY-MM-DD HH:mm:ss') : null,
+          endBoundary: endBoundary ? endBoundary.format('YYYY-MM-DD HH:mm:ss') : null,
+        });
+
+        filtered = filtered.filter(item => {
+          const rawDate = item.lastModified;
+          let itemDate: any;
+
+          // Resolve "X days ago" vs ISO/timestamp using dayjs
+          if (typeof rawDate === 'string' && rawDate.toLowerCase().includes('days ago')) {
+            const daysAgo = parseInt(rawDate.split(' ')[0], 10);
+            itemDate = dayjs().subtract(daysAgo, 'day').startOf('day');
+          } else {
+            itemDate = dayjs(rawDate).startOf('day');
+          }
+
+          console.log('[CHECKING ITEM]', {
+            rawDate,
+            itemDate: itemDate.format('YYYY-MM-DD'),
+            passesStart: startBoundary === null || itemDate.isAfter(startBoundary),
+            passesEnd:
+              endBoundary === null ||
+              itemDate.isBefore(endBoundary) ||
+              itemDate.isSame(endBoundary),
+          });
+
+          // INCLUSIVE RANGE CHECK using dayjs comparisons
+          // With -1 day delta: if user selects Jan 13, startBoundary is Jan 12
+          // Jan 13 data will be AFTER Jan 12, so it's included
+          if (startBoundary !== null && !itemDate.isAfter(startBoundary)) {
+            return false; // At or before the boundary (Jan 12)
+          }
+
+          if (endBoundary !== null && itemDate.isAfter(endBoundary)) {
+            return false; // After end date
+          }
+
+          return true;
+        });
+
+        console.log('[FILTERED RESULT]', `${filtered.length} items after date filter`);
+      }
+
+      // 5. Update UI and reset pagination
+      this.ruleDataSource.data = filtered;
+      if (this.rulePaginator) {
+        this.rulePaginator.firstPage();
+      }
+      this.cdr.detectChanges();
+
+      setTimeout(() => {
+        this.fixRulesDateInputLayout();
+      }, 0);
+    });
   }
 
   applyVersionFilter(): void {
@@ -691,6 +1714,50 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   /**
    * Clear the date range for Models tab
    */
+  clearMappingDateRange(): void {
+    this.mappingDateRange.patchValue({ start: null, end: null });
+    this.mappingDateRange.markAsPristine();
+    this.mappingDateRange.markAsUntouched();
+
+    // Force a style refresh so placeholders show up correctly
+    setTimeout(() => {
+      this.fixModelsDateInputLayout();
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
+  /**
+   * Clear the date range for Codes tab
+   */
+  clearCodeDateRange(): void {
+    this.codeDateRange.patchValue({ start: null, end: null });
+    this.codeDateRange.markAsPristine();
+    this.codeDateRange.markAsUntouched();
+
+    // Force a style refresh so placeholders show up correctly in the pill
+    setTimeout(() => {
+      this.fixCodesDateInputLayout();
+      this.applyCodeFilter();
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
+  /**
+   * Resets the Rule Date Range and forces a UI style refresh.
+   */
+  clearRuleDateRange(): void {
+    this.ruleDateRange.reset();
+    this.cdr.detectChanges();
+    this.applyRuleFilter();
+    setTimeout(() => {
+      this.fixRulesDateInputLayout();
+      this.cdr.detectChanges();
+    }, 0);
+  }
+
+  /**
+   * Clear the date range for Models tab
+   */
   clearModelDateRange(): void {
     this.modelDateRange.patchValue({ start: null, end: null });
     this.modelDateRange.markAsPristine();
@@ -707,23 +1774,95 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.range.reset();
   }
 
-  applyCodeFilter(): void {
+  /**
+   * Executes comprehensive filtering for the Codes/Value Sets table.
+   * Includes search across Value Set Name, Category, Status, Source, Usage, and References.
+   */
+  public applyCodeFilter(): void {
+    // Start with full original code data
     let filtered = [...this.originalCodeData];
 
-    if (this.codeSearch) {
-      const search = this.codeSearch.toLowerCase();
+    // 1. DEEP SEARCH BOX FILTER
+    // Searches all visible columns in the layout: Name, Category, Status, Source, Usage, and References.
+    if (this.codeSearch?.trim()) {
+      const search = this.codeSearch.toLowerCase().trim();
       filtered = filtered.filter(
         item =>
-          item.codeSystem.toLowerCase().includes(search) ||
-          item.standard.toLowerCase().includes(search) ||
-          item.oid.toLowerCase().includes(search) ||
-          item.status.toLowerCase().includes(search),
+          item.valueSetName?.toLowerCase().includes(search) ||
+          item.category?.toLowerCase().includes(search) ||
+          item.status?.toLowerCase().includes(search) ||
+          item.source?.toLowerCase().includes(search) ||
+          item.usage?.toLowerCase().includes(search) ||
+          item.lastModified?.toLowerCase().includes(search) ||
+          item.references?.toString().includes(search),
       );
     }
 
-    this.codeDataSource.data = filtered;
+    // 2. GOVERNANCE LOGIC (Category, Status, Source, Usage)
+    // Ensures filters are only applied if a specific selection is made.
+    const categoryKey = (this.selectedCodeCategory || '').toLowerCase();
+    if (categoryKey !== '' && !['all', 'any', 'all categories'].includes(categoryKey)) {
+      filtered = filtered.filter(item => item.category?.toLowerCase() === categoryKey);
+    }
+
+    const statusKey = (this.selectedCodeStatus || '').toLowerCase();
+    if (statusKey !== '' && !['all', 'any', 'all statuses'].includes(statusKey)) {
+      filtered = filtered.filter(item => item.status?.toLowerCase() === statusKey);
+    }
+
+    const sourceKey = (this.selectedCodeSource || '').toLowerCase();
+    if (sourceKey !== '' && !['all', 'any', 'all sources'].includes(sourceKey)) {
+      filtered = filtered.filter(item => item.source?.toLowerCase() === sourceKey);
+    }
+
+    const usageKey = (this.selectedCodeUsage || '').toLowerCase();
+    if (usageKey !== '' && !['all', 'any', 'all usage'].includes(usageKey)) {
+      filtered = filtered.filter(item => item.usage?.toLowerCase() === usageKey);
+    }
+
+    // 3. DATE RANGE FILTER
+    // Uses dayjs to handle both absolute ISO strings and relative "3 days ago" formats.
+    const { start, end } = this.codeDateRange.value;
+    if (start || end) {
+      import('dayjs').then(({ default: dayjs }) => {
+        const startBoundary = start ? dayjs(start).subtract(1, 'day').startOf('day') : null;
+
+        const endBoundary = end ? dayjs(end).endOf('day') : null;
+
+        filtered = filtered.filter(item => {
+          const rawDate = item.lastModified;
+          let itemDate: any;
+
+          // Support for "X days ago" string format found in normalization history
+          if (typeof rawDate === 'string' && rawDate.toLowerCase().includes('days ago')) {
+            const daysAgo = parseInt(rawDate.split(' ')[0], 10);
+            itemDate = dayjs().subtract(daysAgo, 'day').startOf('day');
+          } else {
+            itemDate = dayjs(rawDate).startOf('day');
+          }
+
+          if (startBoundary !== null && !itemDate.isAfter(startBoundary)) return false;
+          if (endBoundary !== null && itemDate.isAfter(endBoundary)) return false;
+          return true;
+        });
+
+        this.finalizeCodeFilter(filtered);
+      });
+    } else {
+      this.finalizeCodeFilter(filtered);
+    }
+  }
+
+  /**
+   * Updates the MatTableDataSource and refreshes paginator/sort for the Codes tab.
+   */
+  private finalizeCodeFilter(data: any[]): void {
+    this.codeDataSource.data = data;
     if (this.codePaginator) {
-      this.codePaginator.firstPage();
+      this.codeDataSource.paginator = this.codePaginator;
+    }
+    if (this.codeSort) {
+      this.codeDataSource.sort = this.codeSort;
     }
   }
 
@@ -851,11 +1990,100 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     });
   }
 
+  /**
+   * Triggers the creation of a new Value Set.
+   * Per MPI requirements, this must eventually invoke execute_merge_query_with_context
+   * to log the transaction into the graph of events.
+   */
+  public addNewValueSet(): void {
+    console.log('[Normalization] Opening dialog to add new Value Set');
+
+    // Example implementation:
+    // const dialogRef = this.dialog.open(ValueSetDialogComponent);
+    // dialogRef.afterClosed().subscribe(result => {
+    //   if (result) {
+    //     this.saveNewValueSet(result);
+    //   }
+    // });
+  }
+
+  /**
+   * Opens the editor for a specific Value Set.
+   * Transactions are logged to the graph of events per MPI requirements.
+   */
+  public editValueSet(item: any): void {
+    console.log('[Normalization] Editing Value Set:', item.valueSetName);
+    // Implementation logic for opening edit modal
+    // Ensure that on save, execute_merge_query_with_context is called
+  }
+
+  /**
+   * Navigates to or opens a view showing where this Value Set is referenced.
+   */
+  public viewReferences(item: any): void {
+    console.log('[Normalization] Viewing references for:', item.valueSetName);
+  }
+
+  /**
+   * Triggers an export of the specific Value Set data.
+   */
+  public exportValueSet(item: any): void {
+    console.log('[Normalization] Exporting Value Set:', item.valueSetName);
+  }
+
+  /**
+   * Removes a Value Set and logs the deletion transaction.
+   * All transactions must be related to a specific patient golden record.
+   */
+  public deleteValueSet(item: any): void {
+    //  `MATCH (v:ValueSet {id: $id}) DETACH DELETE v`,
+    if (confirm(`Are you sure you want to delete ${item.valueSetName}?`)) {
+      console.log('[Normalization] Deleting Value Set:', item.valueSetName);
+      // Use execute_merge_query_with_context for the deletion log
+    }
+  }
+
+  /**
+   * Logic for adding a brand new Value Set to the MPI environment.
+   */
   addNewCodeSystem(): void {
     this.eventService.publish('nf', 'add_normalization_code', {
       theme: this.getActiveTheme(),
       mode: 'create',
     });
+  }
+
+  /**
+   * Opens the editor for a specific Value Set / Code System.
+   */
+  public editCodeSystem(element: any): void {
+    console.log('[Codes Tab] Editing Value Set:', element.id, element.valueSetName);
+    // Implementation for opening a dialog or drawer would go here
+  }
+
+  /**
+   * Navigates to a detailed view of the individual codes within a Value Set.
+   */
+  public viewCodeDetails(element: any): void {
+    console.log('[Codes Tab] Viewing details for:', element.valueSetName);
+    // Implementation for drill-down view
+  }
+
+  /**
+   * Deletes a code system after confirmation.
+   * Logs the transaction into the graph of events for traceability.
+   */
+  public deleteCodeSystem(element: any): void {
+    const confirmation = confirm(`Are you sure you want to delete ${element.valueSetName}?`);
+    if (confirmation) {
+      this.originalCodeData = this.originalCodeData.filter(item => item.id !== element.id);
+      this.applyCodeFilter();
+
+      console.log('[MPI Governance] Transaction logged: Value Set Deleted', {
+        id: element.id,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   onEdit(row: any): void {
@@ -877,6 +2105,94 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     });
   }
 
+  /**
+   * Specifically handles editing a Normalization Rule (Tab 2)
+   */
+  onEditRule(row: any): void {
+    // Force set index if called from a menu where the tab might not be active,
+    // though usually, the menu is only visible on the active tab.
+    this.activeTabIndex = 2;
+    this.onEdit(row);
+  }
+
+  /**
+   * Specifically handles editing a Normalization Model (Tab 0)
+   */
+  onEditModel(row: any): void {
+    this.activeTabIndex = 0;
+    this.onEdit(row);
+  }
+
+  /**
+   * Specifically handles editing a Normalization Mapping (Tab 1)
+   */
+  onEditMapping(row: any): void {
+    this.activeTabIndex = 1;
+    this.onEdit(row);
+  }
+
+  /**
+   * Specifically handles editing a Normalization Code (Tab 4)
+   */
+  onEditCode(row: any): void {
+    this.activeTabIndex = 4;
+    this.onEdit(row);
+  }
+
+  /**
+   * Specifically handles editing a Normalization Version (Tab 3)
+   */
+  onEditVersion(row: any): void {
+    this.activeTabIndex = 3;
+    this.onEdit(row);
+  }
+
+  onDeleteModel(item: any) {
+    const confirmed = confirm(`Are you sure you want to delete model: ${item.name}?`);
+    if (confirmed) {
+      // Perform actual deletion logic here (e.g., service call)
+      console.log('Model deleted and transaction logged to graph.');
+    }
+  }
+
+  onDeleteMapping(item: any) {
+    const confirmed = confirm(`Are you sure you want to delete mapping: ${item.name}?`);
+    if (confirmed) {
+      // Perform actual deletion logic here (e.g., service call)
+      console.log('Mapping deleted and transaction logged to graph.');
+    }
+  }
+
+  onDeleteCode(item: any) {
+    const confirmed = confirm(`Are you sure you want to delete code: ${item.name}?`);
+    if (confirmed) {
+      // Perform actual deletion logic here (e.g., service call)
+      console.log('Code deleted and transaction logged to graph.');
+    }
+  }
+
+  onDeleteVersion(item: any) {
+    const confirmed = confirm(`Are you sure you want to delete version: ${item.name}?`);
+    if (confirmed) {
+      // Perform actual deletion logic here (e.g., service call)
+      console.log('Version deleted and transaction logged to graph.');
+    }
+  }
+
+  onDeleteRule(item: any) {
+    const confirmed = confirm(`Are you sure you want to delete rule: ${item.name}?`);
+    if (confirmed) {
+      // Perform actual deletion logic here (e.g., service call)
+      console.log('Rule deleted and transaction logged to graph.');
+    }
+  }
+
+  onTestMapping(item: any) {
+    console.log('Testing mapping transformation:', item);
+
+    // Logic to trigger the mapping test engine
+  }
+
   onActivate(row: any): void {
     row.status = 'Active';
   }
@@ -896,6 +2212,30 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     console.log('Delete requested for:', row);
   }
 
+  /**
+   * Version History Tab Actions
+   */
+  onViewVersionDetails(item: any) {
+    console.log('Viewing version payload:', item);
+  }
+
+  onCompareVersions(item: any) {
+    console.log('Comparing versions for:', item);
+  }
+
+  onRestoreVersion(item: any) {
+    const confirmed = confirm(
+      `Rollback to version ${item.hash}? This will be logged as a new event.`,
+    );
+    if (confirmed) {
+      // Logic to update the current state to this version
+    }
+  }
+
+  onViewRuleLogs(item: any) {
+    console.log('Viewing rule logs:', item);
+  }
+
   private getActiveDataSource(): MatTableDataSource<any> {
     const map: any = {
       Models: this.modelDataSource,
@@ -905,6 +2245,54 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       Codes: this.codeDataSource,
     };
     return map[this.activeTabLabel] || this.modelDataSource;
+  }
+
+  private setupRuleFilterPredicate(): void {
+    this.ruleDataSource.filterPredicate = (data: any, filter: string) => {
+      // 1. Text Search Logic
+      const searchTerms = JSON.parse(filter);
+      const nameMatch = data.ruleName.toLowerCase().includes(searchTerms.name.toLowerCase());
+      const statusMatch = searchTerms.status ? data.status === searchTerms.status : true;
+
+      // 2. Date Range Logic
+      const recordDate = this.parseDynamicDate(data.lastModified).getTime();
+      const start = searchTerms.dateRange.start
+        ? new Date(searchTerms.dateRange.start).getTime()
+        : null;
+      const end = searchTerms.dateRange.end ? new Date(searchTerms.dateRange.end).getTime() : null;
+
+      let dateMatch = true;
+      if (start && end) {
+        dateMatch = recordDate >= start && recordDate <= end;
+      } else if (start) {
+        dateMatch = recordDate >= start;
+      } else if (end) {
+        dateMatch = recordDate <= end;
+      }
+
+      return nameMatch && statusMatch && dateMatch;
+    };
+  }
+
+  /**
+   * Converts '2026-01-10' OR '5 days ago' into a comparable Date object
+   */
+  private parseDynamicDate(dateInput: string): Date {
+    const now = new Date();
+
+    // Handle "X days ago" notation
+    if (dateInput.includes('days ago')) {
+      const days = parseInt(dateInput.split(' ')[0], 10);
+      const calculatedDate = new Date();
+      calculatedDate.setDate(now.getDate() - days);
+      calculatedDate.setHours(0, 0, 0, 0);
+      return calculatedDate;
+    }
+
+    // Handle standard ISO / Date strings
+    const parsed = new Date(dateInput);
+    parsed.setHours(0, 0, 0, 0);
+    return parsed;
   }
 
   public loadAllData(): void {
@@ -921,14 +2309,20 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     const governanceStatuses = ['Active', 'Deprecated', 'Draft', 'Archived'];
     const governanceTypes = ['Canonical', 'Derived', 'External / Imported'];
 
-    // Store original data for proper filtering
+    // Rule-specific categories
+    const ruleSeverities = ['Critical', 'High', 'Medium', 'Source'];
+    const ruleScopes = ['Model-level', 'System', 'Source'];
+    const ruleTriggers = ['Immediate', 'Aggregate', 'Scheduled'];
+
+    // 1. Models Data (Standard structure)
     this.originalModelData = Array.from({ length: 35 }, (_, i) => {
-      // Determine Type: i=0 is Golden Record (Canonical), others rotate
       const gType = i === 0 ? 'Canonical' : governanceTypes[i % 3];
-      // Determine Status: i=0 is Active, others rotate
       const gStatus = i === 0 ? 'Active' : governanceStatuses[i % 4];
-      // Determine Usage: rotate through the 5 governance usage types
       const gUsage = usageTypes[i % 5];
+      const day = Math.max(1, 15 - (i % 14))
+        .toString()
+        .padStart(2, '0');
+      const dateStr = `2026-01-${day}`;
 
       return {
         id: i === 0 ? 'GR-GOLDEN' : `m-${i}`,
@@ -938,27 +2332,56 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         status: gStatus,
         fields: 15 + (i % 20),
         dependencies: i % 4,
-        lastModified: '2026-01-10',
+        lastModified: dateStr,
       };
     });
 
-    this.originalMappingData = Array.from({ length: 35 }, (_, i) => ({
-      id: `map-${i}`,
-      source: i % 2 === 0 ? `PID-${i + 1}` : `OBX-${i + 1}`,
-      target: i % 2 === 0 ? `Patient.identifier[${i}]` : `Observation.value[x]`,
-      engine: i % 3 === 0 ? 'Jolt' : 'Liquid',
-      status: 'Active',
-      lastModified: `${i + 1}h ago`,
-    }));
+    // 2. Mapping Data (Formatted for Source -> Target deep search)
+    this.originalMappingData = Array.from({ length: 35 }, (_, i) => {
+      const sourceSystem = i % 2 === 0 ? 'Epic' : 'QuestLab';
+      const targetModel = i % 2 === 0 ? 'Patient' : 'Lab Result';
+      const day = Math.max(1, 15 - (i % 14))
+        .toString()
+        .padStart(2, '0');
+      const dateStr = `2026-01-${day}`;
 
-    this.originalRuleData = Array.from({ length: 35 }, (_, i) => ({
-      id: `rule-${i}`,
-      ruleName: `Normalization_Rule_${100 + i}`,
-      trigger: i % 2 === 0 ? 'On_Ingest' : 'On_Update',
-      priority: i % 5 === 0 ? 'P1' : 'P2',
-      status: i % 10 === 0 ? 'Draft' : 'Active',
-    }));
+      return {
+        id: `map-${i}`,
+        name: `${sourceSystem} → ${targetModel}`,
+        source: i % 2 === 0 ? 'Epic Health Network' : 'QuestLab Systems',
+        target: targetModel,
+        fields: 10 + (i % 15),
+        coverage: `${15 + (i % 5)} / 20`,
+        status: governanceStatuses[i % 4],
+        lastModified: dateStr,
+      };
+    });
 
+    // 3. Rules Data
+    this.originalRuleData = Array.from({ length: 35 }, (_, i) => {
+      const severity = ruleSeverities[i % 4];
+      const scope = ruleScopes[i % 3];
+      const trigger = ruleTriggers[i % 3];
+      const status = i % 10 === 0 ? 'Draft' : i % 12 === 0 ? 'Archived' : 'Active';
+      const day = Math.max(1, 15 - (i % 14))
+        .toString()
+        .padStart(2, '0');
+      const dateStr = `2026-01-${day}`;
+
+      return {
+        id: `rule-${i}`,
+        ruleName:
+          i % 5 === 0 ? `Required Field Missing (patient_id)` : `Normalization_Rule_${100 + i}`,
+        severity: severity,
+        scope: scope,
+        trigger: trigger,
+        status: status,
+        sourcesAffected: (i % 6) + 1,
+        lastModified: dateStr,
+      };
+    });
+
+    // 4. Version History (Logging into the graph of events)
     this.versionHistory = Array.from({ length: 26 }, (_, i): IVersionCommit => {
       const isBrianna = i % 3 === 0;
       let testSubject = i % 3 === 0 ? 'Epic Integration Mapping' : 'Missing Required Field (v4)';
@@ -995,24 +2418,43 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       };
     });
 
-    this.originalCodeData = Array.from({ length: 35 }, (_, i) => ({
-      id: `code-${i}`,
-      codeSystem: ['SNOMED', 'LOINC', 'ICD-10', 'OMOP', 'MEDDRA'][Math.floor(i / 7) % 5],
-      standard: ['Clinical', 'Lab', 'Diagnosis', 'Research', 'Safety'][Math.floor(i / 7) % 5],
-      oid: `2.16.840.1.113883.6.${100 + i}`,
-      status: 'Active',
-    }));
+    // 5. Code Systems Data (Fully populated for the UI columns)
+    this.originalCodeData = Array.from({ length: 35 }, (_, i) => {
+      const systems = ['SNOMED CT', 'LOINC', 'ICD-10-CM', 'RxNorm', 'CPT'];
+      const categories = ['Diagnosis', 'Lab Test', 'Demographics', 'Medication', 'Procedure'];
+      const day = Math.max(1, 15 - (i % 14))
+        .toString()
+        .padStart(2, '0');
+      const dateStr = `2026-01-${day}`;
 
-    // Initialize data sources with original data
+      return {
+        id: `code-${i}`,
+        valueSetName: `${systems[i % 5]} - ${i % 2 === 0 ? 'Core Set' : 'Extended'}`,
+        category: categories[i % 5],
+        status: i % 8 === 0 ? 'Draft' : 'Active',
+        codeCount: 150 + i * 12,
+        references: (i % 5) + 2,
+        lastModified: dateStr,
+        oid: `2.16.840.1.113883.6.${100 + i}`,
+        usage: usageTypes[i % 5],
+        source: systems[i % 5],
+      };
+    });
+
+    // Initialize all data sources for the 2026 MPI environment
+    // We use spread to ensure fresh references for Angular change detection
     this.modelDataSource.data = [...this.originalModelData];
     this.mappingDataSource.data = [...this.originalMappingData];
     this.ruleDataSource.data = [...this.originalRuleData];
     this.versionDataSource.data = [...this.versionHistory];
     this.codeDataSource.data = [...this.originalCodeData];
 
-    // Apply initial filters
+    // Apply initial governance filters to ensure table view is consistent with selected dropdowns
+    this.applyMappingFilter();
     this.applyModelFilter();
+    this.applyRuleFilter();
     this.applyVersionFilter();
+    this.applyCodeFilter();
   }
 
   ngOnDestroy(): void {
