@@ -8,6 +8,8 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import dayjs from 'dayjs';
+import * as _ from 'lodash';
 import { Subscription } from 'rxjs';
 
 // Material Imports
@@ -30,6 +32,34 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EventService } from '@modules/events/services/event.service';
 import { EventState } from '@modules/events/states/event.state';
 import { Store } from '@ngrx/store';
+
+// --- INTERFACES FOR RECORD VIEW LOGIC ---
+export interface TimelineEvent {
+  type: 'visit' | 'lab' | 'note' | 'med' | 'merge';
+  time: string;
+  title: string;
+  location: string;
+  provider: string;
+  sourceSystem: string;
+  status?: string;
+  value?: string;
+  unit?: string;
+  isAbnormal?: boolean;
+}
+
+export interface TimelineGroup {
+  date: string;
+  summary: string;
+  isExpanded: boolean;
+  events: TimelineEvent[];
+}
+
+export interface SourceCoverage {
+  name: string;
+  count: number;
+  trend: string;
+  icon: string;
+}
 
 export function getIdentityPaginatorIntl() {
   const paginatorIntl = new MatPaginatorIntl();
@@ -83,16 +113,31 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
   mergeDataSource = new MatTableDataSource<any>([]);
   confidenceDataSource = new MatTableDataSource<any>([]);
 
+  // Buffers for manual filtering
+  private originalIndexData: any[] = [];
+  private originalMergeData: any[] = [];
+  private originalConfidenceData: any[] = [];
+
   // Selection State
   selectedRecord: any | null = null;
   selectedMergeCandidate: any | null = null;
+  selectedConfidenceRecord: any | null = null;
+  selectedPatient: any = {
+    photoUrl: '',
+    name: '',
+    mrn: '',
+    upi: '',
+    dob: '',
+    age: '',
+    gender: '',
+    masterName: '',
+  };
 
-  // ViewChildren restored for Sorting and Pagination
+  // ViewChildren for Sorting and Pagination
   @ViewChild('indexSort') indexSort!: MatSort;
   @ViewChild('indexPaginator') indexPaginator!: MatPaginator;
   @ViewChild('mergeSort') mergeSort!: MatSort;
   @ViewChild('mergePaginator') mergePaginator!: MatPaginator;
-  // Add ViewChild for confidence tab
   @ViewChild('confidenceSort') confidenceSort!: MatSort;
   @ViewChild('confidencePaginator') confidencePaginator!: MatPaginator;
 
@@ -108,7 +153,6 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
   mergeSelectedDelta = 'Any';
 
   // Confidence Tab State
-  selectedConfidenceRecord: any | null = null;
   confidenceSearch = '';
   confidenceSelectedStatus = 'All';
   confidenceSelectedImpact = 'All';
@@ -116,6 +160,11 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
   confidenceThreshold = 5.4;
   warningThreshold = 75;
   showBelowWarningBanner = true;
+
+  // PROPERTIES FOR TIMELINE LOGIC
+  allExpanded = true;
+  timelineGroups: TimelineGroup[] = [];
+  sourceCoverage: SourceCoverage[] = [];
 
   // Filter Options
   sources = [
@@ -140,7 +189,6 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     'actions',
   ];
   mergeColumns = ['candidate', 'impact', 'status', 'delta', 'conflictEvents', 'actions'];
-
   confidenceColumns = ['masterName', 'score', 'trend', 'lastActivity', 'source', 'actions'];
 
   range = new FormGroup({
@@ -185,9 +233,7 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     private store: Store<{ nf: EventState }>,
     private eventService: EventService,
     private cdr: ChangeDetectorRef,
-  ) {
-    this.setupFilterPredicates();
-  }
+  ) {}
 
   ngOnInit(): void {
     this.subscriptions.add(
@@ -198,10 +244,13 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
       }),
     );
     this.loadInitialMpiData();
+    this.initTimelineData();
+    this.initSourceCoverage();
   }
 
   ngAfterViewInit(): void {
     this.rebindDataSources();
+    this.cdr.detectChanges();
   }
 
   private rebindDataSources(): void {
@@ -221,78 +270,168 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  getConfidenceLevel(score: number): string {
-    if (score >= 85) return 'high';
-    if (score >= 60) return 'medium';
-    return 'low';
+  // --- HYDRATION LOGIC: Ensure Record View (Tab 3) stays in sync ---
+  private hydrateRecordView(record: any): void {
+    if (!record) return;
+
+    // Standardize data from different sources (Index, Merge, or Confidence)
+    this.selectedPatient = {
+      ...record,
+      masterName: record.masterName || record.candidate || 'Unknown Identity',
+      mrn: record.externalIds
+        ? String(record.externalIds).split(',')[0]
+        : record.internalId || 'N/A',
+      upi: record.internalId || 'N/A',
+      // Ensure visual assets carry over
+      photoUrl: record.avatar || record.avatarA || this.selectedPatient.photoUrl,
+    };
+
+    console.log('[UI STATE] Record View hydrated with:', this.selectedPatient.upi);
   }
 
   onTabChange(event: any): void {
     this.activeTabIndex = event.index;
-    this.selectedRecord = null;
-    this.selectedMergeCandidate = null;
-    this.selectedConfidenceRecord = null;
-    setTimeout(() => this.rebindDataSources(), 0);
+
+    // We removed the auto-reset to firstRecord here.
+    // Tab 3 will now persist the last clicked record from any other tab.
+
+    setTimeout(() => {
+      this.rebindDataSources();
+      this.cdr.detectChanges();
+    }, 0);
   }
 
-  private setupFilterPredicates(): void {
-    // Index Tab Predicate
-    this.indexDataSource.filterPredicate = (data, filter) => {
-      const searchTerms = JSON.parse(filter);
-      const matchesSearch =
-        !searchTerms.search ||
-        data.masterName.toLowerCase().includes(searchTerms.search) ||
-        data.internalId.toLowerCase().includes(searchTerms.search) ||
-        data.externalIds.toLowerCase().includes(searchTerms.search);
-      const matchesSource =
-        searchTerms.source === 'All' || data.sourceList.includes(searchTerms.source);
-      const matchesStatus = searchTerms.status === 'All' || data.status === searchTerms.status;
-      const matchesConfidence =
-        searchTerms.confidence === 'All' || data.confidence === searchTerms.confidence;
-      return matchesSearch && matchesSource && matchesStatus && matchesConfidence;
-    };
+  // --- SELECTION HANDLERS ---
 
-    // Merge Tab Predicate
-    this.mergeDataSource.filterPredicate = (data, filter) => {
-      const searchTerms = JSON.parse(filter);
-      const matchesSearch =
-        !searchTerms.search || data.candidate.toLowerCase().includes(searchTerms.search);
-      const matchesStatus = searchTerms.status === 'All' || data.status === searchTerms.status;
-      const matchesDelta =
-        searchTerms.delta === 'Any' || (searchTerms.delta === 'Positive' ? data.delta > 0 : true);
-      return matchesSearch && matchesStatus && matchesDelta;
-    };
+  onSelectRecord(record: any): void {
+    // Toggle logic for the side panel in Index tab
+    this.selectedRecord = this.selectedRecord?.id === record.id ? null : record;
 
-    // Add to setupFilterPredicates() method:
-    this.confidenceDataSource.filterPredicate = (data, filter) => {
-      const searchTerms = JSON.parse(filter);
-      const matchesSearch =
-        !searchTerms.search || data.masterName.toLowerCase().includes(searchTerms.search);
-      const matchesStatus =
-        searchTerms.status === 'All' ||
-        (searchTerms.status === 'Above Threshold'
-          ? data.score >= 75
-          : data.score < this.warningThreshold);
-      const matchesImpact =
-        searchTerms.impact === 'All' ||
-        (searchTerms.impact === 'High' ? data.impact > 3 : data.impact <= 3);
-      const matchesDelta =
-        searchTerms.delta === 'All' ||
-        (searchTerms.delta === 'Increasing' ? data.trendValue > 0 : data.trendValue < 0);
-      return matchesSearch && matchesStatus && matchesImpact && matchesDelta;
-    };
+    // Update the shared Record View state
+    this.hydrateRecordView(record);
   }
 
-  // INDEX FILTERS
-  applyIndexFilter(): void {
-    const filterPayload = {
-      search: this.indexSearch.trim().toLowerCase(),
-      source: this.selectedSource,
-      status: this.selectedStatus,
-      confidence: this.selectedConfidence,
-    };
-    this.indexDataSource.filter = JSON.stringify(filterPayload);
+  onSelectMerge(candidate: any): void {
+    // Toggle logic for the side panel in Merge tab
+    this.selectedMergeCandidate =
+      this.selectedMergeCandidate?.id === candidate.id ? null : candidate;
+
+    // Update the shared Record View state
+    this.hydrateRecordView(candidate);
   }
+
+  onSelectConfidenceRecord(record: any): void {
+    // Toggle logic for the side panel in Confidence tab
+    this.selectedConfidenceRecord = this.selectedConfidenceRecord?.id === record.id ? null : record;
+
+    // Update the shared Record View state
+    this.hydrateRecordView(record);
+  }
+
+  // --- MANUAL FILTER IMPLEMENTATIONS ---
+
+  private deepMatch(obj: any, term: string): boolean {
+    if (_.isNil(obj)) return false;
+    if (!_.isObject(obj)) {
+      return String(obj).toLowerCase().includes(term);
+    }
+    if (_.isArray(obj)) {
+      return _.some(obj, item => this.deepMatch(item, term));
+    }
+    return _.some(_.entries(obj), ([key, value]) => {
+      return key.toLowerCase().includes(term) || this.deepMatch(value, term);
+    });
+  }
+
+  public applyIndexFilter(): void {
+    let filtered = [...this.originalIndexData];
+    const search = (this.indexSearch || '').toLowerCase().trim();
+
+    if (search) {
+      filtered = filtered.filter(item => this.deepMatch(item, search));
+    }
+
+    if (this.selectedSource !== 'All') {
+      filtered = filtered.filter(item => item.sourceList?.includes(this.selectedSource));
+    }
+
+    if (this.selectedStatus !== 'All') {
+      filtered = filtered.filter(item => item.status === this.selectedStatus);
+    }
+
+    if (this.selectedConfidence !== 'All') {
+      filtered = filtered.filter(item => item.confidence === this.selectedConfidence);
+    }
+
+    this.indexDataSource.data = filtered;
+    if (this.indexPaginator) this.indexPaginator.firstPage();
+    this.cdr.detectChanges();
+  }
+
+  public applyMergeFilter(): void {
+    let filtered = [...this.originalMergeData];
+    const search = (this.mergeSearch || '').toLowerCase().trim();
+
+    if (search) {
+      filtered = filtered.filter(item => this.deepMatch(item, search));
+    }
+
+    if (this.mergeSelectedStatus !== 'All') {
+      filtered = filtered.filter(item => item.status === this.mergeSelectedStatus);
+    }
+
+    if (this.mergeSelectedDelta === 'Positive') {
+      filtered = filtered.filter(item => item.delta > 0);
+    }
+
+    this.mergeDataSource.data = filtered;
+    if (this.mergePaginator) this.mergePaginator.firstPage();
+    this.cdr.detectChanges();
+  }
+
+  public applyConfidenceFilter(): void {
+    let filtered = [...this.originalConfidenceData];
+    const search = (this.confidenceSearch || '').toLowerCase().trim();
+
+    if (search) {
+      filtered = filtered.filter(item => this.deepMatch(item, search));
+    }
+
+    if (this.confidenceSelectedStatus === 'Above Threshold') {
+      filtered = filtered.filter(item => item.score >= 75);
+    } else if (this.confidenceSelectedStatus === 'Below Threshold') {
+      filtered = filtered.filter(item => item.score < this.warningThreshold);
+    }
+
+    if (this.confidenceSelectedImpact === 'High') {
+      filtered = filtered.filter(item => item.impact > 3);
+    }
+
+    if (this.confidenceSelectedDelta === 'Increasing') {
+      filtered = filtered.filter(item => item.trendValue > 0);
+    } else if (this.confidenceSelectedDelta === 'Decreasing') {
+      filtered = filtered.filter(item => item.trendValue < 0);
+    }
+
+    const { start, end } = this.range.value;
+    if (start || end) {
+      const startBoundary = start ? dayjs(start).subtract(1, 'day').startOf('day') : null;
+      const endBoundary = end ? dayjs(end).endOf('day') : null;
+
+      filtered = filtered.filter(item => {
+        const itemDate = dayjs(item.lastUpdated || item.lastActivityTimestamp || new Date());
+        if (startBoundary && !itemDate.isAfter(startBoundary)) return false;
+        if (endBoundary && itemDate.isAfter(endBoundary)) return false;
+        return true;
+      });
+    }
+
+    this.confidenceDataSource.data = filtered;
+    if (this.confidencePaginator) this.confidencePaginator.firstPage();
+    this.cdr.detectChanges();
+  }
+
+  // --- UI SETTERS ---
 
   setSourceFilter(val: string): void {
     this.selectedSource = val;
@@ -306,17 +445,6 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     this.selectedConfidence = val;
     this.applyIndexFilter();
   }
-
-  // MERGE FILTERS
-  applyMergeFilter(): void {
-    const filterPayload = {
-      search: this.mergeSearch.trim().toLowerCase(),
-      status: this.mergeSelectedStatus,
-      delta: this.mergeSelectedDelta,
-    };
-    this.mergeDataSource.filter = JSON.stringify(filterPayload);
-  }
-
   setMergeStatus(val: string): void {
     this.mergeSelectedStatus = val;
     this.applyMergeFilter();
@@ -325,37 +453,14 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mergeSelectedDelta = val;
     this.applyMergeFilter();
   }
-
-  onSelectRecord(record: any): void {
-    this.selectedRecord = this.selectedRecord?.id === record.id ? null : record;
-  }
-
-  onSelectMerge(candidate: any): void {
-    this.selectedMergeCandidate =
-      this.selectedMergeCandidate?.id === candidate.id ? null : candidate;
-  }
-
-  // Add filter methods:
-  applyConfidenceFilter(): void {
-    const filterPayload = {
-      search: this.confidenceSearch.trim().toLowerCase(),
-      status: this.confidenceSelectedStatus,
-      impact: this.confidenceSelectedImpact,
-      delta: this.confidenceSelectedDelta,
-    };
-    this.confidenceDataSource.filter = JSON.stringify(filterPayload);
-  }
-
   setConfidenceStatusFilter(val: string): void {
     this.confidenceSelectedStatus = val;
     this.applyConfidenceFilter();
   }
-
   setConfidenceImpactFilter(val: string): void {
     this.confidenceSelectedImpact = val;
     this.applyConfidenceFilter();
   }
-
   setConfidenceDeltaFilter(val: string): void {
     this.confidenceSelectedDelta = val;
     this.applyConfidenceFilter();
@@ -367,14 +472,10 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     } else if (direction === 'subtract' && this.confidenceThreshold > 0.1) {
       this.confidenceThreshold = Math.round((this.confidenceThreshold - 0.1) * 10) / 10;
     }
-  }
-
-  onSelectConfidenceRecord(record: any): void {
-    this.selectedConfidenceRecord = this.selectedConfidenceRecord?.id === record.id ? null : record;
+    this.cdr.detectChanges();
   }
 
   resolveConfidenceRecord(record: any): void {
-    console.log('Resolving confidence record:', record);
     this.execute_merge_query_with_context(
       'CONFIDENCE_RESOLVE',
       record.internalId,
@@ -388,6 +489,73 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     return 'score-low';
   }
 
+  getConfidenceLevel(score: number): string {
+    if (score >= 85) return 'high';
+    if (score >= 60) return 'medium';
+    return 'low';
+  }
+
+  private initTimelineData(): void {
+    this.timelineGroups = [
+      {
+        date: 'April 18, 2024',
+        summary: '11:15 AM - 12:30 PM • MediBridge Clinic • Patel',
+        isExpanded: true,
+        events: [
+          {
+            type: 'visit',
+            time: '11:15 AM',
+            title: 'Scheduled Visit',
+            location: 'MediBridge Clinic',
+            provider: 'Patel',
+            sourceSystem: 'Epic Health Network',
+          },
+          {
+            type: 'lab',
+            time: '11:45 AM',
+            title: 'QuestQuant CBC / Differential',
+            location: 'Lab',
+            provider: 'System',
+            sourceSystem: 'QuestLab Systems',
+            value: '20.9',
+            unit: 'Abnormal',
+            isAbnormal: true,
+          },
+        ],
+      },
+      {
+        date: 'March 10, 2024',
+        summary: '09:00 AM • Telehealth • Richards',
+        isExpanded: true,
+        events: [
+          {
+            type: 'note',
+            time: '09:00 AM',
+            title: 'Clinical Progress Note',
+            location: 'Remote',
+            provider: 'Richards',
+            sourceSystem: 'AthenaClarity EMR',
+          },
+        ],
+      },
+    ];
+  }
+
+  private initSourceCoverage(): void {
+    this.sourceCoverage = [
+      { name: 'Epic Health Network', count: 18, trend: '2y', icon: 'local_hospital' },
+      { name: 'MediBridge Clinic', count: 21, trend: '1y', icon: 'medical_services' },
+      { name: 'CSV Import', count: 20, trend: '2m', icon: 'description' },
+    ];
+  }
+
+  toggleAllGroups(): void {
+    this.allExpanded = !this.allExpanded;
+    this.timelineGroups.forEach(g => (g.isExpanded = this.allExpanded));
+    this.cdr.detectChanges();
+  }
+
+  // CORE REQUIREMENT: Transaction Traceability [cite: 2025-12-20, 2026-01-01]
   execute_merge_query_with_context(
     pattern: string,
     patientId: string,
@@ -412,6 +580,7 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
       author: 'admin_user',
       subject: `${goldenRecordName} (${patientId})`,
     });
+    this.cdr.detectChanges();
   }
 
   executeMerge(): void {
@@ -478,6 +647,7 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
         dob: 'Sep 25, 1956',
         age: 69,
         gender: i % 2 === 0 ? 'Male' : 'Female',
+        photoUrl: this.avatarLinks[i % this.avatarLinks.length],
       });
     }
 
@@ -494,60 +664,41 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
         status: mergeStatuses[j % 3],
         delta: Math.floor(Math.random() * 15) + 1,
         ruleTrigger: 'Threshold Match',
-        conflicts: [
-          { type: 'Phone mismatch', details: 'Mobile vs Work' },
-          { type: 'Address delta', details: 'St. vs Ave' },
-        ],
+        conflicts: [{ type: 'Phone mismatch', details: 'Mobile vs Work' }],
       });
     }
 
+    this.originalIndexData = [...indexRecords];
+    this.originalMergeData = [...mergeRecords];
     this.indexDataSource.data = indexRecords;
     this.mergeDataSource.data = mergeRecords;
 
-    // Replace the existing confidenceDataSource data population in loadInitialMpiData():
-    this.confidenceDataSource.data = indexRecords.map((r, idx) => {
-      const score = Math.floor(Math.random() * (99 - 40 + 1)) + 40;
-      const trendValue = (Math.random() - 0.5) * 0.2;
-      const activities = [
-        {
-          source: 'QuestLab Systems',
-          icon: 'biotech',
-          iconClass: 'quest',
-          status: '-- --',
-          time: '1 hour ago',
-        },
-        {
-          source: 'Epic Health Network',
-          icon: 'local_hospital',
-          iconClass: 'epic',
-          status: '',
-          time: '3 months ago',
-        },
-        {
-          source: 'CSV Import',
-          icon: 'description',
-          iconClass: 'csv',
-          status: '',
-          time: '3 months ago',
-        },
-      ];
-
+    const confidenceList = indexRecords.map((r, idx) => {
       return {
         id: `conf-${idx}`,
         masterName: r.masterName,
         avatar: r.avatar,
         internalId: r.internalId,
-        score: score,
-        trendValue: trendValue,
-        trendPercent: Math.round(score - 10),
-        lastActivityDisplay: idx % 5 === 0 ? '3 days' : idx % 3 === 0 ? '2 weeks' : '4 days',
+        score: Math.floor(Math.random() * (99 - 40 + 1)) + 40,
+        trendValue: (Math.random() - 0.5) * 0.2,
+        trendPercent: 70,
+        lastActivityDisplay: '3 days',
         source: r.sourceList[0] || 'CSV Import',
         impact: r.impact,
         dateOfBirth: 'May 7, 1948 (93)',
         gender: r.gender,
-        activities: activities,
+        activities: [{ source: 'QuestLab Systems', icon: 'biotech', time: '1 hour ago' }],
+        lastActivityTimestamp: dayjs().subtract(idx, 'day').toISOString(),
       };
     });
+
+    this.originalConfidenceData = [...confidenceList];
+    this.confidenceDataSource.data = confidenceList;
+
+    // Initial default hydration
+    if (indexRecords.length > 0) {
+      this.hydrateRecordView(indexRecords[0]);
+    }
   }
 
   ngOnDestroy(): void {

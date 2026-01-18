@@ -1,5 +1,5 @@
-<div class="normalization-main-container">
-  <header class="normalization-header">
+<div class="identity-main-container">
+  <header class="identity-header">
     <div class="breadcrumb-area">
       <div class="breadcrumb">Identity Management</div>
       <div class="title-row">
@@ -22,7 +22,7 @@
   <div class="table-card">
     <div class="tabs-section">
       <mat-tab-group
-        class="normalization-tabs"
+        class="identity-tabs"
         [(selectedIndex)]="activeTabIndex"
         (selectedTabChange)="onTabChange($event)">
         <mat-tab label="Index"></mat-tab>
@@ -448,8 +448,11 @@
                   <mat-icon>verified</mat-icon> Confirm & Merge Golden Record
                 </button>
                 <p class="logging-hint">
-                  This transaction will be logged to the MPI Graph of Events via
-                  <code>execute_merge_query_with_context</code>.
+                  <mat-icon style="font-size: 14px; height: 14px; width: 14px"
+                    >account_tree</mat-icon
+                  >
+                  This transaction is logged via <code>execute_merge_query_with_context</code> to
+                  the MPI Graph of Events.
                 </p>
               </div>
             </div>
@@ -530,13 +533,15 @@
           </mat-menu>
         </div>
 
-        <div class="threshold-warning-banner" *ngIf="showBelowWarningBanner">
-          <mat-icon>add_circle</mat-icon>
-          <span>Below Warning Threshold (≤.{{ warningThreshold }})</span>
-          <button mat-icon-button class="plus-btn">
-            <mat-icon>add</mat-icon>
-          </button>
-        </div>
+        @if (showBelowWarningBanner) {
+          <div class="threshold-warning-banner">
+            <mat-icon>add_circle</mat-icon>
+            <span>Below Warning Threshold (≤.{{ warningThreshold }})</span>
+            <button mat-icon-button class="close-btn" (click)="showBelowWarningBanner = false">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
 
         <div class="split-container">
           <div class="main-list" [style.flex]="selectedConfidenceRecord ? '0 0 65%' : '1 1 100%'">
@@ -600,7 +605,7 @@
               </ng-container>
 
               <ng-container matColumnDef="source">
-                <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Activity</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Activity Source</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="muted-text">{{ row.source }}</span>
                 </td>
@@ -740,88 +745,154 @@
     }
 
     @if (activeTabIndex === 3) {
-      <div class="tab-content timeline-container" style="padding: 24px">
-        <div
-          class="timeline-header"
-          style="
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-          ">
-          <h3>Graph of Events Trace</h3>
-          <p style="opacity: 0.6; font-size: 13px">
-            Audit history of transactions related to specific patient golden records.
-          </p>
-        </div>
+      <div class="record-view-layout">
+        <div class="record-main-content">
+          <div class="patient-profile-header">
+            <img
+              [src]="selectedPatient.photoUrl || 'assets/avatars/default-patient.png'"
+              class="patient-avatar"
+              alt="Patient Photo" />
 
-        @for (tx of historyData; track tx.hash) {
-          <div
-            class="timeline-card"
-            style="
-              background: white;
-              border: 1px solid rgba(0, 0, 0, 0.1);
-              border-radius: 6px;
-              margin-bottom: 16px;
-              overflow: hidden;
-            ">
-            <div
-              class="card-header"
-              style="
-                padding: 12px 16px;
-                background: rgba(0, 0, 0, 0.02);
-                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-                display: flex;
-                align-items: center;
-                gap: 16px;
-              ">
-              <span class="rel-time" style="font-weight: 700; font-size: 13px">{{
-                tx.relativeTime
-              }}</span>
-              <code
-                class="hash"
-                style="background: #e0e0e0; padding: 2px 6px; border-radius: 3px; font-size: 11px"
-                >{{ tx.hash }}</code
-              >
-              <span class="author" style="opacity: 0.7; font-size: 12px"
-                >User: {{ tx.author }}</span
-              >
-              <span
-                class="status-pill logged-to-graph"
-                style="
-                  margin-left: auto;
-                  font-size: 10px;
-                  background: #e8f5e9;
-                  color: #2e7d32;
-                  padding: 2px 8px;
-                  border-radius: 10px;
-                  font-weight: 600;
-                  text-transform: uppercase;
-                ">
-                Verified In Graph
-              </span>
-            </div>
-            <div class="card-body" style="padding: 16px">
-              <div style="display: flex; align-items: flex-start; gap: 12px">
-                <mat-icon style="color: #436d9d">hub</mat-icon>
-                <div>
-                  <div
-                    style="
-                      font-family: 'Roboto Mono', monospace;
-                      font-size: 13px;
-                      color: #436d9d;
-                      font-weight: 600;
-                    ">
-                    execute_merge_query_with_context()
-                  </div>
-                  <div style="font-size: 14px; margin-top: 4px">
-                    Identity pattern applied to:
-                    <span style="font-weight: 600">{{ tx.subject }}</span>
-                  </div>
-                </div>
+            <div class="patient-info-block">
+              <div class="name-row">
+                <h1>{{ selectedPatient.masterName || 'Unnamed Patient' }}</h1>
+                <mat-icon color="primary" matTooltip="Verified Identity">verified</mat-icon>
+              </div>
+
+              <div class="meta-row">
+                <span class="id-tag">MRN: {{ selectedPatient.mrn }}</span>
+                <span class="id-tag">UPI: {{ selectedPatient.upi }}</span>
+                <span class="divider">|</span>
+                <span class="label">DOB:</span>
+                <span class="value">{{ selectedPatient.dob }}</span>
+                <span class="label">Age:</span>
+                <span class="value">{{ selectedPatient.age }}</span>
+                <span class="label">Gender:</span>
+                <span class="value">{{ selectedPatient.gender }}</span>
               </div>
             </div>
           </div>
-        }
+
+          <div class="timeline-container">
+            <div class="timeline-controls">
+              <div class="control-left" (click)="toggleAllGroups()">
+                <mat-icon>{{
+                  allExpanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'
+                }}</mat-icon>
+                <span>{{ allExpanded ? 'Collapse All Activity' : 'Expand All Activity' }}</span>
+              </div>
+              <div class="control-right">
+                <button mat-icon-button matTooltip="Filter Timeline">
+                  <mat-icon>filter_list</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Print Record">
+                  <mat-icon>print</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="timeline-scroll-area">
+              @for (group of timelineGroups; track group.date) {
+                <div class="timeline-group">
+                  <div class="group-header">{{ group.date }} — {{ group.summary }}</div>
+
+                  @if (group.isExpanded) {
+                    @for (event of group.events; track event.time) {
+                      <div
+                        class="event-card"
+                        [class.lab-test]="event.type === 'lab'"
+                        [class.warning]="event.isAbnormal">
+                        <div class="event-header">
+                          <span class="time">{{ event.time }}</span>
+                          <span class="type-badge">{{ event.type }}</span>
+                        </div>
+
+                        <div class="event-title">{{ event.title }}</div>
+
+                        @if (event.value) {
+                          <div class="alert-text">
+                            Result: {{ event.value }} {{ event.unit }}
+                            @if (event.isAbnormal) {
+                              <mat-icon style="font-size: 14px; height: 14px; width: 14px"
+                                >error</mat-icon
+                              >
+                            }
+                          </div>
+                        }
+
+                        <div class="event-location">
+                          {{ event.location }} • {{ event.provider }}
+                          <span style="color: #bdc1c6; margin: 0 4px">|</span>
+                          <span class="source-link">
+                            <mat-icon
+                              style="
+                                font-size: 12px;
+                                height: 12px;
+                                width: 12px;
+                                vertical-align: middle;
+                              "
+                              >link</mat-icon
+                            >
+                            {{ event.sourceSystem }}
+                          </span>
+                        </div>
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="record-sidebar">
+          <div class="sidebar-card">
+            <div class="card-title">
+              <mat-icon>analytics</mat-icon>
+              Source Coverage
+            </div>
+            <div class="coverage-list">
+              @for (source of sourceCoverage; track source.name) {
+                <div class="coverage-item">
+                  <mat-icon>{{ source.icon }}</mat-icon>
+                  <span class="name">{{ source.name }}</span>
+                  <span class="count">{{ source.count }}</span>
+                  <span class="period">{{ source.trend }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="sidebar-card">
+            <div class="card-title">
+              <mat-icon>account_tree</mat-icon>
+              Graph of Events Trace
+            </div>
+
+            <div class="graph-status-box">
+              <div class="status-header">
+                <mat-icon>verified_user</mat-icon>
+                INTEGRITY VERIFIED
+              </div>
+              <p style="font-size: 11px; color: #5f6368; margin: 8px 0">
+                All MPI transactions are related to golden record
+                <strong>{{ selectedPatient.upi }}</strong
+                >.
+              </p>
+              <code class="method-log"> system.execute_merge_query_with_context() </code>
+            </div>
+
+            <div style="margin-top: 16px">
+              <button
+                mat-stroked-button
+                color="primary"
+                style="width: 100%; font-size: 12px"
+                (click)="executeMerge()">
+                <mat-icon>history_edu</mat-icon> View Change Log
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     }
   </div>
