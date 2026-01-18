@@ -1,1 +1,828 @@
-<p>identity.component works!</p>
+<div class="normalization-main-container">
+  <header class="normalization-header">
+    <div class="breadcrumb-area">
+      <div class="breadcrumb">Identity Management</div>
+      <div class="title-row">
+        <h1>{{ pageTitle }}</h1>
+      </div>
+      <p class="subtitle">{{ pageLegend }}</p>
+    </div>
+
+    <div class="workspace-area">
+      <mat-form-field appearance="outline" class="workspace-select">
+        <mat-select [(value)]="selectedEnv">
+          <mat-option value="Production">Production</mat-option>
+          <mat-option value="Staging">Staging</mat-option>
+          <mat-option value="Development">Development</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </header>
+
+  <div class="table-card">
+    <div class="tabs-section">
+      <mat-tab-group
+        class="normalization-tabs"
+        [(selectedIndex)]="activeTabIndex"
+        (selectedTabChange)="onTabChange($event)">
+        <mat-tab label="Index"></mat-tab>
+        <mat-tab label="Merge / Split"></mat-tab>
+        <mat-tab label="Confidence"></mat-tab>
+        <mat-tab label="Record View"></mat-tab>
+      </mat-tab-group>
+    </div>
+
+    @if (activeTabIndex === 0) {
+      <div class="tab-content index-tab-wrapper">
+        <div class="search-section">
+          <div class="search-bar-container">
+            <div class="search-box">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input
+                type="text"
+                class="search-input"
+                placeholder="Search Master Records (Name, ID, MRN)..."
+                [(ngModel)]="indexSearch"
+                (input)="applyIndexFilter()" />
+            </div>
+            <button mat-flat-button class="add-source-btn">
+              <mat-icon>person_add</mat-icon> New Golden Record
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="sourceMenu">
+            <mat-icon>hub</mat-icon> Source: <strong>{{ selectedSource }}</strong>
+            <mat-icon class="chevron">expand_more</mat-icon>
+          </button>
+          <mat-menu #sourceMenu="matMenu" class="governance-menu">
+            <button mat-menu-item (click)="setSourceFilter('All')">All Sources</button>
+            <div class="menu-divider">Configured Sources</div>
+            @for (src of sources; track src) {
+              <button mat-menu-item (click)="setSourceFilter(src)">{{ src }}</button>
+            }
+          </mat-menu>
+
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="statusMenu">
+            <mat-icon>verified</mat-icon> Status: <strong>{{ selectedStatus }}</strong>
+            <mat-icon class="chevron">expand_more</mat-icon>
+          </button>
+          <mat-menu #statusMenu="matMenu">
+            <button mat-menu-item (click)="setStatusFilter('All')">All Statuses</button>
+            @for (st of statuses; track st) {
+              <button mat-menu-item (click)="setStatusFilter(st)">{{ st }}</button>
+            }
+          </mat-menu>
+
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="confMenu">
+            <mat-icon>psychology</mat-icon> Confidence: <strong>{{ selectedConfidence }}</strong>
+            <mat-icon class="chevron">expand_more</mat-icon>
+          </button>
+          <mat-menu #confMenu="matMenu">
+            <button mat-menu-item (click)="setConfidenceFilter('All')">
+              All Confidence Levels
+            </button>
+            @for (cf of confidences; track cf) {
+              <button mat-menu-item (click)="setConfidenceFilter(cf)">{{ cf }}</button>
+            }
+          </mat-menu>
+        </div>
+
+        <div class="split-container">
+          <div class="main-list" [style.flex]="selectedRecord ? '0 0 65%' : '1 1 100%'">
+            <table
+              mat-table
+              [dataSource]="indexDataSource"
+              matSort
+              #indexSort="matSort"
+              class="full-width-table">
+              <ng-container matColumnDef="masterName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Master Name</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="identity-cell">
+                    <img [src]="row.avatar" class="row-avatar" alt="Avatar" />
+                    <span class="primary-text">{{ row.masterName }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="internalId">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Internal ID</th>
+                <td mat-cell *matCellDef="let row">
+                  <code>{{ row.internalId }}</code>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="externalIds">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>MRN / External IDs</th>
+                <td mat-cell *matCellDef="let row" class="muted-text" style="font-size: 12px">
+                  {{ row.externalIds }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="sources">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Sources</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="source-icon-container">
+                    @for (source of row.sourceList; track source) {
+                      <div class="source-icon-wrapper" [matTooltip]="source">
+                        @if (source === 'Epic Health Network') {
+                          <mat-icon class="src-icon epic">local_hospital</mat-icon>
+                        } @else if (source === 'QuestLab Systems') {
+                          <mat-icon class="src-icon quest">biotech</mat-icon>
+                        } @else if (source === 'ClaimsCare Solutions') {
+                          <mat-icon class="src-icon claims">receipt_long</mat-icon>
+                        } @else if (source === 'HealthKit Devices') {
+                          <mat-icon class="src-icon healthkit">watch</mat-icon>
+                        } @else if (source === 'CSV File Import') {
+                          <mat-icon class="src-icon csv">description</mat-icon>
+                        } @else if (source === 'AthenaClarity EMR') {
+                          <mat-icon class="src-icon athena">medical_services</mat-icon>
+                        } @else {
+                          <mat-icon class="src-icon">database</mat-icon>
+                        }
+                      </div>
+                    }
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                <td mat-cell *matCellDef="let row">
+                  <div
+                    class="status-pill"
+                    [ngClass]="row.status.toLowerCase().split(' ').join('-')">
+                    {{ row.status }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="confidence">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Confidence</th>
+                <td mat-cell *matCellDef="let row">
+                  <div
+                    class="conf-indicator"
+                    [ngClass]="row.confidence.toLowerCase().split(' ').join('-')">
+                    {{ row.confidence }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let row">
+                  <button
+                    mat-icon-button
+                    [matMenuTriggerFor]="rowMenu"
+                    (click)="$event.stopPropagation()">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #rowMenu="matMenu">
+                    <button mat-menu-item (click)="onSelectRecord(row)">
+                      <mat-icon>visibility</mat-icon><span>View Details</span>
+                    </button>
+                    <button mat-menu-item (click)="executeMerge()">
+                      <mat-icon>call_merge</mat-icon><span>Merge Record</span>
+                    </button>
+                  </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="indexColumns"></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: indexColumns"
+                class="clickable-row"
+                [class.selected-row]="selectedRecord?.id === row.id"
+                (click)="onSelectRecord(row)"></tr>
+            </table>
+
+            <mat-paginator
+              #indexPaginator
+              [pageSize]="10"
+              [pageSizeOptions]="[5, 10, 25, 50]"
+              showFirstLastButtons></mat-paginator>
+          </div>
+
+          @if (selectedRecord) {
+            <div class="side-panel">
+              <div class="panel-header">
+                <h3>Golden Record Details</h3>
+                <button mat-icon-button (click)="selectedRecord = null">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+
+              <div class="panel-content">
+                <div class="profile-summary">
+                  <img [src]="selectedRecord.avatar" class="panel-avatar" alt="Selected Avatar" />
+                  <div class="profile-text">
+                    <div class="master-name">{{ selectedRecord.masterName }}</div>
+                    <div
+                      class="status-pill"
+                      [ngClass]="selectedRecord.status.toLowerCase().split(' ').join('-')">
+                      {{ selectedRecord.status }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-item">
+                  <label>Internal MPI ID</label>
+                  <code>{{ selectedRecord.internalId }}</code>
+                </div>
+
+                <div class="stats-grid">
+                  <div class="stat-box">
+                    <div class="val">{{ selectedRecord.sourceList?.length || 0 }}</div>
+                    <div class="lab">Linked Systems</div>
+                  </div>
+                  <div class="stat-box">
+                    <div
+                      class="conf-indicator"
+                      [ngClass]="selectedRecord.confidence.toLowerCase().split(' ').join('-')">
+                      {{ selectedRecord.confidence }}
+                    </div>
+                    <div class="lab">Confidence Score</div>
+                  </div>
+                </div>
+
+                <button mat-flat-button class="panel-action-btn" (click)="executeMerge()">
+                  <mat-icon>call_merge</mat-icon> Execute Merge Pattern
+                </button>
+                <button mat-stroked-button class="panel-action-btn secondary">
+                  <mat-icon>history</mat-icon> Audit History
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTabIndex === 1) {
+      <div class="tab-content merge-tab-wrapper">
+        <div class="search-section">
+          <div class="search-bar-container">
+            <div class="search-box">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input
+                type="text"
+                class="search-input"
+                [(ngModel)]="mergeSearch"
+                (input)="applyMergeFilter()"
+                placeholder="Search merge candidates..." />
+            </div>
+            <div class="header-stat">
+              <span class="count">{{ mergeDataSource.filteredData.length }}</span> active candidates
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mStatusMenu">
+            Status: <strong>{{ mergeSelectedStatus }}</strong> <mat-icon>expand_more</mat-icon>
+          </button>
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mDeltaMenu">
+            Delta: <strong>{{ mergeSelectedDelta }}</strong> <mat-icon>expand_more</mat-icon>
+          </button>
+
+          <mat-menu #mStatusMenu="matMenu">
+            <button mat-menu-item (click)="setMergeStatus('All')">All</button>
+            <button mat-menu-item (click)="setMergeStatus('Pending')">Pending</button>
+            <button mat-menu-item (click)="setMergeStatus('Suggested')">Suggested</button>
+          </mat-menu>
+          <mat-menu #mDeltaMenu="matMenu">
+            <button mat-menu-item (click)="setMergeDelta('Any')">Any</button>
+            <button mat-menu-item (click)="setMergeDelta('Positive')">Positive (+)</button>
+          </mat-menu>
+        </div>
+
+        <div class="split-container">
+          <div class="main-list" [style.flex]="selectedMergeCandidate ? '0 0 65%' : '1 1 100%'">
+            <table
+              mat-table
+              [dataSource]="mergeDataSource"
+              matSort
+              #mergeSort="matSort"
+              class="full-width-table">
+              <ng-container matColumnDef="candidate">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Merge / Split Candidate</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="identity-cell">
+                    <div class="avatar-stack">
+                      <img [src]="row.avatarA" class="stack-img" alt="Avatar A" />
+                      <img [src]="row.avatarB" class="stack-img" alt="Avatar B" />
+                    </div>
+                    <span class="primary-text">{{ row.candidate }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="impact">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Impact</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="muted-text">{{ row.impact }} records</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                <td mat-cell *matCellDef="let row">
+                  <div
+                    class="status-pill"
+                    [ngClass]="row.status.toLowerCase().split(' ').join('-')">
+                    {{ row.status }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="delta">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Confidence Delta</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="delta-value" [class.positive]="row.delta > 0">
+                    {{ row.delta > 0 ? '+' : '' }}{{ row.delta }}%
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="conflictEvents">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Conflict Events</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="muted-text">{{ row.conflictEvents || 0 }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let row">
+                  <button
+                    mat-icon-button
+                    [matMenuTriggerFor]="mergeMenu"
+                    (click)="$event.stopPropagation()">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #mergeMenu="matMenu">
+                    <button mat-menu-item (click)="onSelectMerge(row)">
+                      <mat-icon>visibility</mat-icon><span>View Conflict Details</span>
+                    </button>
+                    <button mat-menu-item (click)="executeMerge()">
+                      <mat-icon>call_merge</mat-icon><span>Approve Merge</span>
+                    </button>
+                  </mat-menu>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="mergeColumns"></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: mergeColumns"
+                class="clickable-row"
+                [class.selected-row]="selectedMergeCandidate?.id === row.id"
+                (click)="onSelectMerge(row)"></tr>
+            </table>
+            <mat-paginator
+              #mergePaginator
+              [pageSize]="10"
+              [pageSizeOptions]="[5, 10, 25]"></mat-paginator>
+          </div>
+
+          @if (selectedMergeCandidate) {
+            <div class="side-panel merge-detail-panel">
+              <div class="panel-header">
+                <h3>Merge Comparison</h3>
+                <button mat-icon-button (click)="selectedMergeCandidate = null">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <div class="panel-content">
+                <div class="comparison-card">
+                  <div class="entity">
+                    <img
+                      [src]="selectedMergeCandidate.avatarA"
+                      class="comp-avatar"
+                      alt="Existing Record" />
+                    <div class="entity-name">
+                      {{ selectedMergeCandidate.candidate.split(' + ')[0] }}
+                    </div>
+                    <div class="entity-label">Existing Record</div>
+                  </div>
+
+                  <div class="bridge">
+                    <div class="confidence-circle">
+                      <span class="value">{{ selectedMergeCandidate.delta }}%</span>
+                    </div>
+                    <mat-icon>swap_horiz</mat-icon>
+                  </div>
+
+                  <div class="entity">
+                    <img
+                      [src]="selectedMergeCandidate.avatarB"
+                      class="comp-avatar"
+                      alt="Candidate" />
+                    <div class="entity-name">
+                      {{ selectedMergeCandidate.candidate.split(' + ')[1] }}
+                    </div>
+                    <div class="entity-label">Candidate</div>
+                  </div>
+                </div>
+
+                <div class="conflict-analysis-box">
+                  <h4>Data Conflict Analysis</h4>
+                  <div class="evidence-row">
+                    <span>Date of Birth</span>
+                    <span class="match-status match">MATCH</span>
+                  </div>
+                  <div class="evidence-row">
+                    <span>Gender</span>
+                    <span class="match-status match">MATCH</span>
+                  </div>
+                  <div class="evidence-row">
+                    <span>Phone (Last 4)</span>
+                    <span class="match-status mismatch">MISMATCH</span>
+                  </div>
+                </div>
+
+                <button mat-flat-button class="confirm-merge-btn" (click)="executeMerge()">
+                  <mat-icon>verified</mat-icon> Confirm & Merge Golden Record
+                </button>
+                <p class="logging-hint">
+                  This transaction will be logged to the MPI Graph of Events via
+                  <code>execute_merge_query_with_context</code>.
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTabIndex === 2) {
+      <div class="tab-content confidence-tab-wrapper">
+        <div class="search-section">
+          <div class="search-bar-container">
+            <div class="search-box">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input
+                type="text"
+                class="search-input"
+                placeholder="Search merge candidates by name, ID..."
+                [(ngModel)]="confidenceSearch"
+                (input)="applyConfidenceFilter()" />
+            </div>
+            <div class="header-stat">
+              <span class="count">{{ confidenceDataSource.filteredData.length }}</span> merge
+              candidates
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-actions confidence-filters">
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="confStatusMenu">
+            Status: <strong>{{ confidenceSelectedStatus }}</strong> <mat-icon>expand_more</mat-icon>
+          </button>
+          <mat-menu #confStatusMenu="matMenu">
+            <button mat-menu-item (click)="setConfidenceStatusFilter('All')">All</button>
+            <button mat-menu-item (click)="setConfidenceStatusFilter('Above Threshold')">
+              Above Threshold
+            </button>
+            <button mat-menu-item (click)="setConfidenceStatusFilter('Below Warning')">
+              Below Warning
+            </button>
+          </mat-menu>
+
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="confImpactMenu">
+            Impact: <strong>{{ confidenceSelectedImpact }}</strong> <mat-icon>expand_more</mat-icon>
+          </button>
+          <mat-menu #confImpactMenu="matMenu">
+            <button mat-menu-item (click)="setConfidenceImpactFilter('All')">All</button>
+            <button mat-menu-item (click)="setConfidenceImpactFilter('High')">High Impact</button>
+            <button mat-menu-item (click)="setConfidenceImpactFilter('Medium')">
+              Medium Impact
+            </button>
+          </mat-menu>
+
+          <div class="threshold-filter">
+            <button mat-icon-button class="threshold-btn" (click)="adjustThreshold('add')">
+              <mat-icon>add</mat-icon>
+            </button>
+            <span class="threshold-label">Threshold</span>
+            <mat-icon class="threshold-icon">tune</mat-icon>
+            <span class="threshold-value">≤ / {{ confidenceThreshold }}</span>
+            <button mat-icon-button class="threshold-btn" (click)="adjustThreshold('subtract')">
+              <mat-icon>remove</mat-icon>
+            </button>
+          </div>
+
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="confDeltaMenu">
+            Confidence Delta: <strong>{{ confidenceSelectedDelta }}</strong>
+            <mat-icon>expand_more</mat-icon>
+          </button>
+          <mat-menu #confDeltaMenu="matMenu">
+            <button mat-menu-item (click)="setConfidenceDeltaFilter('All')">All</button>
+            <button mat-menu-item (click)="setConfidenceDeltaFilter('Increasing')">
+              Increasing ↑
+            </button>
+            <button mat-menu-item (click)="setConfidenceDeltaFilter('Decreasing')">
+              Decreasing ↓
+            </button>
+          </mat-menu>
+        </div>
+
+        <div class="threshold-warning-banner" *ngIf="showBelowWarningBanner">
+          <mat-icon>add_circle</mat-icon>
+          <span>Below Warning Threshold (≤.{{ warningThreshold }})</span>
+          <button mat-icon-button class="plus-btn">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+
+        <div class="split-container">
+          <div class="main-list" [style.flex]="selectedConfidenceRecord ? '0 0 65%' : '1 1 100%'">
+            <table
+              mat-table
+              [dataSource]="confidenceDataSource"
+              matSort
+              #confidenceSort="matSort"
+              class="full-width-table">
+              <ng-container matColumnDef="masterName">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Master Name</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="identity-cell">
+                    <img [src]="row.avatar" class="row-avatar" alt="Avatar" />
+                    <span class="primary-text">{{ row.masterName }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="score">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Confidence Score</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="score-cell">
+                    <div class="score-bar-wrapper">
+                      <div
+                        class="score-bar"
+                        [style.width.%]="row.score"
+                        [ngClass]="getScoreClass(row.score)"></div>
+                    </div>
+                    <span class="score-text">{{ row.score }}%</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="trend">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Trend 90d</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="trend-cell">
+                    <mat-icon
+                      [class.trend-up]="row.trendValue > 0"
+                      [class.trend-down]="row.trendValue < 0">
+                      {{ row.trendValue > 0 ? 'trending_up' : 'trending_down' }}
+                    </mat-icon>
+                    <span
+                      [class.trend-up]="row.trendValue > 0"
+                      [class.trend-down]="row.trendValue < 0">
+                      {{ row.trendValue > 0 ? '+' : '' }}{{ row.trendValue | number: '1.2-2' }}
+                    </span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="lastActivity">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Activity</th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="activity-cell">
+                    <mat-icon class="activity-icon">schedule</mat-icon>
+                    <span>{{ row.lastActivityDisplay }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="source">
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Activity</th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="muted-text">{{ row.source }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-button class="resolve-btn" (click)="resolveConfidenceRecord(row)">
+                    <mat-icon>done</mat-icon> Resolve
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="confidenceColumns"></tr>
+              <tr
+                mat-row
+                *matRowDef="let row; columns: confidenceColumns"
+                class="clickable-row"
+                [class.selected-row]="selectedConfidenceRecord?.id === row.id"
+                (click)="onSelectConfidenceRecord(row)"></tr>
+            </table>
+
+            <mat-paginator
+              #confidencePaginator
+              [pageSize]="10"
+              [pageSizeOptions]="[5, 10, 25]"
+              showFirstLastButtons></mat-paginator>
+          </div>
+
+          @if (selectedConfidenceRecord) {
+            <div class="side-panel confidence-detail-panel">
+              <div class="panel-header">
+                <h3>{{ selectedConfidenceRecord.masterName }}</h3>
+                <button mat-icon-button (click)="selectedConfidenceRecord = null">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+
+              <div class="panel-content">
+                <div class="profile-summary">
+                  <img [src]="selectedConfidenceRecord.avatar" class="panel-avatar" alt="Avatar" />
+                  <div class="profile-text">
+                    <div class="profile-meta">
+                      {{ selectedConfidenceRecord.dateOfBirth }} ·
+                      {{ selectedConfidenceRecord.gender }}
+                    </div>
+                    <div class="confidence-score-large">
+                      <mat-icon
+                        class="score-icon"
+                        [ngClass]="getScoreClass(selectedConfidenceRecord.score)">
+                        {{ selectedConfidenceRecord.score >= 75 ? 'check_circle' : 'error' }}
+                      </mat-icon>
+                      <span>{{ selectedConfidenceRecord.score / 100 | number: '1.2-2' }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="alert-box" *ngIf="selectedConfidenceRecord.score < warningThreshold">
+                  <mat-icon>warning</mat-icon>
+                  <span>Below warning threshold (.{{ warningThreshold }})</span>
+                </div>
+
+                <div class="detail-item">
+                  <label>Confidence Trend</label>
+                  <div class="trend-indicator">
+                    <mat-icon
+                      [class.trend-up]="selectedConfidenceRecord.trendValue > 0"
+                      [class.trend-down]="selectedConfidenceRecord.trendValue < 0">
+                      {{
+                        selectedConfidenceRecord.trendValue > 0 ? 'arrow_upward' : 'arrow_downward'
+                      }}
+                    </mat-icon>
+                    <span
+                      >{{ selectedConfidenceRecord.trendPercent }}% →
+                      {{ selectedConfidenceRecord.score }}%</span
+                    >
+                    <span class="trend-date">May 22–43</span>
+                  </div>
+                  <div class="trend-bar">
+                    <div class="trend-fill" [style.width.%]="selectedConfidenceRecord.score"></div>
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <label>Last Activity</label>
+                  <div class="activity-list">
+                    @for (activity of selectedConfidenceRecord.activities; track activity.source) {
+                      <div class="activity-item">
+                        <mat-icon [ngClass]="'src-icon ' + activity.iconClass">{{
+                          activity.icon
+                        }}</mat-icon>
+                        <div class="activity-info">
+                          <span class="activity-source">{{ activity.source }}</span>
+                          <span class="activity-status">{{ activity.status }}</span>
+                        </div>
+                        <span class="activity-time">{{ activity.time }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <label>Threshold Alerts</label>
+                  <div class="threshold-alerts">
+                    <div class="alert-item warning">
+                      <mat-icon>warning</mat-icon>
+                      <span>Below Warning Threshold</span>
+                      <span class="alert-value">≤ .{{ warningThreshold }}</span>
+                    </div>
+                    <div class="alert-item medium">
+                      <mat-icon>info</mat-icon>
+                      <span>Medium Confidence Target</span>
+                      <span class="alert-value">≥ .75</span>
+                    </div>
+                    <div class="alert-item high">
+                      <mat-icon>check_circle</mat-icon>
+                      <span>High Confidence Target</span>
+                      <span class="alert-value">≥ .95</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="detail-section">
+                  <button mat-button class="section-link">
+                    <mat-icon>link</mat-icon> Related Conflicts
+                  </button>
+                  <button mat-button class="section-link">
+                    <mat-icon>history</mat-icon> History & Replay
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activeTabIndex === 3) {
+      <div class="tab-content timeline-container" style="padding: 24px">
+        <div
+          class="timeline-header"
+          style="
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+          ">
+          <h3>Graph of Events Trace</h3>
+          <p style="opacity: 0.6; font-size: 13px">
+            Audit history of transactions related to specific patient golden records.
+          </p>
+        </div>
+
+        @for (tx of historyData; track tx.hash) {
+          <div
+            class="timeline-card"
+            style="
+              background: white;
+              border: 1px solid rgba(0, 0, 0, 0.1);
+              border-radius: 6px;
+              margin-bottom: 16px;
+              overflow: hidden;
+            ">
+            <div
+              class="card-header"
+              style="
+                padding: 12px 16px;
+                background: rgba(0, 0, 0, 0.02);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+                display: flex;
+                align-items: center;
+                gap: 16px;
+              ">
+              <span class="rel-time" style="font-weight: 700; font-size: 13px">{{
+                tx.relativeTime
+              }}</span>
+              <code
+                class="hash"
+                style="background: #e0e0e0; padding: 2px 6px; border-radius: 3px; font-size: 11px"
+                >{{ tx.hash }}</code
+              >
+              <span class="author" style="opacity: 0.7; font-size: 12px"
+                >User: {{ tx.author }}</span
+              >
+              <span
+                class="status-pill logged-to-graph"
+                style="
+                  margin-left: auto;
+                  font-size: 10px;
+                  background: #e8f5e9;
+                  color: #2e7d32;
+                  padding: 2px 8px;
+                  border-radius: 10px;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                ">
+                Verified In Graph
+              </span>
+            </div>
+            <div class="card-body" style="padding: 16px">
+              <div style="display: flex; align-items: flex-start; gap: 12px">
+                <mat-icon style="color: #436d9d">hub</mat-icon>
+                <div>
+                  <div
+                    style="
+                      font-family: 'Roboto Mono', monospace;
+                      font-size: 13px;
+                      color: #436d9d;
+                      font-weight: 600;
+                    ">
+                    execute_merge_query_with_context()
+                  </div>
+                  <div style="font-size: 14px; margin-top: 4px">
+                    Identity pattern applied to:
+                    <span style="font-weight: 600">{{ tx.subject }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
