@@ -13,6 +13,12 @@ export class EventService {
     const m = new Map();
     m.set('open_modal', EventActionTypes.OpenModal);
     m.set('theme_change', EventActionTypes.ThemeChange);
+    m.set('update_breadcrumb', EventActionTypes.UpdateBreadcrumb);
+    m.set('open_usage_impact_drawer', EventActionTypes.OpenUsageImpactDrawer);
+    m.set('close_usage_impact_drawer', EventActionTypes.CloseUsageImpactDrawer);
+    m.set('close_edit_mapping', EventActionTypes.CloseEditMapping);
+    m.set('open_edit_mapping', EventActionTypes.OpenEditMapping);
+    m.set('breadcrumb_navigate', EventActionTypes.BreadcrumbNavigate);
     m.set('close_modal', EventActionTypes.CloseModal);
     m.set('open_user_menu', EventActionTypes.OpenUserMenu);
     m.set('close_user_menu', EventActionTypes.CloseUserMenu);

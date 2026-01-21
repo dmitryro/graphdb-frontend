@@ -1,0 +1,328 @@
+<div class="edit-mapping-wrapper">
+  <header class="main-header">
+    <h1 class="edit-title">
+      Editing Mapping: {{ mappingData?.source || 'Epic' }} → {{ mappingData?.target || 'Patient' }}
+    </h1>
+
+    <div class="header-actions">
+      <button mat-stroked-button class="btn-cancel" (click)="onCancel()">Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="pendingChanges.length === 0"
+        (click)="onSave()">
+        Save Changes
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="moreMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #moreMenu="matMenu">
+        <button mat-menu-item>
+          <mat-icon>published_with_changes</mat-icon>
+          <span>Change Status</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item class="danger-action">
+          <mat-icon>delete</mat-icon>
+          <span>Delete Mapping</span>
+        </button>
+      </mat-menu>
+    </div>
+  </header>
+
+  <section class="context-info header-spacer">
+    <div class="source-target-line">
+      <span
+        >Source: <strong>{{ mappingData?.source || 'Epic Health Network' }}</strong></span
+      >
+      <span
+        >Target: <strong>{{ mappingData?.target || 'Patient' }}</strong></span
+      >
+      <span class="version-info">
+        Based on version
+        {{ mappingData && mappingData['version'] ? mappingData['version'] : 'vX' }} · Last saved
+        {{
+          mappingData && mappingData['lastSavedRelative']
+            ? mappingData['lastSavedRelative']
+            : '2 hours ago'
+        }}
+        by {{ mappingData && mappingData['lastSavedBy'] ? mappingData['lastSavedBy'] : 'admin' }}
+      </span>
+    </div>
+
+    <div class="usage-banner">
+      <mat-icon>info_outline</mat-icon>
+      <span>
+        Used in
+        {{
+          mappingData && mappingData['usageData'] ? mappingData['usageData']['pipelineCount'] : 2
+        }}
+        pipelines · Referenced by
+        {{ mappingData && mappingData['usageData'] ? mappingData['usageData']['ruleCount'] : 4 }}
+        rules ·
+        <button mat-button class="link-like" (click)="toggleUsageAndImpact()">
+          View usage & impact
+        </button>
+      </span>
+    </div>
+  </section>
+
+  <div class="edit-content-grid">
+    <section class="field-mappings-section">
+      <h2 class="section-title">Edit Field Mappings</h2>
+
+      <div class="table-controls">
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            placeholder="Search any column (e.g. Required, Mapped, Number)..."
+            [(ngModel)]="searchTerm"
+            (input)="applySearch()" />
+        </mat-form-field>
+
+        <button
+          mat-stroked-button
+          [matMenuTriggerFor]="filterMenu"
+          class="filter-btn"
+          [class.active-filter]="getActiveFilterLabel() !== 'All'">
+          <span
+            >Filter: {{ getActiveFilterLabel() }} ·
+            {{ dataSource.filteredData.length }} fields</span
+          >
+          <mat-icon>arrow_drop_down</mat-icon>
+        </button>
+      </div>
+
+      <mat-menu #filterMenu="matMenu" class="custom-filter-menu">
+        <div class="filter-menu-container" (click)="$event.stopPropagation()">
+          <div class="filter-group">
+            <label>Requirements</label>
+            <mat-radio-group [(ngModel)]="filters.requirement" (change)="applySearch()">
+              <mat-radio-button value="All">All</mat-radio-button>
+              <mat-radio-button value="Required">Required</mat-radio-button>
+              <mat-radio-button value="Optional">Optional</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <div class="filter-divider"></div>
+
+          <div class="filter-group">
+            <label>Status</label>
+            <mat-radio-group [(ngModel)]="filters.status" (change)="applySearch()">
+              <mat-radio-button value="All">All</mat-radio-button>
+              <mat-radio-button value="Mapped">Mapped</mat-radio-button>
+              <mat-radio-button value="Unmapped">Unmapped</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <div class="filter-divider"></div>
+
+          <div class="filter-group">
+            <label>Mapping Type</label>
+            <mat-radio-group [(ngModel)]="filters.mappingType" (change)="applySearch()">
+              <mat-radio-button value="All">All</mat-radio-button>
+              <mat-radio-button value="Direct">Direct</mat-radio-button>
+              <mat-radio-button value="Derived">Derived</mat-radio-button>
+              <mat-radio-button value="Constant">Constant</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <div class="filter-divider"></div>
+
+          <div class="filter-group">
+            <label>Type</label>
+            <mat-radio-group [(ngModel)]="filters.type" (change)="applySearch()">
+              <mat-radio-button value="All">All</mat-radio-button>
+              <mat-radio-button value="String">String</mat-radio-button>
+              <mat-radio-button value="Number">Number</mat-radio-button>
+              <mat-radio-button value="Date">Date</mat-radio-button>
+              <mat-radio-button value="Boolean">Boolean</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <button mat-button class="clear-btn" (click)="clearFilters()">Clear Filters</button>
+        </div>
+      </mat-menu>
+
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="mapping-table">
+          <ng-container matColumnDef="sourceField">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Source Field</th>
+            <td mat-cell *matCellDef="let row" class="mono">{{ row.sourceField }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="targetField">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Field</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="row.status === 'Modified'">
+                <mat-select
+                  [(ngModel)]="row.targetField"
+                  (selectionChange)="onTargetFieldChange(row, $event.value)">
+                  <mat-option *ngFor="let field of availableTargetFields" [value]="field">
+                    {{ field }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+            <td mat-cell *matCellDef="let row">{{ row.type }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="requirement">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Requirement</th>
+            <td mat-cell *matCellDef="let row">
+              <span [class.required-tag]="row.requirement === 'Required'">
+                {{ row.requirement }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="mappingType">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapping Type</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="row.status === 'Modified'">
+                <mat-select
+                  [(ngModel)]="row.mappingType"
+                  (selectionChange)="onMappingTypeChange(row, $event.value)">
+                  <mat-option value="Direct">Direct</mat-option>
+                  <mat-option value="Derived">Derived</mat-option>
+                  <mat-option value="Constant">Constant</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="status-badge" [ngClass]="row.status?.toLowerCase()">
+                {{ row.status }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-header"></th>
+            <td mat-cell *matCellDef="let row" class="actions-cell">
+              @if (row.status === 'Modified') {
+                <button mat-icon-button color="warn" (click)="resetRow(row)" matTooltip="Reset row">
+                  <mat-icon>settings_backup_restore</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <button mat-stroked-button class="add-mapping-btn" disabled>
+        <mat-icon>add</mat-icon>
+        <span>Add Field Mapping</span>
+      </button>
+
+      <div class="table-footer">
+        <mat-paginator
+          [pageSizeOptions]="[5, 10, 20]"
+          showFirstLastButtons
+          aria-label="Select page">
+        </mat-paginator>
+      </div>
+    </section>
+
+    <aside class="pending-changes-sidebar">
+      <div class="sidebar-header">
+        <h3>Pending Changes ({{ pendingChanges.length }})</h3>
+        <button
+          mat-button
+          color="warn"
+          [disabled]="pendingChanges.length === 0"
+          (click)="resetAllChanges()">
+          Reset All
+        </button>
+      </div>
+
+      @if (pendingChanges.length === 0) {
+        <div class="empty-state">
+          <p><strong>No changes yet</strong></p>
+          <p>Modifications will appear here before saving</p>
+        </div>
+      } @else {
+        <div class="changes-list">
+          @for (change of pendingChanges; track change.id) {
+            <div class="change-item">
+              <div class="change-title">
+                <span class="field">{{ change.field }}</span>
+                <span class="pill {{ change.type | lowercase }}">{{ change.type }}</span>
+              </div>
+              <p class="change-desc">{{ change.description }}</p>
+              @if (change.originalValue !== undefined) {
+                <div class="diff">
+                  <span class="old">{{ change.originalValue }}</span>
+                  →
+                  <span class="new">{{ change.newValue }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </aside>
+  </div>
+</div>
+
+<mat-menu #filterMenu="matMenu" class="advanced-filter-menu">
+  <div class="filter-panel" (click)="$event.stopPropagation()">
+    <h4>Requirements</h4>
+    <mat-radio-group [(ngModel)]="filters.requirement" (change)="applyFilters()">
+      <mat-radio-button value="All">All</mat-radio-button>
+      <mat-radio-button value="Required">Required</mat-radio-button>
+      <mat-radio-button value="Optional">Optional</mat-radio-button>
+    </mat-radio-group>
+
+    <mat-divider></mat-divider>
+
+    <h4>Status</h4>
+    <mat-radio-group [(ngModel)]="filters.status" (change)="applyFilters()">
+      <mat-radio-button value="All">All</mat-radio-button>
+      <mat-radio-button value="Mapped">Mapped</mat-radio-button>
+      <mat-radio-button value="Unmapped">Unmapped</mat-radio-button>
+    </mat-radio-group>
+
+    <mat-divider></mat-divider>
+
+    <h4>Mapping Type</h4>
+    <mat-radio-group [(ngModel)]="filters.mappingType" (change)="applyFilters()">
+      <mat-radio-button value="All">All</mat-radio-button>
+      <mat-radio-button value="Direct">Direct</mat-radio-button>
+      <mat-radio-button value="Derived">Derived</mat-radio-button>
+      <mat-radio-button value="Constant">Constant</mat-radio-button>
+    </mat-radio-group>
+
+    <mat-divider></mat-divider>
+
+    <h4>Type</h4>
+    <mat-radio-group [(ngModel)]="filters.type" (change)="applyFilters()">
+      <mat-radio-button value="All">All</mat-radio-button>
+      <mat-radio-button value="String">String</mat-radio-button>
+      <mat-radio-button value="Number">Number</mat-radio-button>
+      <mat-radio-button value="Date">Date</mat-radio-button>
+      <mat-radio-button value="Boolean">Boolean</mat-radio-button>
+    </mat-radio-group>
+
+    <div class="filter-actions">
+      <button mat-button (click)="clearFilters()">Clear Filters</button>
+    </div>
+  </div>
+</mat-menu>

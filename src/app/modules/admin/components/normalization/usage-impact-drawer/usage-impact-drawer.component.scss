@@ -1,0 +1,155 @@
+@use 'src/scss/variables' as *;
+
+.usage-impact-drawer {
+  // 1. DIMENSIONS & POSITION (Sit below the header)
+  position: fixed !important;
+  top: 84px !important; // ADJUST to your header height
+  bottom: 0 !important;
+  right: 0 !important;
+  width: 440px;
+  z-index: 999999 !important;
+
+  // 2. NUCLEAR OPACITY FIX (No transparency)
+  background-color: #ffffff !important;
+  background: var(--bg-color, #ffffff) !important;
+  opacity: 1 !important;
+  visibility: hidden;
+
+  // 3. DEPTH & SEPARATION
+  border-left: 1px solid var(--border-color, #e1e4e8) !important;
+  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5) !important;
+
+  // 4. ANIMATION & OVERFLOW
+  transform: translateX(100%);
+  transition:
+    transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0.4s;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; // Keeps the drawer container fixed
+
+  &.open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background-color: #ffffff !important;
+  }
+
+  .drawer-content {
+    // Reinforce background here to prevent any transparency leak during scroll
+    background: var(--bg-color) !important;
+    padding: 32px 28px;
+    flex: 1;
+    overflow-y: auto; // Content scrolls, drawer stays put
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+
+    // Solid blocker to ensure nothing peeks through the background
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: inherit;
+      z-index: -1;
+    }
+  }
+
+  // --- Restoring Original Styles exactly as requested ---
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+    h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0;
+    }
+  }
+
+  .drawer-warning {
+    display: flex;
+    gap: 12px;
+    background: rgba(248, 81, 73, 0.12) !important;
+    border: 1px solid rgba(248, 81, 73, 0.28);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+    color: #f85149;
+    font-size: 14px;
+    flex-shrink: 0;
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+  }
+
+  .section {
+    margin-bottom: 32px;
+    flex-shrink: 0;
+    h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0 0 12px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      li {
+        padding: 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-main);
+        border-bottom: 1px solid var(--border-color);
+        mat-icon {
+          font-size: 18px;
+          color: #3fb950;
+          flex-shrink: 0;
+        }
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+    }
+    .info-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--surface-color, #f6f8fa);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-main);
+    }
+  }
+
+  .footer-note {
+    margin-top: auto;
+    padding: 16px;
+    background: var(--surface-color, #f6f8fa);
+    border-radius: 8px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .done-btn {
+    margin-top: 24px;
+    width: 100%;
+    flex-shrink: 0;
+  }
+}

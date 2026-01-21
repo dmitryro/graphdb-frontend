@@ -1,0 +1,93 @@
+<div class="usage-impact-drawer" [class.open]="showUsagePanel">
+  <div class="drawer-content">
+    <div class="drawer-header">
+      <h3>Usage & Impact</h3>
+      <button mat-icon-button (click)="toggleUsageAndImpact()" aria-label="Close panel">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="drawer-warning">
+      <mat-icon>warning_amber</mat-icon>
+      <span>Changes here may affect downstream systems. Review carefully before saving.</span>
+    </div>
+
+    <div class="section">
+      <h4>Used in pipelines</h4>
+      <ul>
+        @if (mappingData && mappingData['usageData'] && mappingData['usageData']['pipelines']) {
+          @for (pipeline of mappingData['usageData']['pipelines']; track pipeline.id) {
+            <li>
+              <mat-icon>check_circle</mat-icon>
+              <span>{{ pipeline.name }}</span>
+            </li>
+          }
+        } @else {
+          <li>
+            <mat-icon>check_circle</mat-icon>
+            <span>Patient Normalization Pipeline</span>
+          </li>
+          <li>
+            <mat-icon>check_circle</mat-icon>
+            <span>Nightly Epic Sync</span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="section">
+      <h4>Referenced by rules</h4>
+      <ul>
+        @if (mappingData && mappingData['usageData'] && mappingData['usageData']['rules']) {
+          @for (rule of mappingData['usageData']['rules']; track rule.id) {
+            <li>
+              <span>{{ rule.name }}</span>
+            </li>
+          }
+        } @else {
+          <li><span>Diagnoses Normalization Rule</span></li>
+          <li><span>Nationality Mapping Rule</span></li>
+          <li><span>Insurance Validation Rule</span></li>
+          <li><span>Epic Encounter Transformation Rule</span></li>
+        }
+      </ul>
+    </div>
+
+    <div class="section">
+      <h4>Target model</h4>
+      <div class="info-badge">
+        <mat-icon>check_circle</mat-icon>
+        <span>{{
+          (mappingData && mappingData['usageData'] && mappingData['usageData']['targetModel']) ||
+            mappingData?.target ||
+            'Patient'
+        }}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h4>Normalization usage</h4>
+      <div class="info-badge">
+        <mat-icon>check_circle</mat-icon>
+        <span>{{
+          mappingData && mappingData['usageData'] && mappingData['usageData']['normalizationActive']
+            ? 'Active'
+            : 'Inactive'
+        }}</span>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <p>System Impact Assessment: High</p>
+    </div>
+
+    <button
+      mat-flat-button
+      color="primary"
+      class="done-btn"
+      style="margin-top: 20px"
+      (click)="toggleUsageAndImpact()">
+      Done
+    </button>
+  </div>
+</div>

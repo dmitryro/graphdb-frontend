@@ -236,3 +236,9 @@ body {
     }
   }
 }
+
+.cdk-overlay-container {
+  // This ensures that our drawer (at 50000) is definitely
+  // above the container where Menus live (which usually lacks a z-index or is lower)
+  z-index: 1000 !important;
+}

@@ -1,844 +1,850 @@
-<div class="normalization-main-container">
-  <header class="normalization-header">
-    <div class="breadcrumb-area">
-      <div class="breadcrumb">Normalization</div>
-      <div class="title-row">
-        <h1>Normalization</h1>
+<!-- Wrap your normalization content and add the mapping detail view -->
+<app-breadcrumb></app-breadcrumb>
+<div class="normalization-wrapper">
+  <div class="normalization-main-container" [class.slide-out]="showMappingDetail">
+    <header class="normalization-header">
+      <div class="breadcrumb-area">
+        <div class="title-row">
+          <h1>Normalization</h1>
+        </div>
+        <p class="subtitle">
+          {{ normalizationSubTitle }}
+        </p>
       </div>
-      <p class="subtitle">
-        {{ normalizationSubTitle }}
-      </p>
-    </div>
 
-    <div class="workspace-area">
-      <mat-form-field appearance="outline" class="workspace-select">
-        <mat-select [(value)]="selectedEnv">
-          <mat-option value="Production">Production</mat-option>
-          <mat-option value="Staging">Staging</mat-option>
-          <mat-option value="Development">Development</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-  </header>
-
-  <div class="table-card">
-    <div class="tabs-section">
-      <mat-tab-group
-        class="normalization-tabs"
-        [(selectedIndex)]="activeTabIndex"
-        (selectedTabChange)="onTabChange($event)">
-        <mat-tab label="Models"></mat-tab>
-        <mat-tab label="Mappings"></mat-tab>
-        <mat-tab label="Rules"></mat-tab>
-        <mat-tab label="Versions"></mat-tab>
-        <mat-tab label="Codes"></mat-tab>
-      </mat-tab-group>
-    </div>
-
-    @if (activeTabIndex === 0) {
-      <div class="tab-content models-tab-wrapper">
-        <div class="search-section">
-          <div class="search-bar-container">
-            <div class="search-box">
-              <mat-icon class="search-icon">search</mat-icon>
-              <input
-                type="text"
-                class="search-input"
-                placeholder="{{ modelsPlaceholder }}"
-                [(ngModel)]="modelSearch"
-                (input)="applyModelFilter()" />
-              @if (modelSearch) {
-                <button mat-icon-button (click)="modelSearch = ''; applyModelFilter()">
-                  <mat-icon>close</mat-icon>
-                </button>
-              }
-            </div>
-            <button mat-flat-button class="add-source-btn" (click)="addNewModel()">
-              <mat-icon>add</mat-icon> New Model
-            </button>
-          </div>
-        </div>
-
-        <div class="filter-actions">
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="statusMenu">
-            <mat-icon>list</mat-icon>
-            Status: <strong>{{ selectedStatus === 'All' ? 'All*' : selectedStatus }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #statusMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setStatusFilter('All')">All*</button>
-            <button mat-menu-item (click)="setStatusFilter('Active')">Active</button>
-            <button mat-menu-item (click)="setStatusFilter('Deprecated')">Deprecated</button>
-            <button mat-menu-item (click)="setStatusFilter('Draft')">Draft</button>
-            <button mat-menu-item (click)="setStatusFilter('Archived')">Archived</button>
-          </mat-menu>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="typeMenu">
-            <mat-icon>layers</mat-icon>
-            Type: <strong>{{ selectedType === 'Any' ? 'Canonical*' : selectedType }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #typeMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setTypeFilter('All')">All</button>
-            <button mat-menu-item (click)="setTypeFilter('Canonical')">Canonical</button>
-            <button mat-menu-item (click)="setTypeFilter('Derived')">Derived</button>
-            <button mat-menu-item (click)="setTypeFilter('External / Imported')">
-              External / Imported
-            </button>
-          </mat-menu>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="usageMenu">
-            <mat-icon>account_tree</mat-icon>
-            Usage: <strong>{{ selectedUsage === 'Any' ? 'Any*' : selectedUsage }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #usageMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setUsageFilter('Any')">Any*</button>
-            <button mat-menu-item (click)="setUsageFilter('Used in Rules')">Used in Rules</button>
-            <button mat-menu-item (click)="setUsageFilter('Used in Pipelines')">
-              Used in Pipelines
-            </button>
-            <button mat-menu-item (click)="setUsageFilter('Exposed via API')">
-              Exposed via API
-            </button>
-            <button mat-menu-item (click)="setUsageFilter('Used in Graph')">Used in Graph</button>
-            <button mat-menu-item (click)="setUsageFilter('Unused / Orphaned')">
-              Unused / Orphaned
-            </button>
-          </mat-menu>
-
-          <div class="filter-date-range">
-            <mat-form-field appearance="outline" class="custom-pill-date">
-              <mat-date-range-input [formGroup]="modelDateRange" [rangePicker]="modelPicker">
-                <input matStartDate formControlName="start" placeholder="Start date" />
-                <input matEndDate formControlName="end" placeholder="End date" />
-              </mat-date-range-input>
-
-              <mat-datepicker-toggle matIconSuffix [for]="modelPicker"></mat-datepicker-toggle>
-              <mat-date-range-picker #modelPicker></mat-date-range-picker>
-            </mat-form-field>
-
-            <button
-              *ngIf="modelDateRange.value.start || modelDateRange.value.end"
-              mat-icon-button
-              class="clear-date-btn"
-              (click)="clearModelDateRange()">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-        </div>
-
-        <table
-          mat-table
-          [dataSource]="modelDataSource"
-          matSort
-          #modelSort="matSort"
-          class="full-width-table">
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
-            <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="type">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-            <td mat-cell *matCellDef="let element">
-              <span class="type-label" [class.canonical]="element.type === 'Canonical'">
-                {{ element.type }}
-              </span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="usage">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Usage</th>
-            <td mat-cell *matCellDef="let element" class="usage-cell">{{ element.usage }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="status-pill" [ngClass]="element.status.toLowerCase()">
-                <mat-icon>check_circle</mat-icon>{{ element.status }}
-              </div>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="fields">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Fields</th>
-            <td mat-cell *matCellDef="let element">{{ element.fields }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="dependencies">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Dependencies</th>
-            <td mat-cell *matCellDef="let element">{{ element.dependencies }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="lastModified">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
-            <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let element">
-              <button
-                mat-icon-button
-                [matMenuTriggerFor]="modelMenu"
-                [matMenuTriggerData]="{ item: element }">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="modelColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: modelColumns"></tr>
-        </table>
-
-        <mat-paginator
-          #modelPaginator
-          [pageSize]="10"
-          [pageSizeOptions]="[5, 10, 20, 50]"
-          showFirstLastButtons></mat-paginator>
+      <div class="workspace-area">
+        <mat-form-field appearance="outline" class="workspace-select">
+          <mat-select [(value)]="selectedEnv">
+            <mat-option value="Production">Production</mat-option>
+            <mat-option value="Staging">Staging</mat-option>
+            <mat-option value="Development">Development</mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
-    }
+    </header>
 
-    @if (activeTabIndex === 1) {
-      <div class="tab-content mapping-tab-wrapper">
-        <div class="search-section">
-          <div class="search-bar-container">
-            <div class="search-box">
-              <mat-icon class="search-icon">search</mat-icon>
-              <input
-                type="text"
-                class="search-input"
-                placeholder="{{ mappingsPlaceholder }}"
-                [(ngModel)]="mappingSearch"
-                (input)="applyMappingFilter()" />
-              @if (mappingSearch) {
-                <button mat-icon-button (click)="mappingSearch = ''; applyMappingFilter()">
-                  <mat-icon>close</mat-icon>
-                </button>
-              }
-            </div>
-            <button mat-flat-button class="add-source-btn" (click)="addNewMapping()">
-              <mat-icon>add</mat-icon> New Mapping
-            </button>
-          </div>
-        </div>
-
-        <div class="filter-actions">
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingStatusMenu">
-            <mat-icon>list</mat-icon>
-            Status: <strong>{{ selectedMappingStatus }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #mappingStatusMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setMappingStatusFilter('All')">All*</button>
-            <button mat-menu-item (click)="setMappingStatusFilter('Active')">Active</button>
-            <button mat-menu-item (click)="setMappingStatusFilter('Deprecated')">Deprecated</button>
-            <button mat-menu-item (click)="setMappingStatusFilter('Draft')">Draft</button>
-          </mat-menu>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingSourceMenu">
-            <mat-icon>hub</mat-icon>
-            Source: <strong>{{ selectedMappingSource }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #mappingSourceMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setMappingSourceFilter('All')">All*</button>
-            <button mat-menu-item (click)="setMappingSourceFilter('Epic Health Network')">
-              Epic Health Network
-            </button>
-            <button mat-menu-item (click)="setMappingSourceFilter('QuestLab Systems')">
-              QuestLab Systems
-            </button>
-            <button mat-menu-item (click)="setMappingSourceFilter('MediBridge Clinic')">
-              MediBridge Clinic
-            </button>
-            <button mat-menu-item (click)="setMappingSourceFilter('CSV Import')">CSV Import</button>
-          </mat-menu>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingTargetMenu">
-            <mat-icon>layers</mat-icon>
-            Target: <strong>{{ selectedMappingTarget }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #mappingTargetMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setMappingTargetFilter('Any')">Any*</button>
-            <button mat-menu-item (click)="setMappingTargetFilter('Patient')">Patient</button>
-            <button mat-menu-item (click)="setMappingTargetFilter('Encounter')">Encounter</button>
-            <button mat-menu-item (click)="setMappingTargetFilter('Lab Result')">Lab Result</button>
-            <button mat-menu-item (click)="setMappingTargetFilter('Medication')">Medication</button>
-          </mat-menu>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingCoverageMenu">
-            <mat-icon>analytics</mat-icon>
-            Coverage: <strong>{{ selectedMappingCoverage }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #mappingCoverageMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setMappingCoverageFilter('Any')">Any*</button>
-            <button mat-menu-item (click)="setMappingCoverageFilter('Complete')">Complete</button>
-            <button mat-menu-item (click)="setMappingCoverageFilter('Partial')">Partial</button>
-            <button mat-menu-item (click)="setMappingCoverageFilter('Missing Required Fields')">
-              Missing Required Fields
-            </button>
-          </mat-menu>
-
-          <div class="filter-date-range">
-            <mat-form-field appearance="outline" class="custom-pill-date">
-              <mat-date-range-input [formGroup]="mappingDateRange" [rangePicker]="mappingPicker">
-                <input matStartDate formControlName="start" placeholder="Start date" />
-                <input matEndDate formControlName="end" placeholder="End date" />
-              </mat-date-range-input>
-              <mat-datepicker-toggle matIconSuffix [for]="mappingPicker"></mat-datepicker-toggle>
-              <mat-date-range-picker #mappingPicker></mat-date-range-picker>
-            </mat-form-field>
-
-            @if (mappingDateRange.value.start || mappingDateRange.value.end) {
-              <button mat-icon-button class="clear-date-btn" (click)="clearMappingDateRange()">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-          </div>
-        </div>
-
-        <table
-          mat-table
-          [dataSource]="mappingDataSource"
-          matSort
-          #mappingSort="matSort"
-          class="full-width-table">
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapping Name</th>
-            <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="source">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
-            <td mat-cell *matCellDef="let element">{{ element.source }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="target">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Model</th>
-            <td mat-cell *matCellDef="let element" class="secondary-text">{{ element.target }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="fields">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapped Fields</th>
-            <td mat-cell *matCellDef="let element">{{ element.fields }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="coverage">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Coverage</th>
-            <td mat-cell *matCellDef="let element">{{ element.coverage }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="status-pill" [ngClass]="element.status.toLowerCase()">
-                {{ element.status }}
-              </div>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="lastModified">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
-            <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let element">
-              <button
-                mat-icon-button
-                [matMenuTriggerFor]="modelMenu"
-                [matMenuTriggerData]="{ item: element }">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="mappingColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: mappingColumns"></tr>
-        </table>
-
-        <mat-paginator
-          #mappingPaginator
-          [pageSize]="10"
-          [pageSizeOptions]="[5, 10, 20, 50]"
-          showFirstLastButtons></mat-paginator>
+    <div class="table-card">
+      <div class="tabs-section">
+        <mat-tab-group
+          class="normalization-tabs"
+          [(selectedIndex)]="activeTabIndex"
+          (selectedTabChange)="onTabChange($event)">
+          <mat-tab label="Models"></mat-tab>
+          <mat-tab label="Mappings"></mat-tab>
+          <mat-tab label="Rules"></mat-tab>
+          <mat-tab label="Versions"></mat-tab>
+          <mat-tab label="Codes"></mat-tab>
+        </mat-tab-group>
       </div>
-    }
 
-    @if (activeTabIndex === 2) {
-      <div class="tab-content rules-tab-wrapper">
-        <div class="search-section">
-          <div class="search-bar-container">
-            <div class="search-box">
-              <mat-icon class="search-icon">search</mat-icon>
-              <input
-                type="text"
-                class="search-input"
-                placeholder="{{ rulesPlaceholder }}"
-                [(ngModel)]="ruleSearch"
-                (input)="applyRuleFilter()" />
-              @if (ruleSearch) {
-                <button mat-icon-button (click)="ruleSearch = ''; applyRuleFilter()">
-                  <mat-icon>close</mat-icon>
-                </button>
-              }
-            </div>
-            <button mat-flat-button class="add-source-btn" (click)="addNewRule()">
-              <mat-icon>add</mat-icon> New Rule
-            </button>
-          </div>
-        </div>
-
-        <div class="filter-actions">
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleStatusMenu">
-            <mat-icon>list</mat-icon>
-            Status: <strong>{{ selectedRuleStatus }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #ruleStatusMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setRuleStatusFilter('All Statuses')">
-              All Statuses
-            </button>
-            <button mat-menu-item (click)="setRuleStatusFilter('Active')">Active</button>
-            <button mat-menu-item (click)="setRuleStatusFilter('Draft')">Draft</button>
-            <button mat-menu-item (click)="setRuleStatusFilter('Archived')">Archived</button>
-          </mat-menu>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleSeverityMenu">
-            <mat-icon>priority_high</mat-icon>
-            Severity: <strong>{{ selectedRuleSeverity }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #ruleSeverityMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setRuleSeverityFilter('All Severities')">
-              All Severities
-            </button>
-            <button mat-menu-item (click)="setRuleSeverityFilter('Critical')">Critical</button>
-            <button mat-menu-item (click)="setRuleSeverityFilter('High')">High</button>
-            <button mat-menu-item (click)="setRuleSeverityFilter('Medium')">Medium</button>
-            <button mat-menu-item (click)="setRuleSeverityFilter('Source')">Source</button>
-          </mat-menu>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleScopeMenu">
-            <mat-icon>adjust</mat-icon>
-            Scope: <strong>{{ selectedRuleScope }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #ruleScopeMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setRuleScopeFilter('All Scopes')">All Scopes</button>
-            <button mat-menu-item (click)="setRuleScopeFilter('Model-level')">Model-level</button>
-            <button mat-menu-item (click)="setRuleScopeFilter('System')">System</button>
-            <button mat-menu-item (click)="setRuleScopeFilter('Source')">Source</button>
-          </mat-menu>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleTriggerMenu">
-            <mat-icon>bolt</mat-icon>
-            Trigger: <strong>{{ selectedRuleTrigger }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-          <mat-menu #ruleTriggerMenu="matMenu" class="governance-menu">
-            <button mat-menu-item (click)="setRuleTriggerFilter('All Triggers')">
-              All Triggers
-            </button>
-            <button mat-menu-item (click)="setRuleTriggerFilter('Immediate')">Immediate</button>
-            <button mat-menu-item (click)="setRuleTriggerFilter('Aggregate')">Aggregate</button>
-            <button mat-menu-item (click)="setRuleTriggerFilter('Scheduled')">Scheduled</button>
-          </mat-menu>
-
-          <div class="filter-date-range">
-            <mat-form-field appearance="outline" class="custom-pill-date">
-              <mat-date-range-input [formGroup]="ruleDateRange" [rangePicker]="rulePicker">
-                <input matStartDate formControlName="start" placeholder="Start date" />
-                <input matEndDate formControlName="end" placeholder="End date" />
-              </mat-date-range-input>
-              <mat-datepicker-toggle matIconSuffix [for]="rulePicker"></mat-datepicker-toggle>
-              <mat-date-range-picker #rulePicker></mat-date-range-picker>
-            </mat-form-field>
-
-            @if (ruleDateRange.value.start || ruleDateRange.value.end) {
-              <button mat-icon-button class="clear-date-btn" (click)="clearRuleDateRange()">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-          </div>
-        </div>
-
-        <table
-          mat-table
-          [dataSource]="ruleDataSource"
-          matSort
-          #ruleSort="matSort"
-          class="full-width-table">
-          <ng-container matColumnDef="ruleName">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Rule Name</th>
-            <td mat-cell *matCellDef="let element" class="primary-text">
-              {{ element.ruleName }}
-              <span class="sub-text" style="display: block; font-size: 11px; color: #818588">
-                (patient_id)
-              </span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="severity">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Severity</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="severity-pill" [ngClass]="element.severity?.toLowerCase()">
-                <span class="dot"></span> {{ element.severity }}
-              </div>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="scope">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
-            <td mat-cell *matCellDef="let element">{{ element.scope }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="trigger">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Trigger</th>
-            <td mat-cell *matCellDef="let element">{{ element.trigger }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="sourcesAffected">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Sources Affected</th>
-            <td mat-cell *matCellDef="let element" style="text-align: center">
-              {{ element.sourcesAffected }}
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="status-pill" [ngClass]="element.status?.toLowerCase()">
-                {{ element.status }}
-              </div>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="lastModified">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
-            <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let element">
-              <button
-                mat-icon-button
-                [matMenuTriggerFor]="ruleMenu"
-                [matMenuTriggerData]="{ item: element }">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="ruleColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: ruleColumns"></tr>
-        </table>
-
-        <mat-paginator
-          #rulePaginator
-          [pageSize]="10"
-          [pageSizeOptions]="[5, 10, 20]"
-          showFirstLastButtons></mat-paginator>
-      </div>
-    }
-
-    @if (activeTabIndex === 3) {
-      <div class="tab-content">
-        <div class="search-filter-wrapper">
-          <div class="version-controls-row">
-            <div class="search-box-version">
-              <mat-icon>search</mat-icon>
-              <input
-                type="text"
-                placeholder="{{ versionsPlaceholder }}"
-                [(ngModel)]="versionSearch"
-                (input)="applyVersionFilter()" />
-              <span class="v-divider">|</span>
-              <div class="date-range-container">
-                <mat-date-range-picker #picker startView="month"></mat-date-range-picker>
-                <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
-                  <input matStartDate formControlName="start" placeholder="Start date" />
-                  <input matEndDate formControlName="end" placeholder="End date" />
-                </mat-date-range-input>
-                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                @if (range.value.start) {
-                  <button mat-icon-button (click)="clearDateRange()" class="clear-date-btn">
+      @if (activeTabIndex === 0) {
+        <div class="tab-content models-tab-wrapper">
+          <div class="search-section">
+            <div class="search-bar-container">
+              <div class="search-box">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input
+                  type="text"
+                  class="search-input"
+                  placeholder="{{ modelsPlaceholder }}"
+                  [(ngModel)]="modelSearch"
+                  (input)="applyModelFilter()" />
+                @if (modelSearch) {
+                  <button mat-icon-button (click)="modelSearch = ''; applyModelFilter()">
                     <mat-icon>close</mat-icon>
                   </button>
                 }
               </div>
-            </div>
-
-            <div class="version-meta-actions">
-              <span class="v-count"
-                >{{ pagedVersionHistory.length }} of {{ versionHistory.length }} versions</span
-              >
-              <button mat-icon-button title="Refresh History" (click)="loadAllData()">
-                <mat-icon>history</mat-icon>
+              <button mat-flat-button class="add-source-btn" (click)="addNewModel()">
+                <mat-icon>add</mat-icon> New Model
               </button>
-              <button mat-icon-button><mat-icon>toll</mat-icon></button>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="statusMenu">
+              <mat-icon>list</mat-icon>
+              Status: <strong>{{ selectedStatus === 'All' ? 'All*' : selectedStatus }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #statusMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setStatusFilter('All')">All*</button>
+              <button mat-menu-item (click)="setStatusFilter('Active')">Active</button>
+              <button mat-menu-item (click)="setStatusFilter('Deprecated')">Deprecated</button>
+              <button mat-menu-item (click)="setStatusFilter('Draft')">Draft</button>
+              <button mat-menu-item (click)="setStatusFilter('Archived')">Archived</button>
+            </mat-menu>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="typeMenu">
+              <mat-icon>layers</mat-icon>
+              Type: <strong>{{ selectedType === 'Any' ? 'Canonical*' : selectedType }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #typeMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setTypeFilter('All')">All</button>
+              <button mat-menu-item (click)="setTypeFilter('Canonical')">Canonical</button>
+              <button mat-menu-item (click)="setTypeFilter('Derived')">Derived</button>
+              <button mat-menu-item (click)="setTypeFilter('External / Imported')">
+                External / Imported
+              </button>
+            </mat-menu>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="usageMenu">
+              <mat-icon>account_tree</mat-icon>
+              Usage: <strong>{{ selectedUsage === 'Any' ? 'Any*' : selectedUsage }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #usageMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setUsageFilter('Any')">Any*</button>
+              <button mat-menu-item (click)="setUsageFilter('Used in Rules')">Used in Rules</button>
+              <button mat-menu-item (click)="setUsageFilter('Used in Pipelines')">
+                Used in Pipelines
+              </button>
+              <button mat-menu-item (click)="setUsageFilter('Exposed via API')">
+                Exposed via API
+              </button>
+              <button mat-menu-item (click)="setUsageFilter('Used in Graph')">Used in Graph</button>
+              <button mat-menu-item (click)="setUsageFilter('Unused / Orphaned')">
+                Unused / Orphaned
+              </button>
+            </mat-menu>
+
+            <div class="filter-date-range">
+              <mat-form-field appearance="outline" class="custom-pill-date">
+                <mat-date-range-input [formGroup]="modelDateRange" [rangePicker]="modelPicker">
+                  <input matStartDate formControlName="start" placeholder="Start date" />
+                  <input matEndDate formControlName="end" placeholder="End date" />
+                </mat-date-range-input>
+
+                <mat-datepicker-toggle matIconSuffix [for]="modelPicker"></mat-datepicker-toggle>
+                <mat-date-range-picker #modelPicker></mat-date-range-picker>
+              </mat-form-field>
+
               <button
+                *ngIf="modelDateRange.value.start || modelDateRange.value.end"
                 mat-icon-button
-                [matMenuTriggerFor]="versionsMenu"
-                [matMenuTriggerData]="{ item: 'global' }">
-                <mat-icon>more_vert</mat-icon>
+                class="clear-date-btn"
+                (click)="clearModelDateRange()">
+                <mat-icon>close</mat-icon>
               </button>
             </div>
           </div>
 
-          <div class="version-filters-bar">
-            <div class="spacer"></div>
-            <mat-paginator
-              #versionPaginator
-              [length]="filteredVersionHistory.length"
-              [pageSize]="pageSize"
-              [pageSizeOptions]="[5, 10, 20, 50]"
-              showFirstLastButtons
-              class="compact-paginator"></mat-paginator>
-          </div>
+          <table
+            mat-table
+            [dataSource]="modelDataSource"
+            matSort
+            #modelSort="matSort"
+            class="full-width-table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
+              <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
+            </ng-container>
 
-          <div class="timeline-container">
-            @for (commit of pagedVersionHistory; track commit.hash) {
-              <div class="timeline-card">
-                <div class="card-header">
-                  <img [src]="commit.author.avatar" class="avatar" />
-                  <span class="rel-time">{{ commit.relativeTime }}</span>
-                  <span class="abs-time">{{ commit.absoluteTime }}</span>
-                  <code class="hash">{{ commit.hash }}</code>
-                  <span class="author link-style">{{ commit.author.name }}</span>
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="type-label" [class.canonical]="element.type === 'Canonical'">
+                  {{ element.type }}
+                </span>
+              </td>
+            </ng-container>
 
-                  <div class="spacer"></div>
+            <ng-container matColumnDef="usage">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Usage</th>
+              <td mat-cell *matCellDef="let element" class="usage-cell">{{ element.usage }}</td>
+            </ng-container>
 
-                  <div class="header-actions">
-                    <mat-icon title="History">history</mat-icon>
-                    <mat-icon title="Share">share</mat-icon>
-                    <button
-                      mat-icon-button
-                      [matMenuTriggerFor]="versionsMenu"
-                      [matMenuTriggerData]="{ item: commit }">
-                      <mat-icon>more_vert</mat-icon>
-                    </button>
-                    <mat-icon class="toggle">expand_more</mat-icon>
-                  </div>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let element">
+                <div class="status-pill" [ngClass]="element.status.toLowerCase()">
+                  <mat-icon>check_circle</mat-icon>{{ element.status }}
                 </div>
+              </td>
+            </ng-container>
 
-                <div class="card-body">
-                  @for (event of commit.events; track $index) {
-                    <div class="timeline-event">
-                      <div class="event-icon" [ngClass]="event.action.toLowerCase()">
-                        <mat-icon>{{ event.action === 'Added' ? 'add_box' : 'edit' }}</mat-icon>
-                      </div>
-                      <div class="event-text">
-                        <span class="bold">{{ event.action }}</span>
-                        <span class="subject link-style">{{ event.subject }}</span>
-                        <span class="ver">{{ event.version }}</span>
-                        @if (event.meta) {
-                          <span class="muted">, {{ event.meta }}.</span>
-                        }
-                        @if (event.scopeChange) {
-                          <div class="sub-detail">
-                            Scope changed: <strong>{{ event.scopeChange }}</strong>
-                          </div>
-                        }
-                      </div>
-                      <span class="event-time">{{ event.timestamp }}</span>
-                    </div>
+            <ng-container matColumnDef="fields">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Fields</th>
+              <td mat-cell *matCellDef="let element">{{ element.fields }}</td>
+            </ng-container>
 
-                    @if (event.nested) {
-                      <div class="tree-container">
-                        <div class="tree-line"></div>
-                        <div class="tree-node">
-                          <mat-icon [ngClass]="event.statusIcon">assignment</mat-icon>
-                          <span class="node-title">{{ event.nested.title }}</span>
-                          <span class="node-tag" [ngClass]="event.type.toLowerCase()">{{
-                            event.nested.tag
-                          }}</span>
-                          <div class="spacer"></div>
-                          <span class="node-time">{{ event.nested.time }}</span>
-                          <mat-icon
-                            class="check"
-                            [ngClass]="{ visible: event.statusIcon === 'check_circle' }"
-                            >check_circle</mat-icon
-                          >
-                        </div>
-                      </div>
-                    }
-                  }
+            <ng-container matColumnDef="dependencies">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Dependencies</th>
+              <td mat-cell *matCellDef="let element">{{ element.dependencies }}</td>
+            </ng-container>
 
-                  <div class="timeline-row-item">
-                    <mat-icon class="edit-icon">arrow_forward</mat-icon>
-                    <span class="label">Edited</span>
-                    <mat-icon class="type-icon mapping">description</mat-icon>
-                    <span class="subject link-style">Age Under 18 (v2)</span>
-                    <span class="muted">, renod Episode Missing Encounter Date (v3)</span>
-                    <span class="node-tag mapping">Mapping</span>
-                    <div class="spacer"></div>
-                    <span class="row-time">2 days ago</span>
-                    <mat-icon class="info">info_outline</mat-icon>
-                  </div>
+            <ng-container matColumnDef="lastModified">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+              <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
+            </ng-container>
 
-                  <div class="timeline-row-item">
-                    <img src="https://ui-avatars.com/api/?name=U" class="mini-avatar" />
-                    <span class="label">Added</span>
-                    <mat-icon class="type-icon added">add_box</mat-icon>
-                    <span class="subject link-style">Epic → Patient (v3)</span>
-                    <span class="node-tag model">Model</span>
-                    <span class="meta">Field count: 28 → 30</span>
-                    <div class="spacer"></div>
-                    <span class="row-time">5 hours ago</span>
-                  </div>
-                </div>
-              </div>
-            } @empty {
-              <div class="empty-state">No version history available.</div>
-            }
-          </div>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let element">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="modelMenu"
+                  [matMenuTriggerData]="{ item: element }">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="modelColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: modelColumns"></tr>
+          </table>
+
+          <mat-paginator
+            #modelPaginator
+            [pageSize]="10"
+            [pageSizeOptions]="[5, 10, 20, 50]"
+            showFirstLastButtons></mat-paginator>
         </div>
-      </div>
-    }
-    @if (activeTabIndex === 4) {
-      <div class="tab-content codes-tab-wrapper">
-        <div class="search-section">
-          <div class="search-bar-container">
-            <div class="search-box">
-              <mat-icon class="search-icon">search</mat-icon>
-              <input
-                type="text"
-                class="search-input"
-                placeholder="Search codes by name, value, or description..."
-                [(ngModel)]="codeSearch"
-                (input)="applyCodeFilter()" />
-              @if (codeSearch) {
-                <button mat-icon-button (click)="codeSearch = ''; applyCodeFilter()">
+      }
+
+      @if (activeTabIndex === 1) {
+        <div class="tab-content mapping-tab-wrapper">
+          <div class="search-section">
+            <div class="search-bar-container">
+              <div class="search-box">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input
+                  type="text"
+                  class="search-input"
+                  placeholder="{{ mappingsPlaceholder }}"
+                  [(ngModel)]="mappingSearch"
+                  (input)="applyMappingFilter()" />
+                @if (mappingSearch) {
+                  <button mat-icon-button (click)="mappingSearch = ''; applyMappingFilter()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </div>
+              <button mat-flat-button class="add-source-btn" (click)="addNewMapping()">
+                <mat-icon>add</mat-icon> New Mapping
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingStatusMenu">
+              <mat-icon>list</mat-icon>
+              Status: <strong>{{ selectedMappingStatus }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #mappingStatusMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setMappingStatusFilter('All')">All*</button>
+              <button mat-menu-item (click)="setMappingStatusFilter('Active')">Active</button>
+              <button mat-menu-item (click)="setMappingStatusFilter('Deprecated')">
+                Deprecated
+              </button>
+              <button mat-menu-item (click)="setMappingStatusFilter('Draft')">Draft</button>
+            </mat-menu>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingSourceMenu">
+              <mat-icon>hub</mat-icon>
+              Source: <strong>{{ selectedMappingSource }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #mappingSourceMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setMappingSourceFilter('All')">All*</button>
+              <button mat-menu-item (click)="setMappingSourceFilter('Epic Health Network')">
+                Epic Health Network
+              </button>
+              <button mat-menu-item (click)="setMappingSourceFilter('QuestLab Systems')">
+                QuestLab Systems
+              </button>
+              <button mat-menu-item (click)="setMappingSourceFilter('MediBridge Clinic')">
+                MediBridge Clinic
+              </button>
+              <button mat-menu-item (click)="setMappingSourceFilter('CSV Import')">
+                CSV Import
+              </button>
+            </mat-menu>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingTargetMenu">
+              <mat-icon>layers</mat-icon>
+              Target: <strong>{{ selectedMappingTarget }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #mappingTargetMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setMappingTargetFilter('Any')">Any*</button>
+              <button mat-menu-item (click)="setMappingTargetFilter('Patient')">Patient</button>
+              <button mat-menu-item (click)="setMappingTargetFilter('Encounter')">Encounter</button>
+              <button mat-menu-item (click)="setMappingTargetFilter('Lab Result')">
+                Lab Result
+              </button>
+              <button mat-menu-item (click)="setMappingTargetFilter('Medication')">
+                Medication
+              </button>
+            </mat-menu>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingCoverageMenu">
+              <mat-icon>analytics</mat-icon>
+              Coverage: <strong>{{ selectedMappingCoverage }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #mappingCoverageMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setMappingCoverageFilter('Any')">Any*</button>
+              <button mat-menu-item (click)="setMappingCoverageFilter('Complete')">Complete</button>
+              <button mat-menu-item (click)="setMappingCoverageFilter('Partial')">Partial</button>
+              <button mat-menu-item (click)="setMappingCoverageFilter('Missing Required Fields')">
+                Missing Required Fields
+              </button>
+            </mat-menu>
+
+            <div class="filter-date-range">
+              <mat-form-field appearance="outline" class="custom-pill-date">
+                <mat-date-range-input [formGroup]="mappingDateRange" [rangePicker]="mappingPicker">
+                  <input matStartDate formControlName="start" placeholder="Start date" />
+                  <input matEndDate formControlName="end" placeholder="End date" />
+                </mat-date-range-input>
+                <mat-datepicker-toggle matIconSuffix [for]="mappingPicker"></mat-datepicker-toggle>
+                <mat-date-range-picker #mappingPicker></mat-date-range-picker>
+              </mat-form-field>
+
+              @if (mappingDateRange.value.start || mappingDateRange.value.end) {
+                <button mat-icon-button class="clear-date-btn" (click)="clearMappingDateRange()">
                   <mat-icon>close</mat-icon>
                 </button>
               }
             </div>
-            <button mat-flat-button class="add-source-btn" (click)="addNewValueSet()">
-              <mat-icon>add</mat-icon> New Value Set
-            </button>
           </div>
+
+          <table
+            mat-table
+            [dataSource]="mappingDataSource"
+            matSort
+            #mappingSort="matSort"
+            class="full-width-table">
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapping Name</th>
+              <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="source">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
+              <td mat-cell *matCellDef="let element">{{ element.source }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="target">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Model</th>
+              <td mat-cell *matCellDef="let element" class="secondary-text">
+                {{ element.target }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="fields">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapped Fields</th>
+              <td mat-cell *matCellDef="let element">{{ element.fieldCount }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="coverage">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Coverage</th>
+              <td mat-cell *matCellDef="let element">{{ element.coverage }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let element">
+                <div class="status-pill" [ngClass]="element.status.toLowerCase()">
+                  {{ element.status }}
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="lastModified">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+              <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let element">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="modelMenu"
+                  [matMenuTriggerData]="{ item: element }"
+                  (click)="$event.stopPropagation()">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="mappingColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: mappingColumns"
+              class="clickable-row"
+              [class.selected-row]="selectedMappingData?.id === row.id"
+              (click)="onMappingRowClick(row)"></tr>
+          </table>
+
+          <mat-paginator
+            #mappingPaginator
+            [pageSize]="10"
+            [pageSizeOptions]="[5, 10, 20, 50]"
+            showFirstLastButtons></mat-paginator>
         </div>
+      }
 
-        <div class="filter-actions">
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeCategoryMenu">
-            <mat-icon>sort</mat-icon>
-            Category: <strong>{{ selectedCodeCategory }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeStatusMenu">
-            <mat-icon>assignment_turned_in</mat-icon>
-            Status: <strong>{{ selectedCodeStatus }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeSourceMenu">
-            <mat-icon>hub</mat-icon>
-            Source: <strong>{{ selectedCodeSource }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-
-          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeUsageMenu">
-            <mat-icon>data_usage</mat-icon>
-            Usage: <strong>{{ selectedCodeUsage }}</strong>
-            <mat-icon class="chevron">expand_more</mat-icon>
-          </button>
-
-          <div class="filter-date-range">
-            <mat-form-field appearance="outline" class="custom-pill-date">
-              <mat-date-range-input [formGroup]="codeDateRange" [rangePicker]="codePicker">
-                <input matStartDate formControlName="start" placeholder="Start date" />
-                <input matEndDate formControlName="end" placeholder="End date" />
-              </mat-date-range-input>
-              <mat-datepicker-toggle matIconSuffix [for]="codePicker"></mat-datepicker-toggle>
-              <mat-date-range-picker #codePicker></mat-date-range-picker>
-            </mat-form-field>
-
-            @if (codeDateRange.value.start || codeDateRange.value.end) {
-              <button mat-icon-button class="clear-date-btn" (click)="clearCodeDateRange()">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-          </div>
-        </div>
-
-        <table
-          mat-table
-          [dataSource]="codeDataSource"
-          matSort
-          #codeSort="matSort"
-          class="full-width-table">
-          <ng-container matColumnDef="valueSetName">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Value Set Name</th>
-            <td mat-cell *matCellDef="let element" class="primary-text link-style">
-              <mat-icon class="row-icon">link</mat-icon> {{ element.valueSetName }}
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="category">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
-            <td mat-cell *matCellDef="let element">{{ element.category }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="status-pill" [ngClass]="element.status?.toLowerCase()">
-                {{ element.status }}
+      @if (activeTabIndex === 2) {
+        <div class="tab-content rules-tab-wrapper">
+          <div class="search-section">
+            <div class="search-bar-container">
+              <div class="search-box">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input
+                  type="text"
+                  class="search-input"
+                  placeholder="{{ rulesPlaceholder }}"
+                  [(ngModel)]="ruleSearch"
+                  (input)="applyRuleFilter()" />
+                @if (ruleSearch) {
+                  <button mat-icon-button (click)="ruleSearch = ''; applyRuleFilter()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
               </div>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="codeCount">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Code Count</th>
-            <td mat-cell *matCellDef="let element">{{ element.codeCount | number }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="references">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>References</th>
-            <td mat-cell *matCellDef="let element">{{ element.references || 0 }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="lastModified">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
-            <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let element">
-              <button
-                mat-icon-button
-                [matMenuTriggerFor]="codesGlobalMenu"
-                [matMenuTriggerData]="{ item: element }">
-                <mat-icon>more_vert</mat-icon>
+              <button mat-flat-button class="add-source-btn" (click)="addNewRule()">
+                <mat-icon>add</mat-icon> New Rule
               </button>
-            </td>
-          </ng-container>
+            </div>
+          </div>
 
-          <tr
-            mat-header-row
-            *matHeaderRowDef="[
-              'valueSetName',
-              'category',
-              'status',
-              'codeCount',
-              'references',
-              'lastModified',
-              'actions',
-            ]"></tr>
-          <tr
-            mat-row
-            *matRowDef="
-              let row;
-              columns: [
+          <div class="filter-actions">
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleStatusMenu">
+              <mat-icon>list</mat-icon>
+              Status: <strong>{{ selectedRuleStatus }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #ruleStatusMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setRuleStatusFilter('All Statuses')">
+                All Statuses
+              </button>
+              <button mat-menu-item (click)="setRuleStatusFilter('Active')">Active</button>
+              <button mat-menu-item (click)="setRuleStatusFilter('Draft')">Draft</button>
+              <button mat-menu-item (click)="setRuleStatusFilter('Archived')">Archived</button>
+            </mat-menu>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleSeverityMenu">
+              <mat-icon>priority_high</mat-icon>
+              Severity: <strong>{{ selectedRuleSeverity }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #ruleSeverityMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setRuleSeverityFilter('All Severities')">
+                All Severities
+              </button>
+              <button mat-menu-item (click)="setRuleSeverityFilter('Critical')">Critical</button>
+              <button mat-menu-item (click)="setRuleSeverityFilter('High')">High</button>
+              <button mat-menu-item (click)="setRuleSeverityFilter('Medium')">Medium</button>
+              <button mat-menu-item (click)="setRuleSeverityFilter('Source')">Source</button>
+            </mat-menu>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleScopeMenu">
+              <mat-icon>adjust</mat-icon>
+              Scope: <strong>{{ selectedRuleScope }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #ruleScopeMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setRuleScopeFilter('All Scopes')">All Scopes</button>
+              <button mat-menu-item (click)="setRuleScopeFilter('Model-level')">Model-level</button>
+              <button mat-menu-item (click)="setRuleScopeFilter('System')">System</button>
+              <button mat-menu-item (click)="setRuleScopeFilter('Source')">Source</button>
+            </mat-menu>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleTriggerMenu">
+              <mat-icon>bolt</mat-icon>
+              Trigger: <strong>{{ selectedRuleTrigger }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #ruleTriggerMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setRuleTriggerFilter('All Triggers')">
+                All Triggers
+              </button>
+              <button mat-menu-item (click)="setRuleTriggerFilter('Immediate')">Immediate</button>
+              <button mat-menu-item (click)="setRuleTriggerFilter('Aggregate')">Aggregate</button>
+              <button mat-menu-item (click)="setRuleTriggerFilter('Scheduled')">Scheduled</button>
+            </mat-menu>
+
+            <div class="filter-date-range">
+              <mat-form-field appearance="outline" class="custom-pill-date">
+                <mat-date-range-input [formGroup]="ruleDateRange" [rangePicker]="rulePicker">
+                  <input matStartDate formControlName="start" placeholder="Start date" />
+                  <input matEndDate formControlName="end" placeholder="End date" />
+                </mat-date-range-input>
+                <mat-datepicker-toggle matIconSuffix [for]="rulePicker"></mat-datepicker-toggle>
+                <mat-date-range-picker #rulePicker></mat-date-range-picker>
+              </mat-form-field>
+
+              @if (ruleDateRange.value.start || ruleDateRange.value.end) {
+                <button mat-icon-button class="clear-date-btn" (click)="clearRuleDateRange()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+
+          <table
+            mat-table
+            [dataSource]="ruleDataSource"
+            matSort
+            #ruleSort="matSort"
+            class="full-width-table">
+            <ng-container matColumnDef="ruleName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Rule Name</th>
+              <td mat-cell *matCellDef="let element" class="primary-text">
+                {{ element.ruleName }}
+                <span class="sub-text" style="display: block; font-size: 11px; color: #818588">
+                  (patient_id)
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="severity">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Severity</th>
+              <td mat-cell *matCellDef="let element">
+                <div class="severity-pill" [ngClass]="element.severity?.toLowerCase()">
+                  <span class="dot"></span> {{ element.severity }}
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="scope">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
+              <td mat-cell *matCellDef="let element">{{ element.scope }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="trigger">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Trigger</th>
+              <td mat-cell *matCellDef="let element">{{ element.trigger }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="sourcesAffected">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Sources Affected</th>
+              <td mat-cell *matCellDef="let element" style="text-align: center">
+                {{ element.sourcesAffected }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let element">
+                <div class="status-pill" [ngClass]="element.status?.toLowerCase()">
+                  {{ element.status }}
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="lastModified">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+              <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let element">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="ruleMenu"
+                  [matMenuTriggerData]="{ item: element }">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="ruleColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: ruleColumns"></tr>
+          </table>
+
+          <mat-paginator
+            #rulePaginator
+            [pageSize]="10"
+            [pageSizeOptions]="[5, 10, 20]"
+            showFirstLastButtons></mat-paginator>
+        </div>
+      }
+
+      @if (activeTabIndex === 3) {
+        <div class="tab-content">
+          <div class="search-filter-wrapper">
+            <div class="version-controls-row">
+              <div class="search-box-version">
+                <mat-icon>search</mat-icon>
+                <input
+                  type="text"
+                  placeholder="{{ versionsPlaceholder }}"
+                  [(ngModel)]="versionSearch"
+                  (input)="applyVersionFilter()" />
+                <span class="v-divider">|</span>
+                <div class="date-range-container">
+                  <mat-date-range-picker #picker startView="month"></mat-date-range-picker>
+                  <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
+                    <input matStartDate formControlName="start" placeholder="Start date" />
+                    <input matEndDate formControlName="end" placeholder="End date" />
+                  </mat-date-range-input>
+                  <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                  @if (range.value.start) {
+                    <button mat-icon-button (click)="clearDateRange()" class="clear-date-btn">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <div class="version-meta-actions">
+                <span class="v-count"
+                  >{{ pagedVersionHistory.length }} of {{ versionHistory.length }} versions</span
+                >
+                <button mat-icon-button title="Refresh History" (click)="loadAllData()">
+                  <mat-icon>history</mat-icon>
+                </button>
+                <button mat-icon-button><mat-icon>toll</mat-icon></button>
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="versionsMenu"
+                  [matMenuTriggerData]="{ item: 'global' }">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="version-filters-bar">
+              <div class="spacer"></div>
+              <mat-paginator
+                #versionPaginator
+                [length]="filteredVersionHistory.length"
+                [pageSize]="pageSize"
+                [pageSizeOptions]="[5, 10, 20, 50]"
+                showFirstLastButtons
+                class="compact-paginator"></mat-paginator>
+            </div>
+
+            <div class="timeline-container">
+              @for (commit of pagedVersionHistory; track commit.hash) {
+                <div class="timeline-card">
+                  <div class="card-header">
+                    <img [src]="commit.author.avatar" class="avatar" />
+                    <span class="rel-time">{{ commit.relativeTime }}</span>
+                    <span class="abs-time">{{ commit.absoluteTime }}</span>
+                    <code class="hash">{{ commit.hash }}</code>
+                    <span class="author link-style">{{ commit.author.name }}</span>
+
+                    <div class="spacer"></div>
+
+                    <div class="header-actions">
+                      <mat-icon title="History">history</mat-icon>
+                      <mat-icon title="Share">share</mat-icon>
+                      <button
+                        mat-icon-button
+                        [matMenuTriggerFor]="versionsMenu"
+                        [matMenuTriggerData]="{ item: commit }">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                      <mat-icon class="toggle">expand_more</mat-icon>
+                    </div>
+                  </div>
+
+                  <div class="card-body">
+                    @for (event of commit.events; track $index) {
+                      <div class="timeline-event">
+                        <div class="event-icon" [ngClass]="event.action.toLowerCase()">
+                          <mat-icon>{{ event.action === 'Added' ? 'add_box' : 'edit' }}</mat-icon>
+                        </div>
+                        <div class="event-text">
+                          <span class="bold">{{ event.action }}</span>
+                          <span class="subject link-style">{{ event.subject }}</span>
+                          <span class="ver">{{ event.version }}</span>
+                          @if (event.meta) {
+                            <span class="muted">, {{ event.meta }}.</span>
+                          }
+                          @if (event.scopeChange) {
+                            <div class="sub-detail">
+                              Scope changed: <strong>{{ event.scopeChange }}</strong>
+                            </div>
+                          }
+                        </div>
+                        <span class="event-time">{{ event.timestamp }}</span>
+                      </div>
+
+                      @if (event.nested) {
+                        <div class="tree-container">
+                          <div class="tree-line"></div>
+                          <div class="tree-node">
+                            <mat-icon [ngClass]="event.statusIcon">assignment</mat-icon>
+                            <span class="node-title">{{ event.nested.title }}</span>
+                            <span class="node-tag" [ngClass]="event.type.toLowerCase()">{{
+                              event.nested.tag
+                            }}</span>
+                            <div class="spacer"></div>
+                            <span class="node-time">{{ event.nested.time }}</span>
+                            <mat-icon
+                              class="check"
+                              [ngClass]="{ visible: event.statusIcon === 'check_circle' }"
+                              >check_circle</mat-icon
+                            >
+                          </div>
+                        </div>
+                      }
+                    }
+
+                    <div class="timeline-row-item">
+                      <mat-icon class="edit-icon">arrow_forward</mat-icon>
+                      <span class="label">Edited</span>
+                      <mat-icon class="type-icon mapping">description</mat-icon>
+                      <span class="subject link-style">Age Under 18 (v2)</span>
+                      <span class="muted">, renod Episode Missing Encounter Date (v3)</span>
+                      <span class="node-tag mapping">Mapping</span>
+                      <div class="spacer"></div>
+                      <span class="row-time">2 days ago</span>
+                      <mat-icon class="info">info_outline</mat-icon>
+                    </div>
+
+                    <div class="timeline-row-item">
+                      <img src="https://ui-avatars.com/api/?name=U" class="mini-avatar" />
+                      <span class="label">Added</span>
+                      <mat-icon class="type-icon added">add_box</mat-icon>
+                      <span class="subject link-style">Epic → Patient (v3)</span>
+                      <span class="node-tag model">Model</span>
+                      <span class="meta">Field count: 28 → 30</span>
+                      <div class="spacer"></div>
+                      <span class="row-time">5 hours ago</span>
+                    </div>
+                  </div>
+                </div>
+              } @empty {
+                <div class="empty-state">No version history available.</div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+      @if (activeTabIndex === 4) {
+        <div class="tab-content codes-tab-wrapper">
+          <div class="search-section">
+            <div class="search-bar-container">
+              <div class="search-box">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input
+                  type="text"
+                  class="search-input"
+                  placeholder="Search codes by name, value, or description..."
+                  [(ngModel)]="codeSearch"
+                  (input)="applyCodeFilter()" />
+                @if (codeSearch) {
+                  <button mat-icon-button (click)="codeSearch = ''; applyCodeFilter()">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </div>
+              <button mat-flat-button class="add-source-btn" (click)="addNewValueSet()">
+                <mat-icon>add</mat-icon> New Value Set
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeCategoryMenu">
+              <mat-icon>sort</mat-icon>
+              Category: <strong>{{ selectedCodeCategory }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeStatusMenu">
+              <mat-icon>assignment_turned_in</mat-icon>
+              Status: <strong>{{ selectedCodeStatus }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeSourceMenu">
+              <mat-icon>hub</mat-icon>
+              Source: <strong>{{ selectedCodeSource }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeUsageMenu">
+              <mat-icon>data_usage</mat-icon>
+              Usage: <strong>{{ selectedCodeUsage }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+
+            <div class="filter-date-range">
+              <mat-form-field appearance="outline" class="custom-pill-date">
+                <mat-date-range-input [formGroup]="codeDateRange" [rangePicker]="codePicker">
+                  <input matStartDate formControlName="start" placeholder="Start date" />
+                  <input matEndDate formControlName="end" placeholder="End date" />
+                </mat-date-range-input>
+                <mat-datepicker-toggle matIconSuffix [for]="codePicker"></mat-datepicker-toggle>
+                <mat-date-range-picker #codePicker></mat-date-range-picker>
+              </mat-form-field>
+
+              @if (codeDateRange.value.start || codeDateRange.value.end) {
+                <button mat-icon-button class="clear-date-btn" (click)="clearCodeDateRange()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+
+          <table
+            mat-table
+            [dataSource]="codeDataSource"
+            matSort
+            #codeSort="matSort"
+            class="full-width-table">
+            <ng-container matColumnDef="valueSetName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Value Set Name</th>
+              <td mat-cell *matCellDef="let element" class="primary-text link-style">
+                <mat-icon class="row-icon">link</mat-icon> {{ element.valueSetName }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+              <td mat-cell *matCellDef="let element">{{ element.category }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let element">
+                <div class="status-pill" [ngClass]="element.status?.toLowerCase()">
+                  {{ element.status }}
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="codeCount">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Code Count</th>
+              <td mat-cell *matCellDef="let element">{{ element.codeCount | number }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="references">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>References</th>
+              <td mat-cell *matCellDef="let element">{{ element.references || 0 }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="lastModified">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+              <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let element">
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="codesGlobalMenu"
+                  [matMenuTriggerData]="{ item: element }">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr
+              mat-header-row
+              *matHeaderRowDef="[
                 'valueSetName',
                 'category',
                 'status',
@@ -846,191 +852,225 @@
                 'references',
                 'lastModified',
                 'actions',
-              ]
-            "></tr>
-        </table>
+              ]"></tr>
+            <tr
+              mat-row
+              *matRowDef="
+                let row;
+                columns: [
+                  'valueSetName',
+                  'category',
+                  'status',
+                  'codeCount',
+                  'references',
+                  'lastModified',
+                  'actions',
+                ]
+              "></tr>
+          </table>
 
-        <mat-paginator
-          #codePaginator
-          [pageSize]="10"
-          [pageSizeOptions]="[5, 10, 20, 50]"
-          showFirstLastButtons>
-        </mat-paginator>
-      </div>
-    }
+          <mat-paginator
+            #codePaginator
+            [pageSize]="10"
+            [pageSizeOptions]="[5, 10, 20, 50]"
+            showFirstLastButtons>
+          </mat-paginator>
+        </div>
+      }
+    </div>
+
+    <mat-menu #codeCategoryMenu="matMenu" class="governance-menu">
+      <button mat-menu-item (click)="setCodeCategory('All Categories')">All Categories</button>
+      <button mat-menu-item (click)="setCodeCategory('Clinical')">Clinical</button>
+      <button mat-menu-item (click)="setCodeCategory('Demographic')">Demographic</button>
+      <button mat-menu-item (click)="setCodeCategory('Financial')">Financial</button>
+      <button mat-menu-item (click)="setCodeCategory('Laboratory')">Laboratory</button>
+    </mat-menu>
+
+    <mat-menu #codeStatusMenu="matMenu" class="governance-menu">
+      <button mat-menu-item (click)="setCodeStatus('All Statuses')">All Statuses</button>
+      <button mat-menu-item (click)="setCodeStatus('Active')">Active</button>
+      <button mat-menu-item (click)="setCodeStatus('Draft')">Draft</button>
+      <button mat-menu-item (click)="setCodeStatus('Archived')">Archived</button>
+      <button mat-menu-item (click)="setCodeStatus('Deprecated')">Deprecated</button>
+    </mat-menu>
+
+    <mat-menu #codeSourceMenu="matMenu" class="governance-menu">
+      <button mat-menu-item (click)="setCodeSource('All Sources')">All Sources</button>
+      <button mat-menu-item (click)="setCodeSource('FHIR')">FHIR</button>
+      <button mat-menu-item (click)="setCodeSource('ICD-10')">ICD-10</button>
+      <button mat-menu-item (click)="setCodeSource('SNOMED-CT')">SNOMED-CT</button>
+      <button mat-menu-item (click)="setCodeSource('LOINC')">LOINC</button>
+      <button mat-menu-item (click)="setCodeSource('System')">System</button>
+    </mat-menu>
+
+    <mat-menu #codeUsageMenu="matMenu" class="governance-menu">
+      <button mat-menu-item (click)="setCodeUsage('All Usage')">All Usage</button>
+      <button mat-menu-item (click)="setCodeUsage('Standard')">Standard</button>
+      <button mat-menu-item (click)="setCodeUsage('Internal')">Internal</button>
+      <button mat-menu-item (click)="setCodeUsage('Mapping Only')">Mapping Only</button>
+      <button mat-menu-item (click)="setCodeUsage('Validation')">Validation</button>
+    </mat-menu>
+
+    <mat-menu #codesGlobalMenu="matMenu" class="governance-menu">
+      <ng-template matMenuContent let-item="item">
+        <button mat-menu-item (click)="editValueSet(item)">
+          <mat-icon>edit</mat-icon>
+          <span>Edit Value Set</span>
+        </button>
+        <button mat-menu-item (click)="viewReferences(item)">
+          <mat-icon>link</mat-icon>
+          <span>View References</span>
+        </button>
+        <button mat-menu-item (click)="exportValueSet(item)">
+          <mat-icon>download</mat-icon>
+          <span>Export Data</span>
+        </button>
+        <div class="menu-divider"></div>
+        <button mat-menu-item class="warn-item" (click)="deleteValueSet(item)">
+          <mat-icon color="warn">delete</mat-icon>
+          <span class="text-warn">Delete Value Set</span>
+        </button>
+      </ng-template>
+    </mat-menu>
+
+    <mat-menu #modelMenu="matMenu" class="compact-list-menu" xPosition="before">
+      <ng-template matMenuContent let-item="item">
+        <button mat-menu-item (click)="onEditModel(item)">
+          <mat-icon>edit</mat-icon><span>Edit Model</span>
+        </button>
+        <div class="menu-divider"></div>
+        <button mat-menu-item (click)="onDeleteModel(item)">
+          <mat-icon color="warn">delete_outline</mat-icon>
+          <span class="warn-text">Delete Model</span>
+        </button>
+      </ng-template>
+    </mat-menu>
+
+    <mat-menu #mappingMenu="matMenu" class="compact-list-menu" xPosition="before">
+      <ng-template matMenuContent let-item="item">
+        <button mat-menu-item (click)="onEditMapping(item)">
+          <mat-icon>edit</mat-icon><span>Edit Mapping</span>
+        </button>
+        <button mat-menu-item (click)="onTestMapping(item)">
+          <mat-icon>play_circle_outline</mat-icon><span>Test Transformation</span>
+        </button>
+        <div class="menu-divider"></div>
+        <button mat-menu-item (click)="onDeleteMapping(item)">
+          <mat-icon color="warn">delete_outline</mat-icon>
+          <span class="warn-text">Delete Mapping</span>
+        </button>
+      </ng-template>
+    </mat-menu>
+
+    <mat-menu #ruleMenu="matMenu" class="compact-list-menu" xPosition="before">
+      <ng-template matMenuContent let-item="item">
+        <button mat-menu-item (click)="onEditRule(item)">
+          <mat-icon>edit</mat-icon><span>Edit Rule</span>
+        </button>
+        <button mat-menu-item (click)="onViewRuleLogs(item)">
+          <mat-icon>history</mat-icon><span>Execution Logs</span>
+        </button>
+        <div class="menu-divider"></div>
+        <button mat-menu-item (click)="onDeleteRule(item)">
+          <mat-icon color="warn">delete_outline</mat-icon>
+          <span class="warn-text">Delete Rule</span>
+        </button>
+      </ng-template>
+    </mat-menu>
+
+    <mat-menu #versionsMenu="matMenu" class="compact-list-menu" xPosition="before">
+      <ng-template matMenuContent let-item="item">
+        <button mat-menu-item (click)="onViewVersionDetails(item)">
+          <mat-icon>visibility</mat-icon><span>View Details</span>
+        </button>
+        <button mat-menu-item (click)="onRestoreVersion(item)">
+          <mat-icon color="primary">settings_backup_restore</mat-icon><span>Rollback</span>
+        </button>
+      </ng-template>
+    </mat-menu>
+
+    <mat-menu #codesMenu="matMenu" class="compact-list-menu" xPosition="before">
+      <ng-template matMenuContent let-item="item">
+        <button mat-menu-item (click)="onEditCode(item)">
+          <mat-icon>edit</mat-icon><span>Edit Code System</span>
+        </button>
+        <div class="menu-divider"></div>
+        <button mat-menu-item (click)="onDeleteCode(item)">
+          <mat-icon color="warn">delete_outline</mat-icon>
+          <span class="warn-text">Delete System</span>
+        </button>
+      </ng-template>
+    </mat-menu>
+
+    <mat-menu #codeCategoryMenu="matMenu" class="governance-menu">
+      <button mat-menu-item (click)="setCodeCategory('All Categories')">All Categories</button>
+      <button mat-menu-item (click)="setCodeCategory('Clinical')">Clinical</button>
+      <button mat-menu-item (click)="setCodeCategory('Demographic')">Demographic</button>
+      <button mat-menu-item (click)="setCodeCategory('Financial')">Financial</button>
+    </mat-menu>
+
+    <mat-menu #codeStatusMenu="matMenu" class="governance-menu">
+      <button mat-menu-item (click)="setCodeStatus('All Statuses')">All Statuses</button>
+      <button mat-menu-item (click)="setCodeStatus('Active')">Active</button>
+      <button mat-menu-item (click)="setCodeStatus('Draft')">Draft</button>
+      <button mat-menu-item (click)="setCodeStatus('Archived')">Archived</button>
+    </mat-menu>
+
+    <mat-menu #codeSourceMenu="matMenu" class="governance-menu">
+      <button mat-menu-item (click)="setCodeSource('All Sources')">All Sources</button>
+      <button mat-menu-item (click)="setCodeSource('FHIR')">FHIR</button>
+      <button mat-menu-item (click)="setCodeSource('ICD-10')">ICD-10</button>
+      <button mat-menu-item (click)="setCodeSource('SNOMED-CT')">SNOMED-CT</button>
+    </mat-menu>
+
+    <mat-menu #codeUsageMenu="matMenu" class="governance-menu">
+      <button mat-menu-item (click)="setCodeUsage('All Usage')">All Usage</button>
+      <button mat-menu-item (click)="setCodeUsage('Standard')">Standard</button>
+      <button mat-menu-item (click)="setCodeUsage('Internal')">Internal</button>
+      <button mat-menu-item (click)="setCodeUsage('Mapping Only')">Mapping Only</button>
+    </mat-menu>
+
+    <mat-menu #codesGlobalMenu="matMenu" class="governance-menu">
+      <ng-template matMenuContent let-item="item">
+        <button mat-menu-item (click)="editValueSet(item)">
+          <mat-icon>edit</mat-icon>
+          <span>Edit Value Set</span>
+        </button>
+        <button mat-menu-item (click)="viewReferences(item)">
+          <mat-icon>link</mat-icon>
+          <span>View References</span>
+        </button>
+        <button mat-menu-item (click)="exportValueSet(item)">
+          <mat-icon>download</mat-icon>
+          <span>Export Data</span>
+        </button>
+        <div class="menu-divider"></div>
+        <button mat-menu-item class="warn-item" (click)="deleteValueSet(item)">
+          <mat-icon color="warn">delete</mat-icon>
+          <span class="text-warn">Delete Value Set</span>
+        </button>
+      </ng-template>
+    </mat-menu>
   </div>
 
-  <mat-menu #codeCategoryMenu="matMenu" class="governance-menu">
-    <button mat-menu-item (click)="setCodeCategory('All Categories')">All Categories</button>
-    <button mat-menu-item (click)="setCodeCategory('Clinical')">Clinical</button>
-    <button mat-menu-item (click)="setCodeCategory('Demographic')">Demographic</button>
-    <button mat-menu-item (click)="setCodeCategory('Financial')">Financial</button>
-    <button mat-menu-item (click)="setCodeCategory('Laboratory')">Laboratory</button>
-  </mat-menu>
+  <!-- Mapping Detail View -->
 
-  <mat-menu #codeStatusMenu="matMenu" class="governance-menu">
-    <button mat-menu-item (click)="setCodeStatus('All Statuses')">All Statuses</button>
-    <button mat-menu-item (click)="setCodeStatus('Active')">Active</button>
-    <button mat-menu-item (click)="setCodeStatus('Draft')">Draft</button>
-    <button mat-menu-item (click)="setCodeStatus('Archived')">Archived</button>
-    <button mat-menu-item (click)="setCodeStatus('Deprecated')">Deprecated</button>
-  </mat-menu>
-
-  <mat-menu #codeSourceMenu="matMenu" class="governance-menu">
-    <button mat-menu-item (click)="setCodeSource('All Sources')">All Sources</button>
-    <button mat-menu-item (click)="setCodeSource('FHIR')">FHIR</button>
-    <button mat-menu-item (click)="setCodeSource('ICD-10')">ICD-10</button>
-    <button mat-menu-item (click)="setCodeSource('SNOMED-CT')">SNOMED-CT</button>
-    <button mat-menu-item (click)="setCodeSource('LOINC')">LOINC</button>
-    <button mat-menu-item (click)="setCodeSource('System')">System</button>
-  </mat-menu>
-
-  <mat-menu #codeUsageMenu="matMenu" class="governance-menu">
-    <button mat-menu-item (click)="setCodeUsage('All Usage')">All Usage</button>
-    <button mat-menu-item (click)="setCodeUsage('Standard')">Standard</button>
-    <button mat-menu-item (click)="setCodeUsage('Internal')">Internal</button>
-    <button mat-menu-item (click)="setCodeUsage('Mapping Only')">Mapping Only</button>
-    <button mat-menu-item (click)="setCodeUsage('Validation')">Validation</button>
-  </mat-menu>
-
-  <mat-menu #codesGlobalMenu="matMenu" class="governance-menu">
-    <ng-template matMenuContent let-item="item">
-      <button mat-menu-item (click)="editValueSet(item)">
-        <mat-icon>edit</mat-icon>
-        <span>Edit Value Set</span>
-      </button>
-      <button mat-menu-item (click)="viewReferences(item)">
-        <mat-icon>link</mat-icon>
-        <span>View References</span>
-      </button>
-      <button mat-menu-item (click)="exportValueSet(item)">
-        <mat-icon>download</mat-icon>
-        <span>Export Data</span>
-      </button>
-      <div class="menu-divider"></div>
-      <button mat-menu-item class="warn-item" (click)="deleteValueSet(item)">
-        <mat-icon color="warn">delete</mat-icon>
-        <span class="text-warn">Delete Value Set</span>
-      </button>
-    </ng-template>
-  </mat-menu>
-
-  <mat-menu #modelMenu="matMenu" class="compact-list-menu" xPosition="before">
-    <ng-template matMenuContent let-item="item">
-      <button mat-menu-item (click)="onEditModel(item)">
-        <mat-icon>edit</mat-icon><span>Edit Model</span>
-      </button>
-      <div class="menu-divider"></div>
-      <button mat-menu-item (click)="onDeleteModel(item)">
-        <mat-icon color="warn">delete_outline</mat-icon>
-        <span class="warn-text">Delete Model</span>
-      </button>
-    </ng-template>
-  </mat-menu>
-
-  <mat-menu #mappingMenu="matMenu" class="compact-list-menu" xPosition="before">
-    <ng-template matMenuContent let-item="item">
-      <button mat-menu-item (click)="onEditMapping(item)">
-        <mat-icon>edit</mat-icon><span>Edit Mapping</span>
-      </button>
-      <button mat-menu-item (click)="onTestMapping(item)">
-        <mat-icon>play_circle_outline</mat-icon><span>Test Transformation</span>
-      </button>
-      <div class="menu-divider"></div>
-      <button mat-menu-item (click)="onDeleteMapping(item)">
-        <mat-icon color="warn">delete_outline</mat-icon>
-        <span class="warn-text">Delete Mapping</span>
-      </button>
-    </ng-template>
-  </mat-menu>
-
-  <mat-menu #ruleMenu="matMenu" class="compact-list-menu" xPosition="before">
-    <ng-template matMenuContent let-item="item">
-      <button mat-menu-item (click)="onEditRule(item)">
-        <mat-icon>edit</mat-icon><span>Edit Rule</span>
-      </button>
-      <button mat-menu-item (click)="onViewRuleLogs(item)">
-        <mat-icon>history</mat-icon><span>Execution Logs</span>
-      </button>
-      <div class="menu-divider"></div>
-      <button mat-menu-item (click)="onDeleteRule(item)">
-        <mat-icon color="warn">delete_outline</mat-icon>
-        <span class="warn-text">Delete Rule</span>
-      </button>
-    </ng-template>
-  </mat-menu>
-
-  <mat-menu #versionsMenu="matMenu" class="compact-list-menu" xPosition="before">
-    <ng-template matMenuContent let-item="item">
-      <button mat-menu-item (click)="onViewVersionDetails(item)">
-        <mat-icon>visibility</mat-icon><span>View Details</span>
-      </button>
-      <button mat-menu-item (click)="onRestoreVersion(item)">
-        <mat-icon color="primary">settings_backup_restore</mat-icon><span>Rollback</span>
-      </button>
-    </ng-template>
-  </mat-menu>
-
-  <mat-menu #codesMenu="matMenu" class="compact-list-menu" xPosition="before">
-    <ng-template matMenuContent let-item="item">
-      <button mat-menu-item (click)="onEditCode(item)">
-        <mat-icon>edit</mat-icon><span>Edit Code System</span>
-      </button>
-      <div class="menu-divider"></div>
-      <button mat-menu-item (click)="onDeleteCode(item)">
-        <mat-icon color="warn">delete_outline</mat-icon>
-        <span class="warn-text">Delete System</span>
-      </button>
-    </ng-template>
-  </mat-menu>
-
-  <mat-menu #codeCategoryMenu="matMenu" class="governance-menu">
-    <button mat-menu-item (click)="setCodeCategory('All Categories')">All Categories</button>
-    <button mat-menu-item (click)="setCodeCategory('Clinical')">Clinical</button>
-    <button mat-menu-item (click)="setCodeCategory('Demographic')">Demographic</button>
-    <button mat-menu-item (click)="setCodeCategory('Financial')">Financial</button>
-  </mat-menu>
-
-  <mat-menu #codeStatusMenu="matMenu" class="governance-menu">
-    <button mat-menu-item (click)="setCodeStatus('All Statuses')">All Statuses</button>
-    <button mat-menu-item (click)="setCodeStatus('Active')">Active</button>
-    <button mat-menu-item (click)="setCodeStatus('Draft')">Draft</button>
-    <button mat-menu-item (click)="setCodeStatus('Archived')">Archived</button>
-  </mat-menu>
-
-  <mat-menu #codeSourceMenu="matMenu" class="governance-menu">
-    <button mat-menu-item (click)="setCodeSource('All Sources')">All Sources</button>
-    <button mat-menu-item (click)="setCodeSource('FHIR')">FHIR</button>
-    <button mat-menu-item (click)="setCodeSource('ICD-10')">ICD-10</button>
-    <button mat-menu-item (click)="setCodeSource('SNOMED-CT')">SNOMED-CT</button>
-  </mat-menu>
-
-  <mat-menu #codeUsageMenu="matMenu" class="governance-menu">
-    <button mat-menu-item (click)="setCodeUsage('All Usage')">All Usage</button>
-    <button mat-menu-item (click)="setCodeUsage('Standard')">Standard</button>
-    <button mat-menu-item (click)="setCodeUsage('Internal')">Internal</button>
-    <button mat-menu-item (click)="setCodeUsage('Mapping Only')">Mapping Only</button>
-  </mat-menu>
-
-  <mat-menu #codesGlobalMenu="matMenu" class="governance-menu">
-    <ng-template matMenuContent let-item="item">
-      <button mat-menu-item (click)="editValueSet(item)">
-        <mat-icon>edit</mat-icon>
-        <span>Edit Value Set</span>
-      </button>
-      <button mat-menu-item (click)="viewReferences(item)">
-        <mat-icon>link</mat-icon>
-        <span>View References</span>
-      </button>
-      <button mat-menu-item (click)="exportValueSet(item)">
-        <mat-icon>download</mat-icon>
-        <span>Export Data</span>
-      </button>
-      <div class="menu-divider"></div>
-      <button mat-menu-item class="warn-item" (click)="deleteValueSet(item)">
-        <mat-icon color="warn">delete</mat-icon>
-        <span class="text-warn">Delete Value Set</span>
-      </button>
-    </ng-template>
-  </mat-menu>
+  @if (showMappingDetail) {
+    <div class="mapping-detail-view">
+      <app-view-mapping [mappingData]="selectedMappingData" (closeView)="onCloseMappingDetail()">
+      </app-view-mapping>
+    </div>
+  }
+  @if (isEditing) {
+    <div class="mapping-edit-view">
+      <app-edit-mapping [mappingData]="selectedMappingData" (closeEdit)="onCloseEdit()">
+      </app-edit-mapping>
+    </div>
+  }
 </div>
+
+<!--
+<app-usage-impact-drawer></app-usage-impact-drawer> -->
+
+<app-usage-impact-drawer></app-usage-impact-drawer>

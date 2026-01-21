@@ -2257,3 +2257,256 @@ $z-overlay: 2000;
     flex-shrink: 0;
   }
 }
+
+// Combined and Fixed normalization.component.scss
+
+:root {
+  --detail-bg: var(--bg-color, #ffffff);
+  --detail-text: var(--text-main, #202124);
+  --detail-border: var(--border-color, #e0e0e0);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --detail-bg: var(--bg-color, #121212);
+    --detail-text: var(--text-main, #e8eaed);
+    --detail-border: var(--border-color, #3c4043);
+  }
+}
+
+.normalization-wrapper {
+  position: relative;
+  width: 100%;
+  /* Ensure the wrapper can expand to accommodate absolute children */
+  min-height: 100vh;
+  background: var(--detail-bg);
+  /* Changed to block to prevent flex-basis issues with absolute children */
+  display: block;
+  overflow-x: hidden;
+  /* This ensures the scrollbar belongs to the wrapper */
+  overflow-y: auto;
+}
+
+.normalization-main-container {
+  width: 100%;
+  background: var(--detail-bg);
+  transition:
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.4s ease,
+    visibility 0.4s;
+  will-change: transform, opacity;
+
+  &.slide-out {
+    transform: translateX(-15%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    /* Remove the container from the height calculation when it's hidden */
+    display: none;
+  }
+
+  &:not(.slide-out) {
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+    display: block;
+  }
+}
+
+/* THE DETAIL VIEW FIX */
+.mapping-detail-view {
+  /* Absolute positioning ensures it aligns perfectly to the top: 0 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* Removed min-height: 100vh to let content define the height */
+  height: auto;
+  background: var(--detail-bg) !important;
+  color: var(--detail-text);
+  z-index: 1000;
+  /* Ensure padding-bottom so the last row isn't flush with the screen edge */
+  padding-bottom: 40px;
+
+  /* Disable internal scroll so the normalization-wrapper handles the scrolling */
+  overflow: visible;
+
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.mapping-edit-view {
+  /* Absolute positioning ensures it aligns perfectly to the top: 0 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* Removed min-height: 100vh to let content define the height */
+  height: auto;
+  background: var(--detail-bg) !important;
+  color: var(--detail-text);
+  z-index: 1000;
+  /* Ensure padding-bottom so the last row isn't flush with the screen edge */
+  padding-bottom: 40px;
+
+  /* Disable internal scroll so the normalization-wrapper handles the scrolling */
+  overflow: visible;
+
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-to-right {
+  animation: slideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--hover-color, rgba(67, 109, 157, 0.08)) !important;
+  }
+
+  &.selected-row {
+    background-color: var(--selected-color, rgba(63, 81, 181, 0.12)) !important;
+  }
+
+  td.mat-cell {
+    padding: 12px 8px;
+    color: var(--detail-text);
+    border-bottom: 1px solid var(--detail-border);
+  }
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &.active {
+    background: rgba(46, 125, 50, 0.1) !important;
+    color: #2e7d32 !important;
+  }
+
+  &.deprecated {
+    background: rgba(183, 28, 28, 0.1) !important;
+    color: #b71c1c !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .status-pill {
+    &.active {
+      background: rgba(129, 199, 132, 0.2) !important;
+      color: #81c784 !important;
+    }
+    &.deprecated {
+      background: rgba(239, 83, 80, 0.2) !important;
+      color: #ef5350 !important;
+    }
+  }
+
+  ::ng-deep .mapping-table {
+    background: transparent !important;
+    .mat-mdc-header-cell {
+      background: var(--detail-bg);
+      color: var(--detail-text);
+      border-bottom: 1px solid var(--detail-border);
+    }
+  }
+}
+
+// Add these styles to your normalization.component.scss:
+
+.normalization-main-container {
+  transition:
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.6s ease;
+  transform-origin: left center;
+
+  &.slide-out {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &.slide-in {
+    animation: slideBackIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+}
+
+@keyframes slideBackIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// Wrapper for both views
+.normalization-wrapper {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.mapping-detail-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg-color);
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+// Add clickable cursor to mapping table rows
+.mapping-tab-wrapper {
+  .full-width-table {
+    tr.clickable-row {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: rgba(67, 109, 157, 0.05) !important;
+      }
+
+      &:active {
+        background-color: rgba(67, 109, 157, 0.1) !important;
+      }
+    }
+  }
+}

@@ -182,6 +182,18 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.OpenEditMapping: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseEditMapping: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     case EventActionTypes.AddNormalizationMapping: {
       return {
         ...state,
@@ -189,6 +201,18 @@ export function eventReducer(
       };
     }
     case EventActionTypes.ThemeChange: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.UpdateBreadcrumb: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.BreadcrumbNavigate: {
       return {
         ...state,
         items: (action as any).payload,
@@ -225,6 +249,18 @@ export function eventReducer(
       };
     }
     case EventActionTypes.DeleteRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenUsageImpactDrawer: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseUsageImpactDrawer: {
       return {
         ...state,
         items: (action as any).payload,

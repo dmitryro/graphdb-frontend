@@ -1,0 +1,23 @@
+<div class="breadcrumb-wrapper">
+  <nav class="breadcrumb-container" aria-label="Breadcrumb">
+    <ol class="breadcrumb-list">
+      @for (item of items; track item.label; let i = $index; let last = $last) {
+        <li class="breadcrumb-item" [class.active]="last">
+          <span
+            class="breadcrumb-label"
+            (click)="onItemClick(item, i)"
+            [class.clickable]="!last"
+            [attr.role]="last ? null : 'button'">
+            {{ item.label }}
+          </span>
+
+          @if (!last) {
+            <mat-icon class="separator-icon">chevron_right</mat-icon>
+          }
+        </li>
+      } @empty {
+        <li class="breadcrumb-item active">Normalization</li>
+      }
+    </ol>
+  </nav>
+</div>

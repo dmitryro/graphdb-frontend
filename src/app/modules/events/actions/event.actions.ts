@@ -5,9 +5,13 @@ export enum EventActionTypes {
   PilotContactFormUpdated = '[Event] Pilot Contact Form Updated',
   ToggleHeader = '[Event] Toggle Header',
   ToggleDrawer = '[Event] Toggle Drawer',
+  OpenEditMapping = '[Event] Open Edit Mapping',
+  CloseEditMapping = '[Event] Close Edit Mapping',
   ThemeChange = '[Event] Theme Change',
   NonHealthcareUser = '[Event] Non Healthcare User',
   OpenDrawer = '[Event] Open Drawer',
+  CloseUsageImpactDrawer = '[Event] Close Usage Impact Drawer',
+  OpenUsageImpactDrawer = '[Event] Open Usage Impact Drawer',
   CloseDrawer = '[Event] Close Drawer',
   OpenChat = '[Event] Open Chat',
   CloseChat = '[Event] Close Chat',
@@ -67,6 +71,38 @@ export enum EventActionTypes {
   AddRule = '[Event] Add Rule',
   DeleteRule = '[Event] Delete Rule',
   EditRule = '[Event] Edit Rule',
+  UpdateBreadcrumb = '[Event] Update Breadcrumb',
+  BreadcrumbNavigate = '[Event] Breadcrumb Navigate',
+}
+
+export class OpenUsageImpactDrawer implements Action {
+  readonly type = EventActionTypes.OpenUsageImpactDrawer;
+  constructor(public payload: any) {}
+}
+
+export class CloseUsageImpactDrawer implements Action {
+  readonly type = EventActionTypes.CloseUsageImpactDrawer;
+  constructor(public payload: any) {}
+}
+
+export class OpenEditMapping implements Action {
+  readonly type = EventActionTypes.OpenEditMapping;
+  constructor(public payload: any) {}
+}
+
+export class CloseEditMapping implements Action {
+  readonly type = EventActionTypes.CloseEditMapping;
+  constructor(public payload: any) {}
+}
+
+export class UpdateBreadcrumb implements Action {
+  readonly type = EventActionTypes.UpdateBreadcrumb;
+  constructor(public payload: any) {}
+}
+
+export class BreadcrumbNavigate implements Action {
+  readonly type = EventActionTypes.BreadcrumbNavigate;
+  constructor(public payload: any) {}
 }
 
 export class ThemeChange implements Action {
@@ -419,6 +455,8 @@ export type EventActions =
   | OpenDrawer
   | CloseDrawer
   | OpenSearch
+  | CloseEditMapping
+  | OpenEditMapping
   | CloseSearch
   | OpenRegistrationModal
   | CloseRegistrationModal
@@ -432,6 +470,8 @@ export type EventActions =
   | CloseUserOptionsMenu
   | OpenUserOptionsMenu
   | ThemeChange
+  | UpdateBreadcrumb
+  | BreadcrumbNavigate
   | TriggerLogout
   | TwitterAuthSuccess
   | TwitterAuthFailure
@@ -457,6 +497,8 @@ export type EventActions =
   | EditRule
   | InspectSource
   | SyncSource
+  | OpenUsageImpactDrawer
+  | CloseUsageImpactDrawer
   | PauseIngestion
   | DownloadSchema
   | ClearSourceCache;

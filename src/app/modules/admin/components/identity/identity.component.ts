@@ -151,7 +151,7 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
   mergeSearch = '';
   mergeSelectedStatus = 'All';
   mergeSelectedDelta = 'Any';
-
+  mergeSelectedImpact = 'All';
   // Confidence Tab State
   confidenceSearch = '';
   confidenceSelectedStatus = 'All';
@@ -217,16 +217,65 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     },
   ];
 
-  // Avatar Assets
-  private avatarLinks = [
-    'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-    'https://i.pravatar.cc/150?u=a04258114e29026702d',
-    'https://i.pravatar.cc/150?u=a042581f4e29026708c',
-    'https://i.pravatar.cc/150?u=a042581f4e29026024d',
-    'https://i.pravatar.cc/150?u=a04258a2462d826712d',
-    'https://i.pravatar.cc/150?u=a042581f4e29026704e',
-    'https://i.pravatar.cc/150?u=a04258114e29026302d',
-    'https://i.pravatar.cc/150?u=a048581f4e29026708c',
+  // Gender-Separated Avatar Assets - Using UI Avatars with proper gender indicators
+  private maleAvatars = [
+    'https://ui-avatars.com/api/?name=James+Smith&background=4A90E2&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Robert+Johnson&background=2C3E50&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=John+Williams&background=34495E&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Michael+Brown&background=16A085&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=William+Jones&background=27AE60&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=David+Garcia&background=2980B9&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Richard+Miller&background=8E44AD&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Joseph+Davis&background=C0392B&color=fff&size=150&bold=true',
+  ];
+
+  private femaleAvatars = [
+    'https://ui-avatars.com/api/?name=Mary+Smith&background=E74C3C&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Patricia+Johnson&background=9B59B6&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Jennifer+Williams&background=E91E63&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Linda+Brown&background=F39C12&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Elizabeth+Jones&background=1ABC9C&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Barbara+Garcia&background=3498DB&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Susan+Miller&background=9C27B0&color=fff&size=150&bold=true',
+    'https://ui-avatars.com/api/?name=Jessica+Davis&background=FF5722&color=fff&size=150&bold=true',
+  ];
+
+  // Name pools separated by gender
+  private maleFirstNames = [
+    'James',
+    'Robert',
+    'John',
+    'Michael',
+    'William',
+    'David',
+    'Richard',
+    'Joseph',
+    'Thomas',
+    'Charles',
+  ];
+  private femaleFirstNames = [
+    'Mary',
+    'Patricia',
+    'Jennifer',
+    'Linda',
+    'Elizabeth',
+    'Barbara',
+    'Susan',
+    'Jessica',
+    'Sarah',
+    'Karen',
+  ];
+  private lastNames = [
+    'Smith',
+    'Johnson',
+    'Williams',
+    'Brown',
+    'Jones',
+    'Garcia',
+    'Miller',
+    'Davis',
+    'Rodriguez',
+    'Martinez',
   ];
 
   constructor(
@@ -270,11 +319,25 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  // --- GENDER-AWARE AVATAR HELPER ---
+  private getGenderAppropriateAvatar(gender: string, firstName: string, lastName: string): string {
+    // Generate avatar based on actual name for consistency
+    const name = `${firstName}+${lastName}`;
+    const backgrounds =
+      gender === 'Female'
+        ? ['E74C3C', '9B59B6', 'E91E63', 'F39C12', '1ABC9C', '3498DB', '9C27B0', 'FF5722']
+        : ['4A90E2', '2C3E50', '34495E', '16A085', '27AE60', '2980B9', '8E44AD', 'C0392B'];
+
+    const bgColor =
+      backgrounds[Math.abs(firstName.charCodeAt(0) + lastName.charCodeAt(0)) % backgrounds.length];
+
+    return `https://ui-avatars.com/api/?name=${name}&background=${bgColor}&color=fff&size=150&bold=true`;
+  }
+
   // --- HYDRATION LOGIC: Ensure Record View (Tab 3) stays in sync ---
   private hydrateRecordView(record: any): void {
     if (!record) return;
 
-    // Standardize data from different sources (Index, Merge, or Confidence)
     this.selectedPatient = {
       ...record,
       masterName: record.masterName || record.candidate || 'Unknown Identity',
@@ -282,7 +345,6 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
         ? String(record.externalIds).split(',')[0]
         : record.internalId || 'N/A',
       upi: record.internalId || 'N/A',
-      // Ensure visual assets carry over
       photoUrl: record.avatar || record.avatarA || this.selectedPatient.photoUrl,
     };
 
@@ -291,9 +353,6 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onTabChange(event: any): void {
     this.activeTabIndex = event.index;
-
-    // We removed the auto-reset to firstRecord here.
-    // Tab 3 will now persist the last clicked record from any other tab.
 
     setTimeout(() => {
       this.rebindDataSources();
@@ -304,27 +363,18 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
   // --- SELECTION HANDLERS ---
 
   onSelectRecord(record: any): void {
-    // Toggle logic for the side panel in Index tab
     this.selectedRecord = this.selectedRecord?.id === record.id ? null : record;
-
-    // Update the shared Record View state
     this.hydrateRecordView(record);
   }
 
   onSelectMerge(candidate: any): void {
-    // Toggle logic for the side panel in Merge tab
     this.selectedMergeCandidate =
       this.selectedMergeCandidate?.id === candidate.id ? null : candidate;
-
-    // Update the shared Record View state
     this.hydrateRecordView(candidate);
   }
 
   onSelectConfidenceRecord(record: any): void {
-    // Toggle logic for the side panel in Confidence tab
     this.selectedConfidenceRecord = this.selectedConfidenceRecord?.id === record.id ? null : record;
-
-    // Update the shared Record View state
     this.hydrateRecordView(record);
   }
 
@@ -372,20 +422,47 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     let filtered = [...this.originalMergeData];
     const search = (this.mergeSearch || '').toLowerCase().trim();
 
+    // 1. Search Filter
     if (search) {
       filtered = filtered.filter(item => this.deepMatch(item, search));
     }
 
+    // 2. Status Filter
     if (this.mergeSelectedStatus !== 'All') {
       filtered = filtered.filter(item => item.status === this.mergeSelectedStatus);
     }
 
-    if (this.mergeSelectedDelta === 'Positive') {
-      filtered = filtered.filter(item => item.delta > 0);
+    // 3. Impact Filter (Matches the new menu)
+    if (this.mergeSelectedImpact !== 'All') {
+      filtered = filtered.filter(item => {
+        // Define thresholds based on the 'impact' number in your data
+        if (this.mergeSelectedImpact === 'High') return item.impact >= 50;
+        if (this.mergeSelectedImpact === 'Medium') return item.impact >= 10 && item.impact < 50;
+        if (this.mergeSelectedImpact === 'Low') return item.impact < 10;
+        return true;
+      });
     }
 
+    // 4. Delta Filter
+    if (this.mergeSelectedDelta !== 'Any') {
+      if (this.mergeSelectedDelta === 'Positive') {
+        filtered = filtered.filter(item => item.delta > 0);
+      } else if (this.mergeSelectedDelta === 'Negative') {
+        filtered = filtered.filter(item => item.delta < 0);
+      } else if (this.mergeSelectedDelta === 'Above Threshold') {
+        filtered = filtered.filter(item => item.delta >= 80); // Example threshold
+      } else if (this.mergeSelectedDelta === 'Below Threshold') {
+        filtered = filtered.filter(item => item.delta < 80);
+      }
+    }
+
+    // 5. Update DataSource and Reset Paging
     this.mergeDataSource.data = filtered;
-    if (this.mergePaginator) this.mergePaginator.firstPage();
+
+    if (this.mergePaginator) {
+      this.mergePaginator.firstPage();
+    }
+
     this.cdr.detectChanges();
   }
 
@@ -399,12 +476,14 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.confidenceSelectedStatus === 'Above Threshold') {
       filtered = filtered.filter(item => item.score >= 75);
-    } else if (this.confidenceSelectedStatus === 'Below Threshold') {
+    } else if (this.confidenceSelectedStatus === 'Below Warning') {
       filtered = filtered.filter(item => item.score < this.warningThreshold);
     }
 
     if (this.confidenceSelectedImpact === 'High') {
       filtered = filtered.filter(item => item.impact > 3);
+    } else if (this.confidenceSelectedImpact === 'Medium') {
+      filtered = filtered.filter(item => item.impact <= 3);
     }
 
     if (this.confidenceSelectedDelta === 'Increasing') {
@@ -447,6 +526,10 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   setMergeStatus(val: string): void {
     this.mergeSelectedStatus = val;
+    this.applyMergeFilter();
+  }
+  setMergeImpact(val: string): void {
+    this.mergeSelectedImpact = val;
     this.applyMergeFilter();
   }
   setMergeDelta(val: string): void {
@@ -555,7 +638,6 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  // CORE REQUIREMENT: Transaction Traceability [cite: 2025-12-20, 2026-01-01]
   execute_merge_query_with_context(
     pattern: string,
     patientId: string,
@@ -602,43 +684,30 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
   private loadInitialMpiData(): void {
     const indexRecords = [];
     const mergeRecords = [];
-    const firstNames = [
-      'James',
-      'Mary',
-      'Robert',
-      'Patricia',
-      'John',
-      'Jennifer',
-      'Michael',
-      'Linda',
-      'William',
-      'Elizabeth',
-    ];
-    const lastNames = [
-      'Smith',
-      'Johnson',
-      'Williams',
-      'Brown',
-      'Jones',
-      'Garcia',
-      'Miller',
-      'Davis',
-      'Rodriguez',
-      'Martinez',
-    ];
 
-    for (let i = 1; i <= 40; i++) {
-      const fIdx = i % firstNames.length;
-      const lIdx = (i + 3) % lastNames.length;
+    // Create 40 records with proper gender matching
+    for (let i = 0; i < 40; i++) {
+      // Alternate genders
+      const isFemale = i % 2 === 0;
+      const gender = isFemale ? 'Female' : 'Male';
+
+      // Select appropriate name pool
+      const firstNames = isFemale ? this.femaleFirstNames : this.maleFirstNames;
+      const firstName = firstNames[i % firstNames.length];
+      const lastName = this.lastNames[(i + 3) % this.lastNames.length];
+
+      // Get gender-appropriate avatar
+      const avatar = this.getGenderAppropriateAvatar(gender, firstName, lastName);
+
       const shuffledSources = [...this.sources].sort(() => 0.5 - Math.random());
       const selectedSources = shuffledSources.slice(0, (i % 4) + 1);
 
       indexRecords.push({
-        id: `rec-${i}`,
-        masterName: `${firstNames[fIdx]} ${lastNames[lIdx]}`,
-        avatar: this.avatarLinks[i % this.avatarLinks.length],
-        internalId: `MPI-${1000 + i}`,
-        externalIds: `MRN${5000 + i}, EHR-${i * 2}`,
+        id: `rec-${i + 1}`,
+        masterName: `${firstName} ${lastName}`,
+        avatar: avatar,
+        internalId: `MPI-${1001 + i}`,
+        externalIds: `MRN${5001 + i}, EHR-${(i + 1) * 2}`,
         sourceList: selectedSources,
         impact: selectedSources.length,
         status: this.statuses[i % this.statuses.length],
@@ -646,25 +715,51 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
         lastUpdated: '2026-01-10',
         dob: 'Sep 25, 1956',
         age: 69,
-        gender: i % 2 === 0 ? 'Male' : 'Female',
-        photoUrl: this.avatarLinks[i % this.avatarLinks.length],
+        gender: gender,
+        photoUrl: avatar,
       });
     }
 
-    const mergeStatuses = ['Pending', 'Suggested', 'Requires Review'];
-    for (let j = 1; j <= 35; j++) {
-      const nameA = `${firstNames[j % 10]} ${lastNames[j % 10]}`;
-      const nameB = `${firstNames[(j + 2) % 10]} ${lastNames[j % 10]}`;
+    const mergeStatuses = ['Stable', 'Potential Conflict', 'Recently Changed', 'Requires Review'];
+    for (let j = 0; j < 35; j++) {
+      const isFemaleA = j % 2 === 0;
+      const isFemaleB = (j + 1) % 2 === 0;
+
+      const firstNamesA = isFemaleA ? this.femaleFirstNames : this.maleFirstNames;
+      const firstNamesB = isFemaleB ? this.femaleFirstNames : this.maleFirstNames;
+
+      const firstNameA = firstNamesA[j % firstNamesA.length];
+      const lastNameA = this.lastNames[j % this.lastNames.length];
+      const firstNameB = firstNamesB[(j + 2) % firstNamesB.length];
+      const lastNameB = this.lastNames[j % this.lastNames.length];
+
+      const nameA = `${firstNameA} ${lastNameA}`;
+      const nameB = `${firstNameB} ${lastNameB}`;
+
+      const avatarA = this.getGenderAppropriateAvatar(
+        isFemaleA ? 'Female' : 'Male',
+        firstNameA,
+        lastNameA,
+      );
+      const avatarB = this.getGenderAppropriateAvatar(
+        isFemaleB ? 'Female' : 'Male',
+        firstNameB,
+        lastNameB,
+      );
+
       mergeRecords.push({
-        id: `mrg-${j}`,
+        id: `mrg-${j + 1}`,
         candidate: `${nameA} + ${nameB}`,
-        avatarA: this.avatarLinks[j % this.avatarLinks.length],
-        avatarB: this.avatarLinks[(j + 2) % this.avatarLinks.length],
+        avatarA: avatarA,
+        avatarB: avatarB,
         impact: (j % 5) + 2,
         status: mergeStatuses[j % 3],
         delta: Math.floor(Math.random() * 15) + 1,
+        conflictEvents: Math.floor(Math.random() * 5),
         ruleTrigger: 'Threshold Match',
         conflicts: [{ type: 'Phone mismatch', details: 'Mobile vs Work' }],
+        genderA: isFemaleA ? 'Female' : 'Male',
+        genderB: isFemaleB ? 'Female' : 'Male',
       });
     }
 
@@ -673,21 +768,47 @@ export class IdentityComponent implements OnInit, AfterViewInit, OnDestroy {
     this.indexDataSource.data = indexRecords;
     this.mergeDataSource.data = mergeRecords;
 
+    // Create confidence records with proper gender matching
     const confidenceList = indexRecords.map((r, idx) => {
+      const score = Math.floor(Math.random() * (99 - 40 + 1)) + 40;
+      const trendValue = (Math.random() - 0.5) * 0.2;
+
       return {
         id: `conf-${idx}`,
         masterName: r.masterName,
         avatar: r.avatar,
         internalId: r.internalId,
-        score: Math.floor(Math.random() * (99 - 40 + 1)) + 40,
-        trendValue: (Math.random() - 0.5) * 0.2,
-        trendPercent: 70,
-        lastActivityDisplay: '3 days',
+        score: score,
+        trendValue: trendValue,
+        trendPercent: Math.round(score - 10),
+        lastActivityDisplay: idx % 5 === 0 ? '3 days' : idx % 3 === 0 ? '2 weeks' : '4 days',
         source: r.sourceList[0] || 'CSV Import',
         impact: r.impact,
         dateOfBirth: 'May 7, 1948 (93)',
         gender: r.gender,
-        activities: [{ source: 'QuestLab Systems', icon: 'biotech', time: '1 hour ago' }],
+        activities: [
+          {
+            source: 'QuestLab Systems',
+            icon: 'biotech',
+            iconClass: 'quest',
+            status: '-- --',
+            time: '1 hour ago',
+          },
+          {
+            source: 'Epic Health Network',
+            icon: 'local_hospital',
+            iconClass: 'epic',
+            status: '',
+            time: '3 months ago',
+          },
+          {
+            source: 'CSV Import',
+            icon: 'description',
+            iconClass: 'csv',
+            status: '',
+            time: '3 months ago',
+          },
+        ],
         lastActivityTimestamp: dayjs().subtract(idx, 'day').toISOString(),
       };
     });

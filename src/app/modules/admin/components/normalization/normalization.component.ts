@@ -23,6 +23,7 @@ import { Store } from '@ngrx/store';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -40,7 +41,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
-
+import { BreadcrumbComponent } from '@modules/admin/components/breadcrumb/breadcrumb.component';
+import { ViewMappingComponent } from './view-mapping/view-mapping.component';
+// Child Component
+import { EditMappingComponent } from './edit-mapping/edit-mapping.component';
+import { UsageImpactDrawerComponent } from './usage-impact-drawer/usage-impact-drawer.component';
 // Core Date Imports
 import {
   DateAdapter,
@@ -64,6 +69,7 @@ import { UsersModule } from '@modules/users/users-module';
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    MatDividerModule,
     MatChipsModule,
     MatProgressBarModule,
     MatPaginatorModule,
@@ -76,6 +82,10 @@ import { UsersModule } from '@modules/users/users-module';
     MatDatepickerModule,
     MatNativeDateModule,
     UsersModule,
+    ViewMappingComponent,
+    EditMappingComponent,
+    UsageImpactDrawerComponent,
+    BreadcrumbComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MatPaginatorIntl },
@@ -106,6 +116,13 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   activeTabLabel = 'Models';
   selectedEnv = 'Production';
   tempAvatar = 'assets/images/avatar.png';
+  // --- Animation handling ---
+  isExiting = false; // Sliding out to right (closing view entirely)
+  isEditing = false; // Controls Edit component lifecycle
+  // Mapping Detail View State
+  showMappingDetail = false;
+  showModelDetail = false; // Add this missing declaration
+  selectedMappingData: any = null;
 
   // Date Range Picker
   startView: 'month' | 'year' | 'multi-year' = 'month';
@@ -468,6 +485,95 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   /**
+   * Processes navigation signals from the breadcrumb.
+   * FIXED: Uses 'selectedMappingData' to match class property definition.
+   */
+  /**
+   * Processes navigation signals from the breadcrumb.
+   * Ensures clickable segments for: Normalization > Mappings > View Mapping > Edit Mapping
+   */
+  /**
+   * Processes navigation signals from the breadcrumb.
+   */
+  private handleBreadcrumbNavigation(target: string): void {
+    // 1. Handle "Edit Mapping" deep dive
+    if (target === 'EDIT_MAPPING') {
+      this.updateBreadcrumbPath();
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // 2. Handle "View Mapping" (Clicking back from Edit Mapping)
+    if (target === 'VIEW_MAPPING') {
+      this.showMappingDetail = true;
+
+      // Signal the view component to toggle isEditing = false
+      this.eventService.publish('nf', 'close_edit_mode', {
+        mappingId: this.selectedMappingData?.id,
+      });
+
+      this.updateBreadcrumbPath();
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // 3. Reset detail view states for standard tab/root navigation
+    if (target === 'ROOT' || target.startsWith('TAB_')) {
+      this.showMappingDetail = false;
+      this.showModelDetail = false;
+      this.selectedMappingData = null;
+
+      switch (target) {
+        case 'ROOT':
+          this.activeTabIndex = 0;
+          break;
+        case 'TAB_MODELS':
+          this.activeTabIndex = 0;
+          break;
+        case 'TAB_MAPPINGS':
+          this.activeTabIndex = 1;
+          break;
+        case 'TAB_RULES':
+          this.activeTabIndex = 2;
+          break;
+        case 'TAB_VERSIONS':
+          this.activeTabIndex = 3;
+          break;
+        case 'TAB_CODES':
+          this.activeTabIndex = 4;
+          break;
+      }
+    }
+
+    // 4. Finalize UI State
+    this.activeTabLabel = this.tabOrder[this.activeTabIndex];
+    this.updateBreadcrumbPath();
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Updates the breadcrumb path by publishing a signal to the EventStore.
+   * Ensures all items follow the expected type structure.
+   */
+  private updateBreadcrumbPath(childLabel?: string): void {
+    const path: { label: string; target: string }[] = [{ label: 'Normalization', target: 'ROOT' }];
+
+    if (this.activeTabLabel) {
+      path.push({
+        label: this.activeTabLabel,
+        target: `TAB_${this.activeTabLabel.toUpperCase()}`,
+      });
+    }
+
+    if (childLabel) {
+      path.push({ label: childLabel, target: 'NONE' });
+    }
+
+    this.eventService.publish('nf', 'update_breadcrumb', { path });
+  }
+  // Define a central path update method to reduce boilerplate
+
+  /**
    * Updates the selected item reference and opens the menu
    * Useful if you need to track the item outside the menu context
    */
@@ -480,6 +586,9 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.activeTabLabel = this.tabOrder[this.activeTabIndex];
 
     this.cdr.detectChanges();
+
+    // Update path: Normalization > [Active Tab]
+    this.updateBreadcrumbPath();
 
     setTimeout(() => {
       this.refreshTablePointers();
@@ -520,6 +629,41 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     }, 100);
   }
 
+  // Add this method to handle row clicks in the mapping table:
+  // Add this method to handle row clicks in the mapping table:
+  onMappingRowClick(mapping: any): void {
+    // Ensure 'mapping' object contains the current status from the table row
+    this.selectedMappingData = { ...mapping };
+    this.showMappingDetail = true;
+
+    // Update path: Normalization > Mappings > View Mapping
+    this.updateBreadcrumbPath('View Mapping');
+
+    setTimeout(() => {
+      const container = document.querySelector('.normalization-main-container');
+      if (container) {
+        container.classList.add('slide-out');
+      }
+    }, 0);
+  }
+  // Add this method to handle closing the mapping detail view:
+  onCloseMappingDetail(): void {
+    const container = document.querySelector('.normalization-main-container');
+    if (container) {
+      container.classList.remove('slide-out');
+      container.classList.add('slide-in');
+    }
+
+    setTimeout(() => {
+      this.showMappingDetail = false;
+      this.selectedMappingData = null;
+
+      if (container) {
+        container.classList.remove('slide-in');
+      }
+    }, 400);
+  }
+
   /**
    * Listen for theme changes and re-apply styles
    */
@@ -555,14 +699,24 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   /**
    * Listen for events from the NgRx Store via EventService.
-   * Now updated to handle theme_change signals to fix layout issues in real-time.
+   * Updated to correctly extract payload data from the EventService's nested structure.
    */
   subscribeEvents(): void {
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       const lastAction = state?.lastAction;
       const eventName = state?.items?.event;
 
-      console.log('[NormalizationComponent] Received Event:', { lastAction, eventName });
+      /**
+       * FIX: EventService.publish wraps your data in a 'payload' property.
+       * Your previous code looked in 'data', which returned undefined for breadcrumb signals.
+       */
+      const eventData = state?.items?.payload;
+
+      console.log('[NormalizationComponent] Received Event:', {
+        lastAction,
+        eventName,
+        eventData,
+      });
 
       // 1. Handle Data Refresh Events
       if (
@@ -573,12 +727,21 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         this.loadAllData();
       }
 
+      if (eventName === 'open_edit_mapping') {
+        // Initialize with the received data
+        this.isEditing = true;
+        this.isExiting = false;
+      }
+
+      if (eventName === 'close_edit_mapping') {
+        // Initialize with the received data
+        this.isEditing = false;
+        this.isExiting = true;
+      }
+
       // 2. Handle Theme Change Events
-      // This is triggered by ThemeSwitchComponent's eventService.publish
       if (eventName === 'theme_change' || lastAction === 'theme_updated') {
         console.log('[NormalizationComponent] Theme change detected, reapplying layout fixes...');
-        // We use a small timeout to ensure the .dark-theme/.light-theme classes
-        // have fully propagated to the DOM before we run our manual overrides.
         setTimeout(() => {
           this.fixModelsDateInputLayout();
           this.fixMappingsDateInputLayout();
@@ -588,6 +751,14 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
           // Force change detection to ensure the UI reflects theme-specific hex colors
           this.cdr.detectChanges();
         }, 50);
+      }
+
+      // 3. Handle Breadcrumb Navigation Signals
+      // This allows the breadcrumb click to trigger handleNavigation()
+      // Inside subscribeEvents() around line 721
+      if (eventName === 'breadcrumb_navigate' && eventData) {
+        // FIX: Change handleNavigation to handleBreadcrumbNavigation
+        this.handleBreadcrumbNavigation(eventData.target);
       }
     });
   }
@@ -2314,6 +2485,15 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     const ruleScopes = ['Model-level', 'System', 'Source'];
     const ruleTriggers = ['Immediate', 'Aggregate', 'Scheduled'];
 
+    // Field mapping data types
+    const fieldTypes = ['String', 'Number', 'Date', 'Boolean', 'Enum', 'Object'];
+    const mappingTypes = ['Direct', 'Derived', 'Constant'];
+    const requirements = ['Required', 'Optional'];
+
+    console.log(`Added new values for fieldTypes: ${JSON.stringify(fieldTypes)}`);
+    console.log(`Added new values for mappingTypes: ${JSON.stringify(mappingTypes)}`);
+    console.log(`Added new values for requirements: ${JSON.stringify(requirements)}`);
+
     // 1. Models Data (Standard structure)
     this.originalModelData = Array.from({ length: 35 }, (_, i) => {
       const gType = i === 0 ? 'Canonical' : governanceTypes[i % 3];
@@ -2336,7 +2516,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       };
     });
 
-    // 2. Mapping Data (Formatted for Source -> Target deep search)
+    // 2. Enhanced Mapping Data with complete field-level details
     this.originalMappingData = Array.from({ length: 35 }, (_, i) => {
       const sourceSystem = i % 2 === 0 ? 'Epic' : 'QuestLab';
       const targetModel = i % 2 === 0 ? 'Patient' : 'Lab Result';
@@ -2344,16 +2524,38 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         .toString()
         .padStart(2, '0');
       const dateStr = `2026-01-${day}`;
+      const fieldCount = 10 + (i % 15);
+
+      // Generate rich field-level mapping data
+      const fields = this.generateFieldMappings(sourceSystem, targetModel, fieldCount, i);
+
+      // Generate usage and impact data
+      const pipelines = this.generatePipelineUsage(sourceSystem, targetModel, i);
+      const rules = this.generateRuleReferences(sourceSystem, targetModel, i);
 
       return {
         id: `map-${i}`,
         name: `${sourceSystem} → ${targetModel}`,
         source: i % 2 === 0 ? 'Epic Health Network' : 'QuestLab Systems',
         target: targetModel,
-        fields: 10 + (i % 15),
+        fields: fields,
+        fieldCount: fieldCount,
         coverage: `${15 + (i % 5)} / 20`,
         status: governanceStatuses[i % 4],
         lastModified: dateStr,
+        version: `v${Math.floor(i / 5) + 1}.${i % 5}`,
+        lastSavedBy: i % 3 === 0 ? 'admin' : i % 3 === 1 ? 'brianna.wilson' : 'mason.adams',
+        lastSavedRelative: `${Math.floor(i / 2) + 1} hours ago`,
+
+        // Usage and Impact data
+        usageData: {
+          pipelines: pipelines,
+          pipelineCount: pipelines.length,
+          rules: rules,
+          ruleCount: rules.length,
+          targetModel: targetModel,
+          normalizationActive: i % 4 !== 3, // Most are active
+        },
       };
     });
 
@@ -2455,6 +2657,196 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.applyRuleFilter();
     this.applyVersionFilter();
     this.applyCodeFilter();
+  }
+
+  // Helper method to generate field mappings for each source-target pair
+  private generateFieldMappings(
+    sourceSystem: string,
+    targetModel: string,
+    count: number,
+    seedIndex: number,
+  ): any[] {
+    const fieldTypes = ['String', 'Number', 'Date', 'Boolean', 'Enum', 'Object'];
+    const mappingTypes = ['Direct', 'Derived', 'Constant'];
+    const requirements = ['Required', 'Optional'];
+    const statuses = ['Mapped', 'Unmapped', 'Modified'];
+    console.log(`Added new values for fieldTypes: ${JSON.stringify(fieldTypes)}`);
+    console.log(`Added new values for mappingTypes: ${JSON.stringify(mappingTypes)}`);
+    console.log(`Added new values for requirements: ${JSON.stringify(requirements)}`);
+    console.log(`Added new values for statuses: ${JSON.stringify(statuses)}`);
+
+    const epicFields = [
+      'MRN',
+      'FIRST_NAME',
+      'LAST_NAME',
+      'MIDDLE_NAME',
+      'DOB',
+      'GENDER',
+      'SSN',
+      'PHONE',
+      'EMAIL',
+      'STREET',
+      'CITY',
+      'STATE',
+      'ZIP',
+      'INSURANCE',
+      'PRIMARY_CARE',
+      'ALLERGIES',
+      'MEDICATIONS',
+      'DIAGNOSES',
+      'HEIGHT',
+      'WEIGHT',
+      'BLOOD_TYPE',
+      'MARITAL_STATUS',
+      'LANGUAGE',
+      'RACE',
+      'ETHNICITY',
+      'EMERGENCY_CONTACT',
+    ];
+
+    const questLabFields = [
+      'SAMPLE_ID',
+      'TEST_CODE',
+      'RESULT_VALUE',
+      'RESULT_UNIT',
+      'REFERENCE_RANGE',
+      'ABNORMAL_FLAG',
+      'COLLECTION_DATE',
+      'RESULT_DATE',
+      'ORDERING_PROVIDER',
+      'PERFORMING_LAB',
+      'SPECIMEN_TYPE',
+      'TEST_STATUS',
+      'PATIENT_ID',
+      'ORDER_ID',
+    ];
+
+    const patientTargetFields = [
+      'patient_id',
+      'first_name',
+      'last_name',
+      'middle_name',
+      'birth_date',
+      'gender',
+      'ssn',
+      'phone_home',
+      'phone_mobile',
+      'email',
+      'addr_street',
+      'addr_city',
+      'addr_state',
+      'addr_zip',
+      'insurance_primary',
+      'primary_physician',
+      'allergies',
+      'current_medications',
+      'active_diagnoses',
+      'height_cm',
+      'weight_kg',
+      'blood_type',
+      'marital_status',
+      'preferred_language',
+      'race',
+      'ethnicity',
+      'emergency_contact_name',
+      'emergency_contact_phone',
+    ];
+
+    const labResultTargetFields = [
+      'sample_id',
+      'test_code',
+      'result_value',
+      'result_unit',
+      'reference_range_low',
+      'reference_range_high',
+      'abnormal_indicator',
+      'collection_timestamp',
+      'result_timestamp',
+      'ordering_provider_id',
+      'performing_lab_code',
+      'specimen_type',
+      'result_status',
+      'patient_reference',
+      'order_reference',
+    ];
+
+    const sourceFields = sourceSystem === 'Epic' ? epicFields : questLabFields;
+    const targetFields = targetModel === 'Patient' ? patientTargetFields : labResultTargetFields;
+
+    return Array.from({ length: Math.min(count, sourceFields.length) }, (_, i) => {
+      const idx = (i + seedIndex) % sourceFields.length;
+      const isRequired = i < 8; // First 8 fields are required
+      const isMapped = i < count - 2; // Most are mapped, last 2 might be unmapped
+
+      return {
+        id: `field-${seedIndex}-${i}`,
+        sourceField: sourceFields[idx],
+        targetField: isMapped ? targetFields[Math.min(idx, targetFields.length - 1)] : '',
+        type: fieldTypes[idx % fieldTypes.length],
+        requirement: isRequired ? 'Required' : 'Optional',
+        mappingType: mappingTypes[idx % mappingTypes.length],
+        status: isMapped ? 'Mapped' : 'Unmapped',
+        notes: i % 5 === 0 ? 'Normalized value' : '',
+      };
+    });
+  }
+
+  // Helper method to generate pipeline usage data
+  private generatePipelineUsage(
+    sourceSystem: string,
+    targetModel: string,
+    seedIndex: number,
+  ): any[] {
+    const pipelines = [
+      { id: 'pipe-1', name: 'Patient Normalization Pipeline', active: true },
+      { id: 'pipe-2', name: 'Nightly Epic Sync', active: true },
+      { id: 'pipe-3', name: 'Real-time Lab Integration', active: true },
+      { id: 'pipe-4', name: 'Historical Data Migration', active: false },
+      { id: 'pipe-5', name: 'Quality Metrics Aggregation', active: true },
+    ];
+
+    // Return 2-3 pipelines per mapping
+    const pipelineCount = 2 + (seedIndex % 2);
+    return pipelines.slice(0, pipelineCount).map(p => ({
+      ...p,
+      usedBy: `${sourceSystem} → ${targetModel}`,
+    }));
+  }
+
+  // Helper method to generate rule references
+  private generateRuleReferences(
+    sourceSystem: string,
+    targetModel: string,
+    seedIndex: number,
+  ): any[] {
+    const rules = [
+      { id: 'rule-1', name: 'Diagnoses Normalization Rule', type: 'Normalization' },
+      { id: 'rule-2', name: 'Nationality Mapping Rule', type: 'Mapping' },
+      { id: 'rule-3', name: 'Insurance Validation Rule', type: 'Validation' },
+      { id: 'rule-4', name: 'Epic Encounter Transformation Rule', type: 'Transformation' },
+      { id: 'rule-5', name: 'Required Field Validation', type: 'Validation' },
+      { id: 'rule-6', name: 'Date Format Standardization', type: 'Normalization' },
+      { id: 'rule-7', name: 'Phone Number Formatting', type: 'Transformation' },
+    ];
+
+    // Return 3-5 rules per mapping
+    const ruleCount = 3 + (seedIndex % 3);
+    return rules.slice(0, ruleCount).map(r => ({
+      ...r,
+      appliedTo: `${sourceSystem} → ${targetModel}`,
+    }));
+  }
+
+  onCloseEdit(): void {
+    // 1. "One In" - Reverse the animation: Slide back from the left
+
+    // 2. Breadcrumb sync
+    this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'VIEW_MAPPING' });
+
+    // 3. Clean up the Edit component AFTER its slide-out animation finishes.
+    setTimeout(() => {
+      this.isEditing = false;
+    }, 600);
   }
 
   ngOnDestroy(): void {

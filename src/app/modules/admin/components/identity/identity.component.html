@@ -284,18 +284,47 @@
           <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mStatusMenu">
             Status: <strong>{{ mergeSelectedStatus }}</strong> <mat-icon>expand_more</mat-icon>
           </button>
+
+          <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mImpactMenu">
+            Impact: <strong>{{ mergeSelectedImpact }}</strong> <mat-icon>expand_more</mat-icon>
+          </button>
+
           <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mDeltaMenu">
-            Delta: <strong>{{ mergeSelectedDelta }}</strong> <mat-icon>expand_more</mat-icon>
+            Confidence Delta: <strong>{{ mergeSelectedDelta }}</strong>
+            <mat-icon>expand_more</mat-icon>
           </button>
 
           <mat-menu #mStatusMenu="matMenu">
             <button mat-menu-item (click)="setMergeStatus('All')">All</button>
-            <button mat-menu-item (click)="setMergeStatus('Pending')">Pending</button>
-            <button mat-menu-item (click)="setMergeStatus('Suggested')">Suggested</button>
+            <button mat-menu-item (click)="setMergeStatus('Stable')">Stable</button>
+            <button mat-menu-item (click)="setMergeStatus('Potential Conflict')">
+              Potential Conflict
+            </button>
+            <button mat-menu-item (click)="setMergeStatus('Recently Changed')">
+              Recently Changed
+            </button>
+            <button mat-menu-item (click)="setMergeStatus('Requires Review')">
+              Requires Review
+            </button>
           </mat-menu>
+
+          <mat-menu #mImpactMenu="matMenu">
+            <button mat-menu-item (click)="setMergeImpact('All')">All</button>
+            <button mat-menu-item (click)="setMergeImpact('High')">High Impact</button>
+            <button mat-menu-item (click)="setMergeImpact('Medium')">Medium Impact</button>
+            <button mat-menu-item (click)="setMergeImpact('Low')">Low Impact</button>
+          </mat-menu>
+
           <mat-menu #mDeltaMenu="matMenu">
             <button mat-menu-item (click)="setMergeDelta('Any')">Any</button>
             <button mat-menu-item (click)="setMergeDelta('Positive')">Positive (+)</button>
+            <button mat-menu-item (click)="setMergeDelta('Negative')">Positive (-)</button>
+            <button mat-menu-item (click)="setMergeDelta('Below Threshold')">
+              Below Threshold
+            </button>
+            <button mat-menu-item (click)="setMergeDelta('Above Threshold')">
+              Above Threshold
+            </button>
           </mat-menu>
         </div>
 
@@ -504,6 +533,7 @@
             <button mat-menu-item (click)="setConfidenceImpactFilter('Medium')">
               Medium Impact
             </button>
+            <button mat-menu-item (click)="setConfidenceImpactFilter('Low')">Low Impact</button>
           </mat-menu>
 
           <div class="threshold-filter">
