@@ -1,0 +1,1438 @@
+// ============================================================================
+// 1. OVERLAY & CONTAINER
+// ============================================================================
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  width: 900px;
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: modalIn 0.25s ease-out;
+  border: 1px solid #333;
+  position: relative;
+
+  &.dark {
+    background: #1e1e1e;
+    color: #e0e0e0;
+  }
+
+  &.light {
+    background: #fff;
+    color: #333;
+    border-color: #ddd;
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================================================
+// 2. HEADER
+// ============================================================================
+.modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  border-radius: 12px 12px 0 0;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  button {
+    color: inherit;
+  }
+
+  &.dark {
+    background: #252525;
+    border-color: #333;
+    .header-title {
+      mat-icon {
+        color: #5b9bd5;
+      }
+      h2 {
+        color: #e0e0e0;
+      }
+      .subtitle {
+        color: #999;
+      }
+    }
+    button {
+      color: #e0e0e0;
+    }
+  }
+
+  &.light {
+    background: #f5f5f5;
+    border-color: #ddd;
+    .header-title {
+      mat-icon {
+        color: #1976d2;
+      }
+      h2 {
+        color: #333;
+      }
+      .subtitle {
+        color: #666;
+      }
+    }
+    button {
+      color: #333;
+    }
+  }
+}
+
+// ============================================================================
+// 3. BODY & STEPPER
+// ============================================================================
+.modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  position: relative;
+  overflow-x: hidden;
+
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #fff;
+  }
+}
+
+.dark-stepper {
+  background: transparent !important;
+  ::ng-deep {
+    .mat-horizontal-stepper-header-container {
+      padding: 8px 16px;
+      background: #252525 !important;
+      border-bottom: 1px solid #333;
+    }
+    .mat-step-header {
+      .mat-step-icon {
+        background-color: #3a3a3a !important;
+        color: #e0e0e0 !important;
+      }
+      .mat-step-icon-selected,
+      .mat-step-icon-state-edit {
+        background-color: #5b9bd5 !important;
+        color: #fff !important;
+      }
+      .mat-step-label {
+        color: #999 !important;
+      }
+      .mat-step-label-selected {
+        color: #e0e0e0 !important;
+      }
+      &:hover:not([aria-disabled='true']) {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+      }
+    }
+    .mat-stepper-horizontal-line {
+      border-top-color: #333 !important;
+    }
+    .mat-horizontal-content-container {
+      padding: 0 !important;
+      background: #1a1a1a;
+      overflow: visible !important;
+    }
+    .mat-horizontal-stepper-content {
+      background: #1a1a1a;
+      overflow: visible !important;
+    }
+  }
+}
+
+.light-stepper {
+  background: transparent !important;
+  ::ng-deep {
+    .mat-horizontal-stepper-header-container {
+      padding: 8px 16px;
+      background: #f5f5f5 !important;
+      border-bottom: 1px solid #ddd;
+    }
+    .mat-step-header {
+      .mat-step-icon {
+        background-color: #e0e0e0 !important;
+        color: #333 !important;
+      }
+      .mat-step-icon-selected,
+      .mat-step-icon-state-edit {
+        background-color: #1976d2 !important;
+        color: #fff !important;
+      }
+      .mat-step-label {
+        color: #666 !important;
+      }
+      .mat-step-label-selected {
+        color: #333 !important;
+      }
+      &:hover:not([aria-disabled='true']) {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+      }
+    }
+    .mat-stepper-horizontal-line {
+      border-top-color: #ddd !important;
+    }
+    .mat-horizontal-content-container {
+      padding: 0 !important;
+      background: #fff;
+      overflow: visible !important;
+    }
+    .mat-horizontal-stepper-content {
+      background: #fff;
+      overflow: visible !important;
+    }
+  }
+}
+
+// ============================================================================
+// 4. FORM CONTENT & FIELDS
+// ============================================================================
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px 48px;
+  min-height: 400px;
+  overflow: visible;
+
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #fff;
+  }
+}
+
+%field-label-fix {
+  ::ng-deep {
+    .mat-mdc-form-field {
+      overflow: visible !important;
+    }
+    .mat-mdc-text-field-wrapper {
+      height: 56px !important;
+      overflow: visible !important;
+    }
+    .mat-mdc-form-field-flex {
+      align-items: center !important;
+    }
+    .mdc-floating-label {
+      transform: translateY(-50%) !important;
+      top: 50% !important;
+      font-size: 15px !important;
+    }
+    .mdc-floating-label--float-above {
+      top: 28px !important;
+      transform: translateY(-40px) scale(0.8) !important;
+    }
+    .mat-mdc-form-field-infix {
+      padding: 0 !important;
+      min-height: 56px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+    input.mat-mdc-input-element {
+      margin-top: 8px !important;
+    }
+  }
+}
+
+// ──────────────────────────────────────────────
+// PLACEHOLDER OVERLAP & ANIMATION FIX – FINAL VERSION
+// ──────────────────────────────────────────────
+
+.dark-field,
+.dark,
+.modal-container.dark,
+.dark-stepper,
+.step-content.dark,
+.step-content-wrapper.dark {
+  ::ng-deep {
+    // USER-ENTERED TEXT – always light
+    input,
+    textarea,
+    .mat-mdc-chip-input input,
+    .mat-mdc-form-field-infix input,
+    .mat-mdc-form-field-infix textarea {
+      color: #e0e0e0 !important;
+    }
+
+    // PLACEHOLDER – restore Material fade behavior in dark mode
+    input::placeholder,
+    textarea::placeholder,
+    .mdc-text-field__input::placeholder,
+    .mat-mdc-chip-input input::placeholder,
+    .mat-mdc-select-placeholder {
+      color: #a0a0a0 !important;
+      opacity: 1 !important; // start visible when empty
+      transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    // HIDE when label floats (Material class triggers this)
+    .mat-mdc-form-field.mat-form-field-should-float ::placeholder,
+    .mat-mdc-form-field.mat-focused ::placeholder,
+    .mat-mdc-form-field.mat-form-field-can-float.mat-form-field-should-float ::placeholder,
+    .mdc-text-field--focused ::placeholder,
+    .mdc-text-field--filled.has-value ::placeholder {
+      opacity: 0 !important;
+    }
+
+    // SHOW when label is in placeholder position
+    .mat-mdc-form-field:not(.mat-form-field-should-float):not(.mat-focused) ::placeholder {
+      opacity: 0.85 !important;
+    }
+
+    // Extra left padding – prevents visual overlap during animation
+    .mat-mdc-form-field-infix {
+      padding-left: 18px !important; // increased from 16px
+      padding-right: 18px !important;
+    }
+
+    // Textarea extra top padding
+    textarea.mat-mdc-input-element {
+      padding-top: 16px !important;
+      padding-left: 18px !important;
+    }
+
+    // Chip input – special handling
+    .mat-mdc-chip-input input::placeholder {
+      opacity: 0.85 !important;
+      padding-left: 4px !important;
+    }
+
+    .mat-mdc-chip-grid .mat-mdc-chip-input-container {
+      padding-left: 12px !important;
+    }
+
+    // SELECTED VALUE IN SELECT
+    .mat-mdc-select-value,
+    .mat-mdc-select-value-text,
+    .mat-mdc-select-trigger {
+      color: #e8e8e8 !important;
+    }
+
+    // CHIP TEXT
+    .mat-mdc-chip,
+    .mat-mdc-chip-row,
+    .mat-mdc-chip-row .mdc-evolution-chip__text-label,
+    .mat-mdc-chip span {
+      color: #e0e0e0 !important;
+    }
+
+    .mat-mdc-chip-row .mat-mdc-chip-trailing-icon,
+    .mat-mdc-chip-row .mat-icon {
+      color: #bbbbbb !important;
+    }
+
+    // LABELS & HINTS
+    .mat-mdc-form-field-label,
+    .mat-mdc-floating-label,
+    .mdc-floating-label,
+    .mat-mdc-form-field-hint,
+    mat-label {
+      color: #bbbbbb !important;
+    }
+
+    // OUTLINE
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #555 !important;
+    }
+
+    .mdc-text-field--focused .mdc-notched-outline__leading,
+    .mdc-text-field--focused .mdc-notched-outline__notch,
+    .mdc-text-field--focused .mdc-notched-outline__trailing {
+      border-color: #5b9bd5 !important;
+    }
+  }
+}
+
+.dark-field {
+  @extend %field-label-fix;
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      background-color: transparent;
+    }
+    .mdc-text-field--filled {
+      background-color: #252525 !important;
+    }
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #444 !important;
+    }
+    label,
+    .mat-mdc-floating-label {
+      color: #999 !important;
+    }
+    input,
+    textarea {
+      color: #e0e0e0 !important;
+      caret-color: #5b9bd5 !important;
+    }
+    .mat-mdc-select-value {
+      color: #e0e0e0 !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #999 !important;
+    }
+    .mat-mdc-form-field-error {
+      color: #f44336 !important;
+    }
+  }
+}
+
+.light-field {
+  @extend %field-label-fix;
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      background-color: transparent;
+    }
+    .mdc-text-field--filled {
+      background-color: #fafafa !important;
+    }
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #ccc !important;
+    }
+    label,
+    .mat-mdc-floating-label {
+      color: #666 !important;
+    }
+    input,
+    textarea {
+      color: #333 !important;
+      caret-color: #1976d2 !important;
+    }
+    .mat-mdc-select-value {
+      color: #333 !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #666 !important;
+    }
+    .mat-mdc-form-field-error {
+      color: #d32f2f !important;
+    }
+  }
+}
+
+// ============================================================================
+// 5. CHIPS, TOGGLES, CHECKBOXES
+// ============================================================================
+.dark-field ::ng-deep .mat-mdc-chip-grid {
+  .mat-mdc-chip,
+  .mat-mdc-chip-row {
+    background-color: #333 !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444;
+
+    span,
+    .mdc-evolution-chip__text-label {
+      color: #e0e0e0 !important;
+    }
+
+    .mat-icon {
+      color: #bbbbbb !important;
+    }
+  }
+
+  input {
+    color: #e0e0e0 !important;
+  }
+}
+
+.light-field ::ng-deep .mat-mdc-chip-grid {
+  .mat-mdc-chip {
+    background-color: #e0e0e0 !important;
+    color: #333 !important;
+    border: 1px solid #ccc;
+    .mat-icon {
+      color: #666 !important;
+    }
+  }
+  input {
+    color: #333 !important;
+  }
+}
+
+.dark-toggle ::ng-deep {
+  .mdc-label {
+    color: #e0e0e0 !important;
+  }
+  .mdc-switch__track {
+    background-color: #444 !important;
+    border-color: #444 !important;
+  }
+  .mdc-switch--selected .mdc-switch__track {
+    background-color: #5b9bd5 !important;
+  }
+  .mdc-switch__handle {
+    background-color: #666 !important;
+  }
+}
+
+.dark-checkbox ::ng-deep {
+  .mdc-label {
+    color: #e0e0e0 !important;
+  }
+  .mdc-checkbox__background {
+    border-color: #666 !important;
+  }
+  .mdc-checkbox--selected .mdc-checkbox__background {
+    background-color: #5b9bd5 !important;
+    border-color: #5b9bd5 !important;
+  }
+}
+
+.light-toggle ::ng-deep {
+  .mdc-label {
+    color: #333 !important;
+  }
+  .mdc-switch--selected .mdc-switch__track {
+    background-color: #1976d2 !important;
+  }
+}
+
+.light-checkbox ::ng-deep {
+  .mdc-label {
+    color: #333 !important;
+  }
+  .mdc-checkbox--selected .mdc-checkbox__background {
+    background-color: #1976d2 !important;
+  }
+}
+
+// ============================================================================
+// 6. UTILITY ROWS
+// ============================================================================
+.form-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  overflow: visible;
+  .flex-2 {
+    flex: 2;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+}
+
+// ============================================================================
+// 7. CONNECTION TEST & SUMMARY
+// ============================================================================
+.connection-test-area {
+  margin-top: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  font-weight: 500;
+
+  &.success {
+    background: rgba(46, 204, 113, 0.15);
+    border-color: #4caf50;
+    .test-msg,
+    mat-icon {
+      color: #4caf50 !important;
+    }
+  }
+  &.error {
+    background: rgba(231, 76, 60, 0.15);
+    border-color: #f44336;
+    .test-msg,
+    mat-icon {
+      color: #f44336 !important;
+    }
+  }
+
+  &.dark-test {
+    background: #252525;
+    border-color: #333;
+    button {
+      color: #e0e0e0;
+      border-color: #444;
+    }
+  }
+  &.light-test {
+    background: #fafafa;
+    border-color: #ddd;
+    button {
+      color: #333;
+      border-color: #ccc;
+    }
+  }
+}
+
+.final-summary {
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  border-left: 4px solid #ff9800;
+  h3,
+  p {
+    margin: 0 0 8px 0;
+  }
+
+  &.dark-summary {
+    background: rgba(255, 152, 0, 0.15);
+    h3,
+    p {
+      color: #e0e0e0;
+    }
+    ul li {
+      color: #ccc;
+    }
+  }
+  &.light-summary {
+    background: rgba(255, 152, 0, 0.1);
+    h3,
+    p {
+      color: #333;
+    }
+    ul li {
+      color: #666;
+    }
+  }
+}
+
+// ============================================================================
+// 8. ACTIONS & BUTTONS
+// ============================================================================
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: auto;
+  padding: 16px 24px;
+  border-top: 1px solid #333;
+  &.light {
+    border-top-color: #ddd;
+  }
+}
+
+.modal-container {
+  &.dark ::ng-deep {
+    button[mat-flat-button][color='primary'] {
+      background-color: #5b9bd5 !important;
+      color: #fff !important;
+    }
+    button[mat-flat-button][color='warn'] {
+      background-color: #d32f2f !important;
+    }
+    button[mat-button],
+    button[mat-stroked-button] {
+      color: #e0e0e0 !important;
+      border-color: #444 !important;
+    }
+  }
+  &.light ::ng-deep {
+    button[mat-flat-button][color='primary'] {
+      background-color: #1976d2 !important;
+      color: #fff !important;
+    }
+    button[mat-button],
+    button[mat-stroked-button] {
+      color: #333 !important;
+      border-color: #ccc !important;
+    }
+  }
+}
+
+// ============================================================================
+// 9. SPINNER
+// ============================================================================
+::ng-deep mat-spinner {
+  circle {
+    stroke: #5b9bd5 !important;
+  }
+  &.light circle {
+    stroke: #1976d2 !important;
+  }
+}
+
+// ============================================================================
+// 10. LISTS & SELECTIONS
+// ============================================================================
+.item-selection-list {
+  border: 1px solid #333;
+  border-radius: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  margin-top: 8px;
+
+  .list-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid #333;
+    transition: background 0.2s;
+    cursor: pointer;
+    &:last-child {
+      border-bottom: none;
+    }
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    &.selected {
+      background: rgba(91, 155, 213, 0.15);
+      border-left: 3px solid #5b9bd5;
+    }
+  }
+
+  &.light-list {
+    border-color: #ddd;
+    .list-item {
+      border-bottom-color: #ddd;
+      &:hover {
+        background: rgba(0, 0, 0, 0.02);
+      }
+      &.selected {
+        background: rgba(25, 118, 210, 0.08);
+        border-left-color: #1976d2;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 11. TABLE INTEGRATION
+// ============================================================================
+.modal-table-container {
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #333;
+  table {
+    width: 100%;
+    background: transparent !important;
+  }
+  .mat-mdc-header-row {
+    background: #252525;
+  }
+  .mat-mdc-header-cell {
+    color: #999 !important;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+  &.light-table {
+    border-color: #ddd;
+    .mat-mdc-header-row {
+      background: #f5f5f5;
+    }
+    .mat-mdc-header-cell {
+      color: #666 !important;
+    }
+  }
+}
+
+// ============================================================================
+// 12. CUSTOM SCROLLBARS
+// ============================================================================
+.modal-body,
+.item-selection-list {
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &.dark::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+  }
+  &.light::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+  }
+}
+
+// ============================================================================
+// 13. ADDITIONAL FORM HELPERS
+// ============================================================================
+.info-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #999;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 12px 0;
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+  &.light-info {
+    color: #666;
+  }
+}
+
+// ============================================================================
+// 14. RADIO BUTTON THEMING & LAYOUT
+// ============================================================================
+.radio-selection-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 0 4px;
+
+  .radio-group-label {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+  }
+
+  mat-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .field-info {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+}
+
+.dark-radio ::ng-deep {
+  .mdc-label {
+    color: #e0e0e0 !important;
+    font-size: 14px;
+  }
+  .mdc-radio__outer-circle {
+    border-color: #666 !important;
+  }
+  .mat-mdc-radio-button.mat-primary.mat-mdc-radio-checked .mdc-radio__outer-circle {
+    border-color: #5b9bd5 !important;
+  }
+  .mat-mdc-radio-button.mat-primary .mdc-radio__inner-circle {
+    background-color: #5b9bd5 !important;
+  }
+}
+
+.light-radio ::ng-deep {
+  .mdc-label {
+    color: #333 !important;
+    font-size: 14px;
+  }
+  .mat-mdc-radio-button.mat-primary.mat-mdc-radio-checked .mdc-radio__outer-circle {
+    border-color: #1976d2 !important;
+  }
+  .mat-mdc-radio-button.mat-primary .mdc-radio__inner-circle {
+    background-color: #1976d2 !important;
+  }
+}
+
+.step-actions {
+  margin-top: auto;
+  padding: 16px 0 0 0;
+}
+
+.field-container {
+  margin-bottom: 24px;
+  .field-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    .required {
+      color: #f44336;
+    }
+  }
+  .full-width-field {
+    width: 100%;
+  }
+}
+
+.vertical-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .radio-option {
+    display: flex;
+    flex-direction: column;
+
+    .radio-title {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .radio-description {
+      font-size: 12px;
+      color: #777;
+      margin-left: 40px;
+      margin-top: -4px;
+    }
+  }
+}
+
+.field-selection-header {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  .header-item {
+    display: flex;
+    flex-direction: column;
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+  }
+}
+
+// ============================================================================
+// STEP 3 - MAPPING TABLE
+// ============================================================================
+$source-w: 30%;
+$target-w: 30%;
+$transform-w: 32%;
+$actions-w: 8%;
+
+.step-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 40px;
+  min-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+
+  &.dark {
+    background: #1a1a1a;
+  }
+
+  &.light {
+    background: #fff;
+  }
+
+  .step-description {
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+    color: #666;
+  }
+
+  .selection-row-grid {
+    display: flex;
+    width: 100%;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #666;
+    }
+
+    .col-source {
+      flex: 0 0 $source-w;
+    }
+
+    .col-target {
+      flex: 0 0 $target-w;
+    }
+
+    .col-transform {
+      flex: 0 0 $transform-w;
+    }
+
+    .col-actions-spacer {
+      flex: 0 0 $actions-w;
+    }
+  }
+
+  .mapping-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+
+    &.dark {
+      background: #1e1e1e;
+      border-color: #333;
+    }
+
+    .table-header {
+      display: flex;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f8f9fa;
+      color: #666;
+      gap: 12px;
+
+      &.dark {
+        background: #252525;
+        border-color: #333;
+        color: #999;
+      }
+
+      > div {
+        padding: 0 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .col-source {
+        flex: 0 0 $source-w;
+      }
+
+      .col-target {
+        flex: 0 0 $target-w;
+      }
+
+      .col-transform {
+        flex: 0 0 $transform-w;
+      }
+
+      .col-actions {
+        flex: 0 0 $actions-w;
+        text-align: center;
+        padding: 0;
+      }
+    }
+
+    .table-body {
+      min-height: 120px;
+    }
+
+    .table-row {
+      display: flex;
+      padding: 10px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      align-items: center;
+      gap: 12px;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background: #fafafa;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &.dark {
+        border-bottom-color: #2a2a2a;
+        &:hover {
+          background: rgba(255, 255, 255, 0.03);
+        }
+      }
+
+      > div {
+        padding: 0 8px;
+        overflow: hidden;
+      }
+
+      .col-source,
+      .col-target,
+      .col-transform {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .col-actions {
+        flex: 0 0 $actions-w;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+      }
+
+      .trash-btn {
+        color: #888;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        padding: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+
+        &:hover {
+          color: #f44336;
+          background: rgba(244, 67, 54, 0.12);
+        }
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+
+      ::ng-deep {
+        .mat-mdc-form-field {
+          width: 100%;
+        }
+        .mat-mdc-text-field-wrapper,
+        .mat-mdc-form-field-flex {
+          height: 40px !important;
+        }
+        .mat-mdc-form-field-infix {
+          padding: 0 8px !important;
+          min-height: 40px !important;
+          display: flex !important;
+          align-items: center !important;
+        }
+        .mat-mdc-form-field-subscript-wrapper {
+          display: none !important;
+        }
+      }
+    }
+
+    .table-footer {
+      padding: 16px;
+      border-top: 1px solid #e0e0e0;
+
+      &.dark {
+        border-top-color: #333;
+      }
+
+      .add-row-btn {
+        width: 100%;
+        border: 1px dashed #ccc;
+        color: #1976d2;
+        height: 44px;
+        font-weight: 500;
+
+        &:hover {
+          border-color: #1976d2;
+          background: rgba(25, 118, 210, 0.06);
+        }
+
+        &.dark {
+          border-color: #555;
+          color: #5b9bd5;
+          &:hover {
+            border-color: #5b9bd5;
+            background: rgba(91, 155, 213, 0.12);
+          }
+        }
+      }
+    }
+  }
+
+  .step-footer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid #e0e0e0;
+
+    &.dark {
+      border-top-color: #333;
+    }
+
+    .back-btn,
+    .next-btn {
+      padding: 0 32px;
+      height: 40px;
+      border-radius: 4px;
+      font-weight: 500;
+      background-color: #1976d2 !important;
+      color: #fff !important;
+      min-width: 120px;
+      box-shadow: none !important;
+    }
+
+    .back-btn {
+      &.dark {
+        background-color: #5b9bd5 !important;
+      }
+    }
+
+    .next-btn {
+      &.dark {
+        background-color: #5b9bd5 !important;
+      }
+
+      &[disabled] {
+        background-color: #90a4ae !important;
+        opacity: 0.65;
+      }
+    }
+  }
+}
+
+/* Target all footer action containers across all steps */
+.step-actions,
+.step-footer-actions {
+  display: flex;
+  justify-content: space-between; // Back on left, Next on right
+  align-items: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+
+  /* Standard Blue Buttons (Light Mode) */
+  button[mat-flat-button],
+  button[mat-button] {
+    padding: 0 32px;
+    height: 40px;
+    border-radius: 4px;
+    font-weight: 500;
+
+    /* Force Blue Background for both Back and Next */
+    &.mat-primary,
+    &.back-btn,
+    &.next-btn,
+    &[matStepperPrevious],
+    &[matStepperNext] {
+      background-color: #1976d2 !important;
+      color: #fff !important;
+    }
+
+    /* Exception for the final 'Create' button if you want to keep it Warn/Red */
+    &.color-warn {
+      background-color: #f44336 !important;
+    }
+  }
+}
+
+/* Dark Mode Overrides */
+.dark {
+  .step-actions,
+  .step-footer-actions {
+    border-top-color: #333;
+
+    button[mat-flat-button],
+    button[mat-button] {
+      &.mat-primary,
+      &.back-btn,
+      &.next-btn,
+      &[matStepperPrevious],
+      &[matStepperNext] {
+        background-color: #5b9bd5 !important; // Softer blue for dark mode
+        color: #fff !important;
+      }
+    }
+  }
+}
+
+/* Ensure this block is scoped to your dark mode class/attribute if applicable */
+[data-theme='dark'],
+.dark-mode {
+  /* 1. Fix for Input Placeholders */
+  /* Ensures placeholders are visible but distinct from entered text */
+  input::placeholder,
+  textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+    opacity: 1; /* Firefox fix */
+  }
+
+  /* 2. Fix for Overlapping Placeholder/Label issues */
+  /* This prevents the "e.g. ERP..." text from clashing with the field title */
+  .MuiInputLabel-root,
+  .input-label {
+    background-color: #121212; /* Match your specific dark background color */
+    padding: 0 4px;
+  }
+
+  /* 3. Fix for Tags (Chips) Visibility */
+  /* Ensures tags have a distinct background and readable text */
+  .tag-container .tag,
+  .MuiChip-root {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+    border: 1px solid #444444;
+  }
+
+  .tag-container .tag svg,
+  .MuiChip-deleteIcon {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  /* 4. General Input Field Contrast */
+  input,
+  select,
+  textarea {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border-color: #444444 !important;
+  }
+
+  /* 5. Dropdown/Select Icon visibility */
+  .MuiSelect-icon,
+  .select-arrow {
+    color: #ffffff !important;
+  }
+}
+
+/* Scoped to your .dark class found in the form */
+.dark {
+  /* 1. Fix Placeholder visibility and prevent overlap with floating label */
+  --mat-mdc-form-field-floating-label-scale: 0.75;
+
+  .mat-mdc-form-field-input-control::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+    font-style: italic;
+  }
+
+  /* Force placeholder to hide when label is NOT floating (fix for overlap) */
+  .mat-mdc-form-field:not(.mat-mdc-form-field-can-float) .mdc-text-field__input::placeholder,
+  .mat-mdc-form-field.mat-form-field-hide-placeholder .mdc-text-field__input::placeholder {
+    transition: opacity 0.1s !important;
+    opacity: 0 !important;
+  }
+
+  /* 2. Fix Tags (Chips) visibility and contrast */
+  .mat-mdc-chip-grid {
+    --mdc-chip-elevated-container-color: #333333;
+    --mdc-chip-label-text-color: #ffffff;
+    --mdc-chip-with-trailing-icon-disabled-trailing-icon-color: rgba(255, 255, 255, 0.5);
+  }
+
+  mat-chip-row,
+  .mat-mdc-chip {
+    background-color: #444444 !important;
+    color: white !important;
+    border: 1px solid #555555 !important;
+  }
+
+  /* Fix for the 'x' delete icon on tags */
+  .mat-mdc-chip-remove,
+  .mat-mdc-chip-trailing-icon {
+    color: white !important;
+    opacity: 0.7;
+  }
+
+  /* 3. Fix Input & Textarea text contrast */
+  .mat-mdc-input-element {
+    color: #ffffff !important;
+    caret-color: #3f51b5 !important; /* Material Primary */
+  }
+
+  /* 4. Fix Outline/Border contrast in dark mode */
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* 5. Fix Label visibility */
+  .mat-mdc-form-field-label mat-label {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+}
+
+/* Scoped to your .dark class */
+.dark {
+  /* 1. RESET PLACEHOLDER FOR DARK MODE */
+  /* This ensures it exists but starts invisible to allow for animation */
+  .mat-mdc-form-field-hide-placeholder .mat-mdc-input-element::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+    transition: opacity 200ms cubic-bezier(0, 0, 0.2, 1) !important;
+    opacity: 0 !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.4) !important;
+  }
+
+  /* 2. TRIGGER ANIMATION ON FOCUS/FILL */
+  /* This mimics the light mode behavior: when the label floats, the placeholder appears */
+  .mat-mdc-form-field-should-float .mat-mdc-input-element::placeholder {
+    opacity: 1 !important;
+  }
+
+  /* 3. FIX TAGS (CHIPS) VISIBILITY */
+  /* Ensures the tags like "11" or "dd" are visible in dark mode */
+  .mat-mdc-chip-set .mdc-evolution-chip__cell--primary,
+  .mat-mdc-chip-row {
+    background-color: #3d3d3d !important; /* Visible grey background */
+    border: 1px solid #555555 !important;
+  }
+
+  /* Tag text and 'X' icon */
+  .mat-mdc-chip-row .mdc-evolution-chip__text-label,
+  .mat-mdc-chip-remove svg,
+  .mat-mdc-chip-trailing-action svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    opacity: 1 !important;
+  }
+
+  /* 4. FIX DROPDOWN/SELECT ARROWS */
+  /* Fixes the invisible arrow in the 'Confidence Level' field */
+  .mat-mdc-select-arrow svg {
+    fill: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  /* 5. INPUT TEXT COLOR */
+  .mat-mdc-input-element {
+    color: #ffffff !important;
+    caret-color: #ffffff !important;
+  }
+}

@@ -1,0 +1,453 @@
+<div class="edit-model-wrapper">
+  <header class="main-header">
+    <h1 class="edit-title">Editing Model: {{ modelData?.name || 'Patient' }}</h1>
+
+    <div class="header-actions">
+      <button mat-stroked-button class="btn-cancel" (click)="onCancel()">Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        class="top-save-btn"
+        [disabled]="pendingChanges.length === 0"
+        (click)="onSave()">
+        Save Changes
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="moreMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #moreMenu="matMenu">
+        <button mat-menu-item>
+          <mat-icon>published_with_changes</mat-icon>
+          <span>Change Status</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item class="danger-action">
+          <mat-icon>delete</mat-icon>
+          <span>Delete Model</span>
+        </button>
+      </mat-menu>
+    </div>
+  </header>
+
+  <section class="context-info header-spacer">
+    <div class="overview-metadata">
+      <div class="metadata-section">
+        <h3>Overview</h3>
+
+        <div class="aliases-editor">
+          <label>Aliases:</label>
+          <div class="aliases-chips">
+            @for (alias of aliases; track alias) {
+              <mat-chip class="alias-chip">
+                {{ alias }}
+                <button matChipRemove (click)="removeAlias(alias)">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip>
+            }
+            <div class="add-alias-input">
+              <input
+                type="text"
+                placeholder="+ Add Alias"
+                [(ngModel)]="newAlias"
+                (keyup.enter)="addAlias()" />
+              <button mat-icon-button (click)="addAlias()" *ngIf="newAlias">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="metadata-grid">
+          <div class="metadata-item">
+            <label>Canonical Identifier Field:</label>
+            <span class="field-name">{{
+              modelData?.identifierField || 'patient_canonical_id'
+            }}</span>
+          </div>
+          <div class="metadata-item">
+            <label>Owner:</label>
+            <span>{{ modelData?.owner || 'Data Governance Team' }}</span>
+          </div>
+          <div class="metadata-item">
+            <label>Created:</label>
+            <span>{{ modelData?.created || '2024-01-15 by Dmitry' }}</span>
+          </div>
+          <div class="metadata-item">
+            <label>Last Modified:</label>
+            <span>{{ modelData?.lastModified || '2024-02-07 by Dmitry' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="edit-content-grid">
+    <section class="fields-edit-section">
+      <h2 class="section-title">Edit Fields</h2>
+
+      <div class="table-controls">
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            placeholder="Search fields..."
+            [(ngModel)]="fieldsSearchTerm"
+            (input)="applyFieldsSearch()" />
+        </mat-form-field>
+
+        <div class="field-count">{{ fieldsDataSource.filteredData.length }} fields</div>
+      </div>
+
+      <div class="table-wrapper">
+        <table
+          mat-table
+          [dataSource]="fieldsDataSource"
+          matSort
+          #fieldsSort="matSort"
+          class="fields-table">
+          <ng-container matColumnDef="fieldName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Field Name</th>
+            <td mat-cell *matCellDef="let row">
+              <input
+                type="text"
+                class="inline-input"
+                [class.modified-field]="isFieldModified(row, 'fieldName')"
+                [(ngModel)]="row.fieldName"
+                (blur)="onFieldValueChange(row)"
+                placeholder="field_name" />
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dataType">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Data Type</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="isFieldModified(row, 'dataType')">
+                <mat-select [(ngModel)]="row.dataType" (selectionChange)="onFieldValueChange(row)">
+                  <mat-option *ngFor="let type of dataTypeOptions" [value]="type">
+                    {{ type }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="required">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Required</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="isFieldModified(row, 'required')">
+                <mat-select [(ngModel)]="row.required" (selectionChange)="onFieldValueChange(row)">
+                  <mat-option *ngFor="let opt of requiredOptions" [value]="opt">
+                    {{ opt }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="references">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>References</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="reference-count">{{ row.references }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="constraints">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Constraints</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="isFieldModified(row, 'constraints')">
+                <mat-select
+                  [(ngModel)]="row.constraints"
+                  (selectionChange)="onConstraintChange(row)">
+                  <mat-option *ngFor="let constraint of constraintOptions" [value]="constraint">
+                    {{ constraint }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="constraintDetails">
+            <th mat-header-cell *matHeaderCellDef>Constraint Details</th>
+            <td mat-cell *matCellDef="let row">
+              <input
+                type="text"
+                class="inline-input"
+                [class.modified-field]="isFieldModified(row, 'constraintDetails')"
+                [(ngModel)]="row.constraintDetails"
+                (blur)="onFieldValueChange(row)"
+                [disabled]="row.constraints === 'None'"
+                placeholder="Details..." />
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-header"></th>
+            <td mat-cell *matCellDef="let row" class="actions-cell">
+              @if (row.status === 'Modified') {
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="resetField(row)"
+                  matTooltip="Reset field">
+                  <mat-icon>settings_backup_restore</mat-icon>
+                </button>
+              }
+              @if (row.status === 'New' || row.status === 'Unchanged') {
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="deleteField(row)"
+                  matTooltip="Delete field">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="fieldsColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: fieldsColumns"></tr>
+        </table>
+      </div>
+
+      <button mat-stroked-button class="add-field-btn" (click)="addNewField()">
+        <mat-icon>add</mat-icon>
+        <span>Add Field</span>
+      </button>
+
+      <div class="table-footer">
+        <mat-paginator
+          #fieldsPaginator
+          [pageSize]="10"
+          [pageSizeOptions]="[5, 10, 20]"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
+
+      <!-- Dependencies Section -->
+      <div class="dependencies-edit-section">
+        <h2 class="section-title">Dependencies</h2>
+
+        <mat-tab-group class="dependencies-tabs">
+          <!-- Related Models Tab -->
+          <mat-tab label="Related Models">
+            <div class="tab-content">
+              @if (relatedModelsDataSource.data.length > 0) {
+                <div class="table-wrapper">
+                  <table
+                    mat-table
+                    [dataSource]="relatedModelsDataSource"
+                    matSort
+                    #relatedSort="matSort"
+                    class="related-table">
+                    <ng-container matColumnDef="modelName">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
+                      <td mat-cell *matCellDef="let row">
+                        <a class="model-link">{{ row.modelName }}</a>
+                      </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="relationshipContext">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                        Relationship Context
+                      </th>
+                      <td mat-cell *matCellDef="let row">{{ row.relationshipContext }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="impactScope">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Impact Scope</th>
+                      <td mat-cell *matCellDef="let row">
+                        <mat-form-field
+                          appearance="outline"
+                          class="compact-select"
+                          [class.modified-field]="isFieldModified(row, 'impactScope')">
+                          <mat-select
+                            [(ngModel)]="row.impactScope"
+                            (selectionChange)="onRelatedModelChange(row)">
+                            <mat-option *ngFor="let scope of impactScopeOptions" [value]="scope">
+                              {{ scope }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                      </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="references">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>References</th>
+                      <td mat-cell *matCellDef="let row">
+                        <span class="reference-count">{{ row.references }}</span>
+                      </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="relatedModelsColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: relatedModelsColumns"></tr>
+                  </table>
+                </div>
+
+                <mat-paginator #relatedPaginator [pageSize]="5" [pageSizeOptions]="[5, 10]">
+                </mat-paginator>
+              } @else {
+                <div class="empty-state">
+                  <p>No related models found.</p>
+                </div>
+              }
+            </div>
+          </mat-tab>
+
+          <!-- Upstream Tab (Read-only) -->
+          <mat-tab label="Upstream">
+            <div class="tab-content">
+              <div class="readonly-notice">
+                <mat-icon>info</mat-icon>
+                <span>Upstream dependencies are read-only in this view</span>
+              </div>
+              @if (upstreamDataSource.data.length > 0) {
+                <table
+                  mat-table
+                  [dataSource]="upstreamDataSource"
+                  class="dependency-table readonly-table">
+                  <ng-container matColumnDef="sourceName">
+                    <th mat-header-cell *matHeaderCellDef>Source Name</th>
+                    <td mat-cell *matCellDef="let row">{{ row.sourceName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef>Type</th>
+                    <td mat-cell *matCellDef="let row">{{ row.type }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let row">{{ row.status }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="lastUpdated">
+                    <th mat-header-cell *matHeaderCellDef>Last Updated</th>
+                    <td mat-cell *matCellDef="let row">{{ row.lastUpdated }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="upstreamColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: upstreamColumns"></tr>
+                </table>
+              } @else {
+                <div class="empty-state">
+                  <p>No upstream dependencies found.</p>
+                </div>
+              }
+            </div>
+          </mat-tab>
+
+          <!-- Downstream Tab (Read-only) -->
+          <mat-tab label="Downstream">
+            <div class="tab-content">
+              <div class="readonly-notice">
+                <mat-icon>info</mat-icon>
+                <span>Downstream dependencies are read-only in this view</span>
+              </div>
+              @if (downstreamDataSource.data.length > 0) {
+                <table
+                  mat-table
+                  [dataSource]="downstreamDataSource"
+                  class="dependency-table readonly-table">
+                  <ng-container matColumnDef="dependentName">
+                    <th mat-header-cell *matHeaderCellDef>Dependent Name</th>
+                    <td mat-cell *matCellDef="let row">{{ row.dependentName }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef>Type</th>
+                    <td mat-cell *matCellDef="let row">{{ row.type }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let row">{{ row.status }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="environment">
+                    <th mat-header-cell *matHeaderCellDef>Environment</th>
+                    <td mat-cell *matCellDef="let row">{{ row.environment }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="downstreamColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: downstreamColumns"></tr>
+                </table>
+              } @else {
+                <div class="empty-state">
+                  <p>No downstream dependencies found.</p>
+                </div>
+              }
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </section>
+
+    <aside class="pending-changes-sidebar">
+      <div class="sidebar-header">
+        <h3>Pending Changes ({{ pendingChanges.length }})</h3>
+        <button
+          mat-button
+          class="reset-link"
+          [disabled]="pendingChanges.length === 0"
+          (click)="resetAllChanges()">
+          Reset All
+        </button>
+      </div>
+
+      @if (pendingChanges.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon-container">
+            <mat-icon>edit_note</mat-icon>
+          </div>
+          <p><strong>No changes yet</strong></p>
+          <p>Modifications will appear here before saving</p>
+        </div>
+      } @else {
+        <div class="changes-list">
+          @for (change of pendingChanges; track change.id) {
+            <div class="change-item">
+              <div class="change-title">
+                <span class="field">{{ change.field }}</span>
+                <span class="pill" [ngClass]="change.type.toLowerCase().replace(' ', '-')">
+                  {{ change.type }}
+                </span>
+              </div>
+
+              <p class="change-desc">{{ change.description }}</p>
+
+              @if (change.originalValue !== undefined && change.newValue !== undefined) {
+                <div class="diff">
+                  <span class="old">{{ change.originalValue }}</span>
+                  <span class="arrow">→</span>
+                  <span class="new">{{ change.newValue }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <div class="sidebar-actions">
+        <button
+          mat-flat-button
+          color="primary"
+          class="pending-save-btn"
+          [disabled]="pendingChanges.length === 0"
+          (click)="onSave()">
+          Save Changes
+        </button>
+        <button mat-stroked-button (click)="onCancel()" class="pending-cancel-btn">Cancel</button>
+      </div>
+    </aside>
+  </div>
+</div>

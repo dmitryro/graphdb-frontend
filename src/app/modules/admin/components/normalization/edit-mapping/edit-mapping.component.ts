@@ -27,15 +27,28 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EventService } from '@modules/events/services/event.service';
 import { EventState } from '@modules/events/states/event.state';
 import { Store } from '@ngrx/store';
+import * as _ from 'lodash';
 import { Subscription } from 'rxjs';
 
-import { UsageImpactDrawerComponent } from '@modules/admin/components/normalization/usage-impact-drawer/usage-impact-drawer.component';
-import * as _ from 'lodash';
+// Define these at the top or within your class
+export const REQUIREMENT_OPTIONS = ['Required', 'Optional'];
+export const TYPE_OPTIONS = [
+  'Boolean',
+  'Number',
+  'Enum',
+  'Date',
+  'String',
+  'Object',
+  'Float',
+  'Integer',
+];
 
+// 1. Update the Interface to include rowId
 interface PendingChange {
   id: string;
+  rowId: string; // Ensure this is present
   field: string;
-  type: 'Added' | 'Modified' | 'Removed';
+  type: string;
   description: string;
   originalValue?: any;
   newValue?: any;
@@ -50,6 +63,7 @@ interface MappingRow {
   mappingType: string;
   status: string;
   notes?: string;
+  [key: string]: any; // Allow indexing for the comparison logic
 }
 
 @Component({
@@ -70,7 +84,6 @@ interface MappingRow {
     MatTooltipModule,
     MatPaginatorModule,
     MatSortModule,
-    UsageImpactDrawerComponent,
   ],
   templateUrl: './edit-mapping.component.html',
   styleUrls: ['./edit-mapping.component.scss'],
@@ -84,6 +97,11 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Animation control - slides out to the RIGHT when closing
   isExiting = false;
+  // Expose lists to the HTML template
+  requirementOptions = REQUIREMENT_OPTIONS;
+  typeOptions = TYPE_OPTIONS;
+  // Counter for pending changes
+  pendingCount = 0;
 
   @HostBinding('class.slide-out-to-right')
   get exitClass() {
@@ -180,6 +198,14 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.updateBreadcrumb();
       }
     });
+  }
+
+  private getActiveTheme(): 'light' | 'dark' {
+    const isDark =
+      document.body.classList.contains('dark-theme') ||
+      document.body.classList.contains('dark-mode') ||
+      (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return isDark ? 'dark' : 'light';
   }
 
   /**
@@ -417,48 +443,78 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
     this.applySearch();
   }
 
-  onMappingTypeChange(row: MappingRow, newValue: string): void {
+  /**
+   * Helper to determine if a specific field on a row has changed from the original backup.
+   * This is used by the HTML template to apply the .modified-field class specifically.
+   */
+  isFieldModified(row: MappingRow, fieldName: string): boolean {
     const original = this.originalDataBackup.find(o => o.id === row.id);
-
-    if (original && original.mappingType === newValue) {
-      // If changed back to original, reset the row
-      this.resetRow(row);
-      return;
-    }
-
-    const change: PendingChange = {
-      id: `${row.id}-mappingType`,
-      field: `${row.sourceField} (Source)`,
-      type: 'Modified',
-      description: 'Mapping Type changed',
-      originalValue: original?.mappingType || row.mappingType,
-      newValue,
-    };
-
-    this.updatePendingList(change);
-    row.status = 'Modified';
+    if (!original) return false;
+    return row[fieldName] !== original[fieldName];
   }
 
-  onTargetFieldChange(row: MappingRow, newValue: string): void {
+  /**
+   * UPDATED: Unified change tracking logic.
+   * Compares the row against the original backup and generates specific pending change entries.
+   */
+  onValueChange(row: MappingRow): void {
     const original = this.originalDataBackup.find(o => o.id === row.id);
+    if (!original) return;
 
-    if (original && original.targetField === newValue) {
-      // If changed back to original, reset the row
-      this.resetRow(row);
-      return;
+    // Remove existing specific changes for this row before recalculating
+    // We use rowId to ensure we target the correct entries accurately
+    this.pendingChanges = this.pendingChanges.filter(c => c.rowId !== row.id);
+
+    const fieldsToTrack = ['requirement', 'type', 'targetField', 'mappingType'];
+    let rowHasAnyChange = false;
+
+    fieldsToTrack.forEach(field => {
+      if (row[field] !== original[field]) {
+        rowHasAnyChange = true;
+
+        // Map field keys to human readable labels
+        const labels: Record<string, string> = {
+          requirement: 'Requirement',
+          type: 'Data Type',
+          targetField: 'Target Mapping',
+          mappingType: 'Mapping Logic',
+        };
+
+        this.pendingChanges.push({
+          id: `${row.id}-${field}`,
+          rowId: row.id, // CRITICAL: This was missing and is required for onSidebarUpdate
+          field: row.sourceField,
+          type: labels[field] || 'Field',
+          description: `Changed ${labels[field] || field}`,
+          originalValue: original[field] || '(Empty)',
+          newValue: row[field] || '(Empty)',
+        });
+      }
+    });
+
+    if (rowHasAnyChange) {
+      row.status = 'Modified';
+    } else {
+      row.status = original.status;
     }
 
-    const change: PendingChange = {
-      id: `${row.id}-targetField`,
-      field: `${row.sourceField} (Source)`,
-      type: 'Modified',
-      description: 'Target field changed',
-      originalValue: original?.targetField || row.targetField,
-      newValue,
-    };
+    this.pendingCount = this.pendingChanges.length;
+  }
 
-    this.updatePendingList(change);
-    row.status = 'Modified';
+  /**
+   * Selection change for Mapping Type dropdown
+   */
+  onMappingTypeChange(row: MappingRow, newValue: string): void {
+    row.mappingType = newValue;
+    this.onValueChange(row);
+  }
+
+  /**
+   * Selection change for Target Field dropdown
+   */
+  onTargetFieldChange(row: MappingRow, newValue: string): void {
+    row.targetField = newValue;
+    this.onValueChange(row);
   }
 
   resetRow(row: MappingRow): void {
@@ -466,13 +522,19 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (original) {
       row.mappingType = original.mappingType;
       row.targetField = original.targetField;
+      row.type = original.type;
+      row.requirement = original.requirement;
       row.status = original.status;
 
       // Remove all pending changes for this row
       this.pendingChanges = this.pendingChanges.filter(c => !c.id.startsWith(row.id));
+      this.pendingCount = this.pendingChanges.length;
     }
   }
 
+  /**
+   * Legacy wrapper kept for template compatibility
+   */
   updatePendingList(change: PendingChange): void {
     const existingIndex = _.findIndex(this.pendingChanges, { id: change.id });
     if (existingIndex > -1) {
@@ -480,10 +542,46 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       this.pendingChanges.push(change);
     }
+    this.pendingCount = this.pendingChanges.length;
+  }
+
+  /**
+   * Updates the source data when a selection is changed within the pending sidebar.
+   * @param change The change object from the pendingChanges array
+   */
+  onSidebarUpdate(change: PendingChange): void {
+    // 1. Find the specific row in the data source using the rowId stored in the change object
+    const targetRow = this.dataSource.data.find(row => row.id === change.rowId);
+
+    if (targetRow) {
+      // 2. Map the human-readable sidebar "type" back to the actual MappingRow property keys
+      const propertyMap: Record<string, string> = {
+        Requirement: 'requirement',
+        'Data Type': 'type',
+        'Target Mapping': 'targetField',
+        'Mapping Logic': 'mappingType',
+      };
+
+      const propName = propertyMap[change.type];
+
+      if (propName) {
+        // 3. Update the value in the object reference
+        targetRow[propName] = change.newValue;
+
+        // 4. Run the standard change logic to recalculate the "Modified" status badge
+        this.onValueChange(targetRow);
+
+        // 5. CRITICAL: Re-assign the data array reference using spread.
+        // This notifies the MatTable that the data has changed so the HTML
+        // template refreshes the specific cell and applies the .modified-field CSS.
+        this.dataSource.data = [...this.dataSource.data];
+      }
+    }
   }
 
   resetAllChanges(): void {
     this.pendingChanges = [];
+    this.pendingCount = 0;
     this.loadMappingData(this.mappingData);
   }
 
@@ -543,5 +641,21 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Same exit animation as cancel
     this.onCancel();
+  }
+
+  /**
+   * Generic handler used by template
+   */
+  onTableValueChange(element: any) {
+    this.onValueChange(element);
+  }
+
+  addNewMapping(): void {
+    // Signal the view component to toggle isOpen = true
+    this.eventService.publish('nf', 'open_new_mapping_modal', {
+      action: 'open_new_mapping_modal',
+      theme: this.getActiveTheme(),
+      mode: 'create',
+    });
   }
 }

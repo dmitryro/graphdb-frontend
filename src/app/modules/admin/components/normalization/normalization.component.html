@@ -192,7 +192,12 @@
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="modelColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: modelColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: modelColumns"
+              class="clickable-row"
+              [class.selected-row]="selectedModelData?.id === row.id"
+              (click)="onModelRowClick(row)"></tr>
           </table>
 
           <mat-paginator
@@ -1062,15 +1067,25 @@
       </app-view-mapping>
     </div>
   }
-  @if (isEditing) {
+  @if (isEditingMapping) {
     <div class="mapping-edit-view">
-      <app-edit-mapping [mappingData]="selectedMappingData" (closeEdit)="onCloseEdit()">
+      <app-edit-mapping [mappingData]="selectedMappingData" (closeEdit)="onCloseEditMapping()">
       </app-edit-mapping>
     </div>
   }
+
+  <!-- Model Detail View -->
+  @if (showModelDetail) {
+    <div class="model-detail-view">
+      <app-view-model [modelData]="selectedModelData" (closeView)="onCloseModelDetail()">
+      </app-view-model>
+    </div>
+  }
+  @if (isEditingModel) {
+    <div class="model-edit-view">
+      <app-edit-model [modelData]="selectedModelData" (closeEdit)="onCloseEditModel()">
+      </app-edit-model>
+    </div>
+  }
 </div>
-
-<!--
-<app-usage-impact-drawer></app-usage-impact-drawer> -->
-
 <app-usage-impact-drawer></app-usage-impact-drawer>

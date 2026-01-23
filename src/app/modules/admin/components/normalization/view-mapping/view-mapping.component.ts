@@ -22,9 +22,6 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-// Child Component
-import { EditMappingComponent } from '../edit-mapping/edit-mapping.component';
-
 // NgRx & Events
 import { EventService } from '@modules/events/services/event.service';
 import { EventState } from '@modules/events/states/event.state';
@@ -67,7 +64,6 @@ interface MappingVersion {
     MatTooltipModule,
     MatInputModule,
     MatFormFieldModule,
-    EditMappingComponent,
   ],
   templateUrl: './view-mapping.component.html',
   styleUrls: ['./view-mapping.component.scss'],
@@ -333,25 +329,20 @@ export class ViewMappingComponent implements OnInit, AfterViewInit, OnDestroy {
    * Opening Edit: View slides out to LEFT, Edit slides in from RIGHT
    */
   onEdit(): void {
-    // 1. First, hide the parent component immediately (no animation delay)
+    // 1. Immediately hide the parent component AND set editing state together
     this.isExitedToLeft = true;
     this.isReturningFromLeft = false;
-
-    // 2. Set editing state to render the child component
     this.isEditing = true;
 
-    // 3. Use a small timeout to ensure DOM rendering before sending event
-    setTimeout(() => {
-      // 4. Publish the open event with data
-      this.eventService.publish('nf', 'open_edit_mapping', {
-        action: 'open_edit_mapping',
-        mappingId: this.mappingData?.id,
-        fullData: this.mappingData,
-      });
+    // 2. Publish the open event immediately (no delay needed)
+    this.eventService.publish('nf', 'open_edit_mapping', {
+      action: 'open_edit_mapping',
+      mappingId: this.mappingData?.id,
+      fullData: this.mappingData,
+    });
 
-      // Note: Breadcrumb update is now handled by EditMappingComponent
-      // when it receives the 'open_edit_mapping' event
-    }, 10); // Small delay to ensure child component is rendered
+    // Note: Breadcrumb update is now handled by EditMappingComponent
+    // when it receives the 'open_edit_mapping' event
   }
 
   /**

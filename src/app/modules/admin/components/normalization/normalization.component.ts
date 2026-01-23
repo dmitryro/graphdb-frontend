@@ -46,6 +46,9 @@ import { ViewMappingComponent } from './view-mapping/view-mapping.component';
 // Child Component
 import { EditMappingComponent } from './edit-mapping/edit-mapping.component';
 import { UsageImpactDrawerComponent } from './usage-impact-drawer/usage-impact-drawer.component';
+// Add these imports at the top with the other component imports:
+import { EditModelComponent } from './edit-model/edit-model.component';
+import { ViewModelComponent } from './view-model/view-model.component';
 // Core Date Imports
 import {
   DateAdapter,
@@ -84,6 +87,8 @@ import { UsersModule } from '@modules/users/users-module';
     UsersModule,
     ViewMappingComponent,
     EditMappingComponent,
+    ViewModelComponent,
+    EditModelComponent,
     UsageImpactDrawerComponent,
     BreadcrumbComponent,
   ],
@@ -118,11 +123,15 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   tempAvatar = 'assets/images/avatar.png';
   // --- Animation handling ---
   isExiting = false; // Sliding out to right (closing view entirely)
-  isEditing = false; // Controls Edit component lifecycle
+  isEditingMapping = false; // Controls Edit component lifecycle
   // Mapping Detail View State
   showMappingDetail = false;
   showModelDetail = false; // Add this missing declaration
   selectedMappingData: any = null;
+
+  // Model Detail View State
+  isEditingModel = false;
+  selectedModelData: any = null;
 
   // Date Range Picker
   startView: 'month' | 'year' | 'multi-year' = 'month';
@@ -486,69 +495,81 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   /**
    * Processes navigation signals from the breadcrumb.
-   * FIXED: Uses 'selectedMappingData' to match class property definition.
-   */
-  /**
-   * Processes navigation signals from the breadcrumb.
-   * Ensures clickable segments for: Normalization > Mappings > View Mapping > Edit Mapping
-   */
-  /**
-   * Processes navigation signals from the breadcrumb.
+   * Ensures clickable segments for: Normalization > [Tab] > View > Edit
    */
   private handleBreadcrumbNavigation(target: string): void {
-    // 1. Handle "Edit Mapping" deep dive
-    if (target === 'EDIT_MAPPING') {
+    // 1. Handle "Edit" views - stay in current state but update path
+    if (target === 'EDIT_MAPPING' || target === 'EDIT_MODEL') {
       this.updateBreadcrumbPath();
       this.cdr.detectChanges();
       return;
     }
 
-    // 2. Handle "View Mapping" (Clicking back from Edit Mapping)
+    // 2. Handle "View" views (Back navigation from Edit)
     if (target === 'VIEW_MAPPING') {
       this.showMappingDetail = true;
-
-      // Signal the view component to toggle isEditing = false
-      this.eventService.publish('nf', 'close_edit_mode', {
+      this.eventService.publish('nf', 'close_edit_mapping', {
         mappingId: this.selectedMappingData?.id,
       });
-
-      this.updateBreadcrumbPath();
+      this.updateBreadcrumbPath('View Mapping');
       this.cdr.detectChanges();
       return;
     }
 
-    // 3. Reset detail view states for standard tab/root navigation
+    if (target === 'VIEW_MODEL') {
+      this.showModelDetail = true;
+      this.eventService.publish('nf', 'close_edit_model', { modelId: this.selectedModelData?.id });
+      this.updateBreadcrumbPath('View Model');
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // 3. Handle Root or Tab Navigation (Reset detail views)
     if (target === 'ROOT' || target.startsWith('TAB_')) {
+      // Clear detail/edit states
       this.showMappingDetail = false;
       this.showModelDetail = false;
       this.selectedMappingData = null;
+      this.selectedModelData = null;
 
+      let targetIndex = this.activeTabIndex;
+
+      // FIX: Ensure these indices match your template [Models(0), Mappings(1), etc.]
       switch (target) {
         case 'ROOT':
-          this.activeTabIndex = 0;
+          targetIndex = 0;
           break;
         case 'TAB_MODELS':
-          this.activeTabIndex = 0;
+          targetIndex = 0;
           break;
         case 'TAB_MAPPINGS':
-          this.activeTabIndex = 1;
+          targetIndex = 1;
           break;
         case 'TAB_RULES':
-          this.activeTabIndex = 2;
+          targetIndex = 2;
           break;
         case 'TAB_VERSIONS':
-          this.activeTabIndex = 3;
+          targetIndex = 3;
           break;
         case 'TAB_CODES':
-          this.activeTabIndex = 4;
+          targetIndex = 4;
           break;
       }
-    }
 
-    // 4. Finalize UI State
-    this.activeTabLabel = this.tabOrder[this.activeTabIndex];
-    this.updateBreadcrumbPath();
-    this.cdr.detectChanges();
+      // THE FIX: Use setTimeout to ensure mat-tab-group registers the index change
+      setTimeout(() => {
+        this.activeTabIndex = targetIndex;
+        if (this.tabOrder && this.tabOrder[this.activeTabIndex]) {
+          this.activeTabLabel = this.tabOrder[this.activeTabIndex];
+        }
+
+        // Finalize UI
+        this.updateBreadcrumbPath();
+        this.onCloseMappingDetail(); // Ensure slide-in animations trigger
+        this.onCloseModelDetail();
+        this.cdr.detectChanges();
+      }, 0);
+    }
   }
 
   /**
@@ -558,6 +579,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   private updateBreadcrumbPath(childLabel?: string): void {
     const path: { label: string; target: string }[] = [{ label: 'Normalization', target: 'ROOT' }];
 
+    // Use current activeTabLabel if available
     if (this.activeTabLabel) {
       path.push({
         label: this.activeTabLabel,
@@ -565,8 +587,11 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       });
     }
 
+    // Append child if we are in "View" or "Edit" mode
     if (childLabel) {
-      path.push({ label: childLabel, target: 'NONE' });
+      // If childLabel is 'View Mapping', target should be 'VIEW_MAPPING'
+      const target = childLabel.toUpperCase().replace(' ', '_');
+      path.push({ label: childLabel, target: target });
     }
 
     this.eventService.publish('nf', 'update_breadcrumb', { path });
@@ -646,6 +671,22 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       }
     }, 0);
   }
+
+  onModelRowClick(model: any): void {
+    this.selectedModelData = { ...model };
+    this.showModelDetail = true;
+
+    // Update path: Normalization > Models > View Model
+    this.updateBreadcrumbPath('View Model');
+
+    setTimeout(() => {
+      const container = document.querySelector('.normalization-main-container');
+      if (container) {
+        container.classList.add('slide-out');
+      }
+    }, 0);
+  }
+
   // Add this method to handle closing the mapping detail view:
   onCloseMappingDetail(): void {
     const container = document.querySelector('.normalization-main-container');
@@ -657,6 +698,23 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     setTimeout(() => {
       this.showMappingDetail = false;
       this.selectedMappingData = null;
+
+      if (container) {
+        container.classList.remove('slide-in');
+      }
+    }, 400);
+  }
+
+  onCloseModelDetail(): void {
+    const container = document.querySelector('.normalization-main-container');
+    if (container) {
+      container.classList.remove('slide-out');
+      container.classList.add('slide-in');
+    }
+
+    setTimeout(() => {
+      this.showModelDetail = false;
+      this.selectedModelData = null;
 
       if (container) {
         container.classList.remove('slide-in');
@@ -729,13 +787,24 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
       if (eventName === 'open_edit_mapping') {
         // Initialize with the received data
-        this.isEditing = true;
+        this.isEditingMapping = true;
         this.isExiting = false;
       }
 
       if (eventName === 'close_edit_mapping') {
         // Initialize with the received data
-        this.isEditing = false;
+        this.isEditingMapping = false;
+        this.isExiting = true;
+      }
+
+      // Handle model edit events
+      if (eventName === 'open_edit_model') {
+        this.isEditingModel = true;
+        this.isExiting = false;
+      }
+
+      if (eventName === 'close_edit_model') {
+        this.isEditingModel = false;
         this.isExiting = true;
       }
 
@@ -2837,7 +2906,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     }));
   }
 
-  onCloseEdit(): void {
+  onCloseEditMapping(): void {
     // 1. "One In" - Reverse the animation: Slide back from the left
 
     // 2. Breadcrumb sync
@@ -2845,7 +2914,17 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     // 3. Clean up the Edit component AFTER its slide-out animation finishes.
     setTimeout(() => {
-      this.isEditing = false;
+      this.isEditingMapping = false;
+    }, 600);
+  }
+
+  onCloseEditModel(): void {
+    // 1. Reverse the animation: Slide back from the left
+    this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'VIEW_MODEL' });
+
+    // 2. Clean up the Edit component AFTER its slide-out animation finishes
+    setTimeout(() => {
+      this.isEditingModel = false;
     }, 600);
   }
 

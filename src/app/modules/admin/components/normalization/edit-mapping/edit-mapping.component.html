@@ -158,7 +158,7 @@
               <mat-form-field
                 appearance="outline"
                 class="compact-select"
-                [class.modified-field]="row.status === 'Modified'">
+                [class.modified-field]="isFieldModified(row, 'targetField')">
                 <mat-select
                   [(ngModel)]="row.targetField"
                   (selectionChange)="onTargetFieldChange(row, $event.value)">
@@ -172,15 +172,33 @@
 
           <ng-container matColumnDef="type">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-            <td mat-cell *matCellDef="let row">{{ row.type }}</td>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="isFieldModified(row, 'type')">
+                <mat-select [(ngModel)]="row.type" (selectionChange)="onValueChange(row)">
+                  <mat-option *ngFor="let type of typeOptions" [value]="type">
+                    {{ type }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="requirement">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Requirement</th>
             <td mat-cell *matCellDef="let row">
-              <span [class.required-tag]="row.requirement === 'Required'">
-                {{ row.requirement }}
-              </span>
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="isFieldModified(row, 'requirement')">
+                <mat-select [(ngModel)]="row.requirement" (selectionChange)="onValueChange(row)">
+                  <mat-option *ngFor="let opt of requirementOptions" [value]="opt">
+                    {{ opt }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
             </td>
           </ng-container>
 
@@ -190,7 +208,7 @@
               <mat-form-field
                 appearance="outline"
                 class="compact-select"
-                [class.modified-field]="row.status === 'Modified'">
+                [class.modified-field]="isFieldModified(row, 'mappingType')">
                 <mat-select
                   [(ngModel)]="row.mappingType"
                   (selectionChange)="onMappingTypeChange(row, $event.value)">
@@ -227,7 +245,7 @@
         </table>
       </div>
 
-      <button mat-stroked-button class="add-mapping-btn" disabled>
+      <button mat-stroked-button class="add-mapping-btn" (click)="addNewMapping()">
         <mat-icon>add</mat-icon>
         <span>Add Field Mapping</span>
       </button>
@@ -255,22 +273,50 @@
 
       @if (pendingChanges.length === 0) {
         <div class="empty-state">
+          <div class="empty-icon-container">
+            <mat-icon>edit_note</mat-icon>
+          </div>
           <p><strong>No changes yet</strong></p>
           <p>Modifications will appear here before saving</p>
         </div>
       } @else {
         <div class="changes-list">
           @for (change of pendingChanges; track change.id) {
-            <div class="change-item">
+            <div class="change-item" [ngClass]="change.type.toLowerCase().split(' ').join('-')">
               <div class="change-title">
                 <span class="field">{{ change.field }}</span>
-                <span class="pill {{ change.type | lowercase }}">{{ change.type }}</span>
+
+                <mat-form-field subscriptSizing="dynamic" class="sidebar-compact-select">
+                  <mat-select
+                    [(ngModel)]="change.newValue"
+                    (selectionChange)="onSidebarUpdate(change)">
+                    @if (change.type === 'Data Type') {
+                      @for (opt of typeOptions; track opt) {
+                        <mat-option [value]="opt">{{ opt }}</mat-option>
+                      }
+                    } @else if (change.type === 'Requirement') {
+                      @for (opt of requirementOptions; track opt) {
+                        <mat-option [value]="opt">{{ opt }}</mat-option>
+                      }
+                    } @else if (change.type === 'Target Mapping') {
+                      @for (opt of availableTargetFields; track opt) {
+                        <mat-option [value]="opt">{{ opt }}</mat-option>
+                      }
+                    } @else if (change.type === 'Mapping Logic') {
+                      <mat-option value="Direct">Direct</mat-option>
+                      <mat-option value="Constant">Constant</mat-option>
+                      <mat-option value="Derived">Derived</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
               </div>
+
               <p class="change-desc">{{ change.description }}</p>
+
               @if (change.originalValue !== undefined) {
                 <div class="diff">
                   <span class="old">{{ change.originalValue }}</span>
-                  →
+                  <span class="arrow">→</span>
                   <span class="new">{{ change.newValue }}</span>
                 </div>
               }

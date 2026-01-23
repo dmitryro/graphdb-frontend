@@ -1,3 +1,4 @@
+// edit-mapping.component.scss
 @use 'src/scss/variables' as *;
 
 // =============================================================================
@@ -911,53 +912,62 @@
   // =============================================================================
   // CUSTOM FILTER MENU (MAT-MENU)
   // =============================================================================
-  .custom-filter-menu.mat-mdc-menu-panel {
+  .custom-filter-menu.mat-mdc-menu-panel,
+  .advanced-filter-menu.mat-mdc-menu-panel {
     background-color: var(--surface-color) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 12px !important;
     min-width: 280px;
     padding: 12px 0;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
 
-    .filter-menu-container {
+    .filter-menu-container,
+    .filter-panel {
       display: flex;
       flex-direction: column;
       padding: 8px 16px;
+
+      h4,
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        margin-top: 4px;
+      }
 
       .filter-group {
         display: flex;
         flex-direction: column;
         gap: 8px;
         margin-bottom: 12px;
-
-        label {
-          font-size: 12px;
-          font-weight: 700;
-          text-transform: uppercase;
-          color: var(--text-muted);
-          letter-spacing: 0.5px;
-          margin-bottom: 4px;
-        }
-
-        mat-radio-group {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px 8px;
-        }
-
-        .mdc-label {
-          color: var(--text-main) !important;
-          font-size: 14px;
-        }
       }
 
-      .filter-divider {
+      mat-radio-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px 8px;
+        margin-bottom: 16px;
+      }
+
+      .mdc-label {
+        color: var(--text-main) !important;
+        font-size: 14px;
+      }
+
+      .filter-divider,
+      mat-divider {
         height: 1px;
         background: var(--border-color);
         margin: 8px -16px 16px;
+        border: none;
       }
 
-      .clear-btn {
+      .clear-btn,
+      .filter-actions button {
         margin-top: 4px;
         color: var(--primary);
         font-weight: 600;
@@ -968,6 +978,7 @@
         background: transparent;
         border: none;
         cursor: pointer;
+        text-align: left;
 
         &:hover {
           text-decoration: underline;
@@ -977,16 +988,263 @@
   }
 
   // =============================================================================
-  // MAT-RADIO COMPONENT FIXES (CONSISTENT #333333)
+  // ADD MAPPING BUTTON & FOOTER
   // =============================================================================
+  .add-mapping-btn {
+    margin-top: 16px;
+    color: var(--primary) !important;
+    font-weight: 600;
+    background: transparent !important;
+    border: 1px dashed var(--border-color) !important;
+    padding: 14px 16px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+    width: 100%;
 
-  // Outer circle for unselected state
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: var(--primary);
+    }
+
+    &:disabled {
+      opacity: 0.5 !important;
+      cursor: not-allowed !important;
+      border: 1px dashed var(--border-color) !important;
+      color: var(--text-muted) !important;
+
+      mat-icon {
+        color: var(--text-muted);
+      }
+    }
+
+    &:not(:disabled):hover {
+      background: var(--surface-color) !important;
+      border-color: var(--primary) !important;
+    }
+  }
+
+  .table-footer {
+    margin-top: 12px;
+    flex-shrink: 0;
+  }
+
+  // =============================================================================
+  // MAPPING TABLE - COLUMN WIDTH FIXES & VISIBILITY
+  // =============================================================================
+  .mapping-table {
+    width: 100%;
+
+    .mat-mdc-header-row {
+      background-color: var(--surface-color) !important;
+    }
+
+    .mat-mdc-row:hover {
+      background-color: var(--surface-color-light);
+    }
+
+    // Column widths fixed for parity and full text visibility
+    .mat-column-sourceField {
+      width: 14%;
+    }
+    .mat-column-targetField {
+      width: 16%;
+    }
+    .mat-column-type {
+      width: 18% !important;
+    }
+    .mat-column-requirement {
+      width: 18% !important;
+    }
+    .mat-column-mappingType {
+      width: 16%;
+    }
+    .mat-column-status {
+      width: 13%;
+    }
+    .mat-column-actions {
+      width: 5%;
+    }
+
+    .compact-select {
+      width: 100%;
+
+      .mat-mdc-select-value {
+        color: var(--text-main) !important;
+        font-weight: 500;
+        opacity: 1 !important;
+      }
+
+      .mat-mdc-select-placeholder {
+        color: var(--text-muted) !important;
+      }
+
+      // HIGH CONTRAST MODIFIED STATE (Synced with Sidebar Changes)
+      &.modified-field {
+        .mat-mdc-text-field-wrapper {
+          background-color: rgba(var(--primary-rgb, 103, 58, 183), 0.12) !important;
+          border-radius: 4px !important;
+        }
+
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: var(--primary) !important;
+          border-width: 2px !important;
+        }
+
+        .mat-mdc-select-value {
+          color: var(--primary) !important;
+          font-weight: 800 !important;
+        }
+
+        .mat-mdc-select-arrow {
+          color: var(--primary) !important;
+        }
+      }
+    }
+  }
+
+  // =============================================================================
+  // STATUS BADGES
+  // =============================================================================
+  .status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: inline-block;
+
+    &.mapped {
+      background-color: rgba(76, 175, 80, 0.15);
+      color: #81c784;
+    }
+    &.unmapped {
+      background-color: rgba(244, 67, 54, 0.15);
+      color: #e57373;
+    }
+    &.modified {
+      background-color: rgba(255, 152, 0, 0.15);
+      color: #ffb74d;
+    }
+  }
+
+  // =============================================================================
+  // SIDEBAR PENDING CHANGES (UNDERLINE FIX & HEIGHT SYNC)
+  // =============================================================================
+  .changes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .change-item {
+      background: var(--surface-color-light);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      border-left: 4px solid var(--primary);
+
+      .change-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+
+        .field {
+          font-weight: 600;
+          color: var(--text-main);
+        }
+
+        .sidebar-compact-select {
+          width: 130px;
+
+          .mat-mdc-text-field-wrapper {
+            background-color: var(--surface-color) !important;
+            padding: 0 10px !important;
+            border-radius: 8px !important;
+            height: 32px !important;
+            border: 1px solid var(--border-color) !important;
+
+            &::before,
+            &::after {
+              display: none !important;
+            }
+          }
+
+          .mat-mdc-form-field-flex {
+            height: 32px !important;
+            align-items: center !important;
+          }
+
+          .mat-mdc-select-value,
+          .mat-mdc-select-value-text,
+          .mat-mdc-select-trigger {
+            color: var(--text-main) !important;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            opacity: 1 !important;
+          }
+
+          .mat-mdc-select-arrow {
+            color: var(--text-main) !important;
+            svg {
+              fill: var(--text-main) !important;
+              width: 10px;
+            }
+          }
+
+          .mat-mdc-form-field-subscript-wrapper,
+          .mdc-notched-outline,
+          .mdc-line-ripple {
+            display: none !important;
+          }
+        }
+      }
+
+      .change-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin: 4px 0;
+      }
+
+      .diff {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        margin-top: 8px;
+        font-family: 'Monaco', 'Consolas', monospace;
+
+        .old {
+          color: #e57373;
+          text-decoration: line-through;
+        }
+        .arrow {
+          color: var(--text-muted);
+        }
+        .new {
+          color: #81c784;
+        }
+      }
+    }
+  }
+
+  // =============================================================================
+  // MAT-RADIO COMPONENT FIXES
+  // =============================================================================
   .mdc-radio__outer-circle {
     border-color: var(--text-muted) !important;
     border-width: 2px !important;
   }
 
-  // Selected state logic
   .mdc-radio__native-control:enabled:checked ~ .mdc-radio__background .mdc-radio__inner-circle {
     border-color: var(--primary) !important;
   }
@@ -995,52 +1253,35 @@
     border-color: var(--primary) !important;
   }
 
-  // Theme-specific consistency for Radio Buttons
   [data-theme='dark'],
   .dark-theme {
-    // The "consistent darker color" instead of black
     .mdc-radio__outer-circle {
-      border-color: #333333 !important;
+      border-color: var(--border-color) !important;
     }
 
-    // Radio selection ripple background
     .mat-mdc-radio-button .mat-mdc-radio-touch-target {
       background-color: transparent !important;
     }
 
-    // Hover state to brighten the circle slightly
     .mdc-radio:hover
       .mdc-radio__native-control:not(:disabled)
       ~ .mdc-radio__background
       .mdc-radio__outer-circle {
-      border-color: #444444 !important;
+      border-color: var(--primary) !important;
     }
   }
 
   // =============================================================================
-  // DISABLED BUTTONS (CONSISTENT NON-BLACK SHADE)
+  // DISABLED BUTTONS
   // =============================================================================
-
-  .header-actions button[mat-flat-button][disabled],
-  .header-actions button[mat-stroked-button][disabled],
-  .sidebar-header button[mat-button][disabled] {
-    // Using a solid consistent dark grey fill instead of black for visibility
-    background-color: #333333 !important;
+  .header-actions button[disabled],
+  .sidebar-header button[disabled] {
+    background-color: var(--border-color) !important;
     color: var(--text-muted) !important;
-    opacity: 0.8 !important;
+    opacity: 0.5 !important;
     cursor: not-allowed !important;
-    border: 1px solid var(--border-color) !important;
   }
 
-  // Ensure "Reset All" link-style buttons remain visible
-  .sidebar-header button.mat-mdc-button:disabled {
-    background-color: transparent !important;
-    color: var(--text-muted) !important;
-    border: 1px solid #333333 !important;
-    opacity: 0.5;
-  }
-
-  // Fix for inner label text visibility in disabled state
   .mdc-button:disabled .mdc-button__label {
     color: var(--text-muted) !important;
   }
@@ -1057,5 +1298,15 @@
     background-color: var(--surface-color) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 8px !important;
+
+    .mat-mdc-option {
+      .mdc-list-item__primary-text {
+        color: var(--text-main) !important;
+      }
+
+      &:hover:not(.mdc-list-item--disabled) {
+        background-color: var(--surface-color-light) !important;
+      }
+    }
   }
 }

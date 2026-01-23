@@ -18,6 +18,10 @@ export class EventService {
     m.set('close_usage_impact_drawer', EventActionTypes.CloseUsageImpactDrawer);
     m.set('close_edit_mapping', EventActionTypes.CloseEditMapping);
     m.set('open_edit_mapping', EventActionTypes.OpenEditMapping);
+    m.set('close_edit_model', EventActionTypes.CloseEditModel);
+    m.set('open_edit_model', EventActionTypes.OpenEditModel);
+    m.set('open_new_mapping_modal', EventActionTypes.OpenNewMappingModal);
+    m.set('close_new_mapping_modal', EventActionTypes.CloseNewMappingModal);
     m.set('breadcrumb_navigate', EventActionTypes.BreadcrumbNavigate);
     m.set('close_modal', EventActionTypes.CloseModal);
     m.set('open_user_menu', EventActionTypes.OpenUserMenu);

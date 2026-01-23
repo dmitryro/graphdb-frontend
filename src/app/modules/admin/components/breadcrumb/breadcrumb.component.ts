@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 
 export interface BreadcrumbItem {
   label: string;
-  target?: string; // e.g., 'TAB_MAPPINGS', 'ROOT_NORMALIZATION'
+  target?: string; // e.g., 'TAB_MAPPINGS', 'TAB_MODELS', 'VIEW_MAPPING', 'VIEW_MODEL'
   active?: boolean;
 }
 
@@ -35,7 +35,6 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   private subscribeToBreadcrumbUpdates(): void {
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       const eventName = state?.items?.event;
-      // The EventService wraps your data in a property called 'payload'
       const data = state?.items?.payload;
 
       if (eventName === 'update_breadcrumb' && data?.path) {
@@ -45,8 +44,8 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Navigates back to a specific view based on the target property.
-   * Passing 3 arguments to match the EventService.publish definition.
+   * Navigates back based on the target property.
+   * Handles Mappings and Models consistently.
    */
   onItemClick(item: BreadcrumbItem, index: number): void {
     if (index === this.items.length - 1) return;
@@ -54,15 +53,27 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     // 1. Handle navigation back to View Mapping specifically
     if (item.target === 'VIEW_MAPPING') {
       this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'VIEW_MAPPING' });
-      return; // EditMappingComponent will catch this and call its own onCancel()
+      return;
     }
 
-    // 2. Existing logic for further back navigation
+    // 2. Handle navigation back to View Model specifically
+    if (item.target === 'VIEW_MODEL') {
+      this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'VIEW_MODEL' });
+      return;
+    }
+
+    // 3. Logic for further back navigation (Tabs or Root)
     if (item.target === 'ROOT') {
+      // Close any potential edit mode
       this.eventService.publish('nf', 'close_edit_mapping', { action: 'close_edit_mapping' });
+      this.eventService.publish('nf', 'close_edit_model', { action: 'close_edit_model' });
+
       this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'ROOT' });
     } else if (item.target?.startsWith('TAB_')) {
+      // Close any potential edit mode
       this.eventService.publish('nf', 'close_edit_mapping', { action: 'close_edit_mapping' });
+      this.eventService.publish('nf', 'close_edit_model', { action: 'close_edit_model' });
+
       this.eventService.publish('nf', 'breadcrumb_navigate', {
         target: item.target,
         tabIndex: index,

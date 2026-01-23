@@ -194,6 +194,18 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.OpenEditModel: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseEditModel: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     case EventActionTypes.AddNormalizationMapping: {
       return {
         ...state,
@@ -261,6 +273,18 @@ export function eventReducer(
       };
     }
     case EventActionTypes.CloseUsageImpactDrawer: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenNewMappingModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseNewMappingModal: {
       return {
         ...state,
         items: (action as any).payload,

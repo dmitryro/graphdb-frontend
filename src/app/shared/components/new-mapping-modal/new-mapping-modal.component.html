@@ -1,0 +1,397 @@
+@if (isOpen) {
+  <div class="modal-overlay" (click)="close()">
+    <div
+      class="modal-container"
+      [class.dark]="theme === 'dark'"
+      [class.light]="theme === 'light'"
+      (click)="$event.stopPropagation()">
+      <header
+        class="modal-header"
+        [class.dark]="theme === 'dark'"
+        [class.light]="theme === 'light'">
+        <div class="header-title">
+          <mat-icon>alt_route</mat-icon>
+          <div>
+            <h2>Create New Mapping</h2>
+            <span class="subtitle">Structured configuration flow</span>
+          </div>
+        </div>
+        <button mat-icon-button (click)="close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <div class="modal-body" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+        <mat-stepper
+          [linear]="true"
+          #stepper
+          [class.dark-stepper]="theme === 'dark'"
+          [class.light-stepper]="theme === 'light'">
+          <mat-step [stepControl]="basicsForm">
+            <form
+              [formGroup]="basicsForm"
+              class="step-content"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <ng-template matStepLabel>Basics</ng-template>
+              <div class="info-text" [class.light-info]="theme === 'light'">
+                <mat-icon>info</mat-icon>
+                <span>Give this mapping a clear name and description.</span>
+              </div>
+
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Mapping Name</mat-label>
+                <input
+                  matInput
+                  formControlName="name"
+                  required
+                  placeholder="e.g. ERP_TO_CORE_MAPPING" />
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description" rows="2"></textarea>
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Tags</mat-label>
+                <mat-chip-grid #chipGrid>
+                  @for (tag of tags; track tag) {
+                    <mat-chip-row (removed)="removeTag(tag)">
+                      {{ tag }}
+                      <button matChipRemove><mat-icon>cancel</mat-icon></button>
+                    </mat-chip-row>
+                  }
+                  <input
+                    placeholder="Add tag..."
+                    [matChipInputFor]="chipGrid"
+                    [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                    (matChipInputTokenEnd)="addTag($event)" />
+                </mat-chip-grid>
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Confidence Level</mat-label>
+                <mat-select formControlName="confidence">
+                  @for (level of confidenceLevels; track level) {
+                    <mat-option [value]="level">{{ level }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <div class="step-footer-actions">
+                <div></div>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  matStepperNext
+                  [disabled]="basicsForm.invalid"
+                  class="next-btn">
+                  Continue to Scope
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <mat-step [stepControl]="scopeForm">
+            <form [formGroup]="scopeForm" class="step-content" [class.dark]="theme === 'dark'">
+              <ng-template matStepLabel>Scope</ng-template>
+
+              <p class="step-description">
+                Define what this mapping connects by selecting the source and target it applies to.
+              </p>
+
+              <div class="field-container">
+                <label class="field-label">Source <span class="required">*</span></label>
+                <mat-form-field
+                  appearance="outline"
+                  class="full-width-field"
+                  [class.dark-field]="theme === 'dark'">
+                  <mat-select formControlName="source" placeholder="Select system / domain">
+                    <mat-option *ngFor="let opt of sourceOptions" [value]="opt.value">
+                      {{ opt.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-hint>The originating mapping context this mapping starts from.</mat-hint>
+                </mat-form-field>
+              </div>
+
+              <div class="field-container">
+                <label class="field-label">Target <span class="required">*</span></label>
+                <mat-form-field
+                  appearance="outline"
+                  class="full-width-field"
+                  [class.dark-field]="theme === 'dark'">
+                  <mat-select formControlName="target" placeholder="Select system / domain">
+                    <mat-option *ngFor="let opt of targetOptions" [value]="opt.value">
+                      {{ opt.label }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-hint>The destination mapping context this mapping maps into.</mat-hint>
+                </mat-form-field>
+              </div>
+
+              <div class="radio-selection-group">
+                <label class="field-label">Direction <span class="required">*</span></label>
+                <p class="field-info">Indicates how the mapping is applied:</p>
+
+                <mat-radio-group formControlName="direction" class="vertical-radio-group">
+                  <div class="radio-option" *ngFor="let dir of directions">
+                    <mat-radio-button
+                      [value]="dir.value"
+                      color="primary"
+                      [class.dark-radio]="theme === 'dark'">
+                      <span class="radio-title">{{ dir.label }}</span>
+                    </mat-radio-button>
+                    <span class="radio-description">{{ dir.desc }}</span>
+                  </div>
+                </mat-radio-group>
+              </div>
+
+              <div class="step-footer-actions">
+                <button mat-flat-button color="primary" matStepperPrevious class="back-btn">
+                  Back
+                </button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  matStepperNext
+                  [disabled]="scopeForm.invalid"
+                  class="next-btn">
+                  Next: Define Logic
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <mat-step [stepControl]="logicForm">
+            <form
+              [formGroup]="logicForm"
+              class="step-content-wrapper"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <ng-template matStepLabel>Mapping</ng-template>
+
+              <p class="step-description">
+                Define how values from the source map to the target by creating specific field
+                mappings.
+              </p>
+
+              <div class="selection-row-grid">
+                <div class="col-source">
+                  <label class="field-label">Source Field</label>
+                  <mat-form-field appearance="outline" [class.dark-field]="theme === 'dark'">
+                    <mat-select placeholder="Select field">
+                      <mat-option *ngFor="let opt of sourceOptions" [value]="opt.value">{{
+                        opt.label
+                      }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="col-target">
+                  <label class="field-label">Target Field</label>
+                  <mat-form-field appearance="outline" [class.dark-field]="theme === 'dark'">
+                    <mat-select placeholder="Select field">
+                      <mat-option *ngFor="let opt of targetOptions" [value]="opt.value">{{
+                        opt.label
+                      }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="col-transform">
+                  <label class="field-label">Transform</label>
+                  <mat-form-field appearance="outline" [class.dark-field]="theme === 'dark'">
+                    <mat-select placeholder="Optional">
+                      <mat-option *ngFor="let rule of transformationRules" [value]="rule">{{
+                        rule
+                      }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                <div class="col-actions-spacer"></div>
+              </div>
+
+              <div class="mapping-card" [class.dark]="theme === 'dark'">
+                <div class="table-header" [class.dark]="theme === 'dark'">
+                  <div class="col-source">Source Value</div>
+                  <div class="col-target">Target Value</div>
+                  <div class="col-transform">Default Value (optional)</div>
+                  <div class="col-actions">Actions</div>
+                </div>
+
+                <div formArrayName="mappings" class="table-body">
+                  <div
+                    *ngFor="let row of mappingRows.controls; let i = index"
+                    [formGroupName]="i"
+                    class="table-row"
+                    [class.dark]="theme === 'dark'">
+                    <div class="col-source">
+                      <mat-form-field appearance="outline" [class.dark-field]="theme === 'dark'">
+                        <input
+                          matInput
+                          formControlName="sourceElement"
+                          placeholder="Enter source" />
+                      </mat-form-field>
+                    </div>
+
+                    <div class="col-target">
+                      <mat-form-field appearance="outline" [class.dark-field]="theme === 'dark'">
+                        <input
+                          matInput
+                          formControlName="targetElement"
+                          placeholder="Enter target" />
+                      </mat-form-field>
+                    </div>
+
+                    <div class="col-transform">
+                      <mat-form-field appearance="outline" [class.dark-field]="theme === 'dark'">
+                        <input matInput formControlName="rule" placeholder="Enter default value" />
+                      </mat-form-field>
+                    </div>
+
+                    <div class="col-actions">
+                      <button
+                        mat-icon-button
+                        class="trash-btn"
+                        (click)="removeMappingRow(i)"
+                        type="button">
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="table-footer" [class.dark]="theme === 'dark'">
+                  <button
+                    mat-button
+                    class="add-row-btn"
+                    [class.dark]="theme === 'dark'"
+                    (click)="addMappingRow()"
+                    type="button">
+                    <mat-icon>add</mat-icon> Add Mapping
+                  </button>
+                </div>
+              </div>
+
+              <div class="step-footer-actions" [class.dark]="theme === 'dark'">
+                <button
+                  mat-flat-button
+                  matStepperPrevious
+                  class="back-btn"
+                  [class.dark]="theme === 'dark'">
+                  Back
+                </button>
+                <button
+                  mat-flat-button
+                  matStepperNext
+                  [disabled]="mappingRows.length < 1"
+                  class="next-btn"
+                  [class.dark]="theme === 'dark'">
+                  Next: Conditions
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <mat-step [stepControl]="conditionsForm">
+            <form
+              [formGroup]="conditionsForm"
+              class="step-content"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <ng-template matStepLabel>Conditions</ng-template>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Applicability</mat-label>
+                <mat-select formControlName="applicability">
+                  <mat-option value="Always applies">Always applies</mat-option>
+                  <mat-option value="Conditional">Only when conditions are met</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Exceptions / Overrides</mat-label>
+                <textarea
+                  matInput
+                  formControlName="exceptions"
+                  rows="3"
+                  placeholder="Define exclusions..."></textarea>
+              </mat-form-field>
+
+              <div class="step-footer-actions">
+                <button mat-flat-button color="primary" matStepperPrevious class="back-btn">
+                  Back
+                </button>
+                <button mat-flat-button color="primary" matStepperNext class="next-btn">
+                  Next: Review
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <mat-step>
+            <ng-template matStepLabel>Review</ng-template>
+            <div
+              class="step-content"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <div
+                class="final-summary"
+                [class.dark-summary]="theme === 'dark'"
+                [class.light-summary]="theme === 'light'">
+                <h3>Review Mapping Object</h3>
+                <p>
+                  Ready to create <strong>{{ basicsForm.get('name')?.value }}</strong
+                  >.
+                </p>
+                <ul>
+                  <li>
+                    <strong>Scope:</strong> {{ scopeForm.get('source')?.value }} ➔
+                    {{ scopeForm.get('target')?.value }}
+                  </li>
+                  <li>
+                    <strong>Logic:</strong> {{ mappingRows.length }} defined transformation rows
+                  </li>
+                  <li><strong>Confidence:</strong> {{ basicsForm.get('confidence')?.value }}</li>
+                </ul>
+              </div>
+
+              <div
+                class="connection-test-area"
+                [class.dark-test]="theme === 'dark'"
+                [class.light-test]="theme === 'light'">
+                <mat-icon>check_circle</mat-icon>
+                <span class="test-msg"
+                  >Configuration validated. Source and Target contexts are reachable.</span
+                >
+              </div>
+
+              <div class="step-footer-actions">
+                <button mat-flat-button color="primary" matStepperPrevious class="back-btn">
+                  Back
+                </button>
+                <button mat-flat-button color="warn" (click)="confirmAction()" class="next-btn">
+                  Create Mapping
+                </button>
+              </div>
+            </div>
+          </mat-step>
+        </mat-stepper>
+      </div>
+    </div>
+  </div>
+}

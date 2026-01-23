@@ -7,6 +7,10 @@ export enum EventActionTypes {
   ToggleDrawer = '[Event] Toggle Drawer',
   OpenEditMapping = '[Event] Open Edit Mapping',
   CloseEditMapping = '[Event] Close Edit Mapping',
+  OpenEditModel = '[Event] Open Edit Model',
+  CloseEditModel = '[Event] Close Edit Model',
+  OpenNewMappingModal = '[Event] Open New Mapping Modal',
+  CloseNewMappingModal = '[Event] Close New Mapping Modal',
   ThemeChange = '[Event] Theme Change',
   NonHealthcareUser = '[Event] Non Healthcare User',
   OpenDrawer = '[Event] Open Drawer',
@@ -92,6 +96,26 @@ export class OpenEditMapping implements Action {
 
 export class CloseEditMapping implements Action {
   readonly type = EventActionTypes.CloseEditMapping;
+  constructor(public payload: any) {}
+}
+
+export class OpenEditModel implements Action {
+  readonly type = EventActionTypes.OpenEditModel;
+  constructor(public payload: any) {}
+}
+
+export class CloseEditModel implements Action {
+  readonly type = EventActionTypes.CloseEditModel;
+  constructor(public payload: any) {}
+}
+
+export class OpenNewMappingModal implements Action {
+  readonly type = EventActionTypes.OpenNewMappingModal;
+  constructor(public payload: any) {}
+}
+
+export class CloseNewMappingModal implements Action {
+  readonly type = EventActionTypes.CloseNewMappingModal;
   constructor(public payload: any) {}
 }
 
@@ -457,6 +481,8 @@ export type EventActions =
   | OpenSearch
   | CloseEditMapping
   | OpenEditMapping
+  | CloseEditModel
+  | OpenEditModel
   | CloseSearch
   | OpenRegistrationModal
   | CloseRegistrationModal
@@ -479,9 +505,6 @@ export type EventActions =
   | GoogleAuthFailure
   | MSAuthSuccess
   | MSAuthFailure
-  | VKCodeReceived
-  | VKAuthSuccess
-  | VKAuthFailure
   | InnerMenuItemSelected
   | CloseLoginDialog
   | AddNormalizationModel
@@ -501,4 +524,6 @@ export type EventActions =
   | CloseUsageImpactDrawer
   | PauseIngestion
   | DownloadSchema
+  | CloseNewMappingModal
+  | OpenNewMappingModal
   | ClearSourceCache;
