@@ -1,18 +1,18 @@
-import { NgModule } from "@angular/core";
-import { Routes, RouterModule } from "@angular/router";
-import { LayoutComponent } from "./layout/layout.component";
-import { childRoutes } from "./child-routes";
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { childRoutes } from './child-routes';
+import { LayoutComponent } from './layout/layout.component';
 
 const routes: Routes = [
   {
-    path: "",
+    path: '',
     component: LayoutComponent,
     children: [
       ...childRoutes,
       {
-        path: "",
-        pathMatch: "full",
-        redirectTo: "dashboard",
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'dashboard',
       },
     ],
   },

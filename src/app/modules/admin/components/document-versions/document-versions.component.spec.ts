@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DocumentVersionsComponent } from "./document-versions.component";
+import { DocumentVersionsComponent } from './document-versions.component';
 
-describe("DocumentVersionsComponent", () => {
+describe('DocumentVersionsComponent', () => {
   let component: DocumentVersionsComponent;
   let fixture: ComponentFixture<DocumentVersionsComponent>;
 
@@ -16,7 +16,7 @@ describe("DocumentVersionsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

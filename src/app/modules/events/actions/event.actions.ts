@@ -1,10 +1,15 @@
 import { Action } from '@modules/events/interfaces/action.interface';
 
 export enum EventActionTypes {
+  ConfirmationDeleteConfirmed = '[Event] Confirmation Delete Confirmed',
+  ConfirmationSaveConfirmed = '[Event] Confirmation Save Confirmed',
+  ConfirmationConfirmConfirmed = '[Event] Confirmation Confirm Confirmed',
+  ConfirmationResetConfirmed = '[Event] Confirmation Reset Confirmed',
   PilotTermsAgreed = '[Event] Pilot Terms Agreed',
   PilotContactFormUpdated = '[Event] Pilot Contact Form Updated',
   ToggleHeader = '[Event] Toggle Header',
   ToggleDrawer = '[Event] Toggle Drawer',
+  OpenConfirmationModal = '[Event] Open Confirmation Modal',
   OpenEditMapping = '[Event] Open Edit Mapping',
   CloseEditMapping = '[Event] Close Edit Mapping',
   OpenEditModel = '[Event] Open Edit Model',
@@ -25,9 +30,6 @@ export enum EventActionTypes {
   CloseRegistrationModal = '[Event] Close Registration',
   InnerMenuItemSelected = '[Event] Inner Menu Item Selected',
   CloseLoginDialog = '[Event] Close Login Dialog',
-  VKAuthSuccess = '[Event] VK Auth Success',
-  VKAuthFailure = '[Event] VK Auth Failure',
-  VKCodeReceived = '[Event] VK Code Received',
   TwitterAuthSuccess = '[Event] Twitter Auth Success',
   TwitterAuthFailure = '[Event] Twitter Auth Faiure',
   GoogleAuthSuccess = '[Event] Google Auth Success',
@@ -77,10 +79,41 @@ export enum EventActionTypes {
   EditRule = '[Event] Edit Rule',
   UpdateBreadcrumb = '[Event] Update Breadcrumb',
   BreadcrumbNavigate = '[Event] Breadcrumb Navigate',
+  ViewRelatedModel = '[Event] View Related Model',
+}
+
+export class ConfirmationDeleteConfirmed implements Action {
+  readonly type = EventActionTypes.ConfirmationDeleteConfirmed;
+  constructor(public payload: any) {}
+}
+
+export class ConfirmationSaveConfirmed implements Action {
+  readonly type = EventActionTypes.ConfirmationSaveConfirmed;
+  constructor(public payload: any) {}
+}
+
+export class ConfirmationConfirmConfirmed implements Action {
+  readonly type = EventActionTypes.ConfirmationConfirmConfirmed;
+  constructor(public payload: any) {}
+}
+
+export class ConfirmationResetConfirmed implements Action {
+  readonly type = EventActionTypes.ConfirmationResetConfirmed;
+  constructor(public payload: any) {}
+}
+
+export class OpenConfirmationModal implements Action {
+  readonly type = EventActionTypes.OpenConfirmationModal;
+  constructor(public payload: any) {}
 }
 
 export class OpenUsageImpactDrawer implements Action {
   readonly type = EventActionTypes.OpenUsageImpactDrawer;
+  constructor(public payload: any) {}
+}
+
+export class ViewRelatedModel implements Action {
+  readonly type = EventActionTypes.ViewRelatedModel;
   constructor(public payload: any) {}
 }
 
@@ -289,21 +322,6 @@ export class CloseLoginDialog implements Action {
   constructor(public payload: any) {}
 }
 
-export class VKAuthSuccess implements Action {
-  readonly type = EventActionTypes.VKAuthSuccess;
-  constructor(public payload: any) {}
-}
-
-export class VKAuthFailure implements Action {
-  readonly type = EventActionTypes.VKAuthFailure;
-  constructor(public payload: any) {}
-}
-
-export class VKCodeReceived implements Action {
-  readonly type = EventActionTypes.VKCodeReceived;
-  constructor(public payload: any) {}
-}
-
 export class MSAuthFailure implements Action {
   readonly type = EventActionTypes.MSAuthFailure;
   constructor(public payload: any) {}
@@ -484,6 +502,10 @@ export type EventActions =
   | CloseEditModel
   | OpenEditModel
   | CloseSearch
+  | ConfirmationDeleteConfirmed
+  | ConfirmationSaveConfirmed
+  | ConfirmationConfirmConfirmed
+  | ConfirmationResetConfirmed
   | OpenRegistrationModal
   | CloseRegistrationModal
   | SetPickerDate
@@ -521,9 +543,11 @@ export type EventActions =
   | InspectSource
   | SyncSource
   | OpenUsageImpactDrawer
+  | ViewRelatedModel
   | CloseUsageImpactDrawer
   | PauseIngestion
   | DownloadSchema
   | CloseNewMappingModal
   | OpenNewMappingModal
+  | OpenConfirmationModal
   | ClearSourceCache;

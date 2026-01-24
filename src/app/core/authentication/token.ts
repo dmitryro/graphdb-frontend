@@ -1,5 +1,5 @@
-import { base64, capitalize, currentTimestamp, timeLeft } from "./helpers";
-import { Token } from "./interface";
+import { base64, capitalize, currentTimestamp, timeLeft } from './helpers';
+import { Token } from './interface';
 
 export abstract class BaseToken {
   constructor(protected attributes: Token) {}
@@ -13,7 +13,7 @@ export abstract class BaseToken {
   }
 
   get token_type() {
-    return this.attributes.token_type ?? "bearer";
+    return this.attributes.token_type ?? 'bearer';
   }
 
   get exp() {
@@ -26,8 +26,8 @@ export abstract class BaseToken {
 
   getBearerToken() {
     return this.access_token
-      ? [capitalize(this.token_type), this.access_token].join(" ").trim()
-      : "";
+      ? [capitalize(this.token_type), this.access_token].join(' ').trim()
+      : '';
   }
 
   needRefresh() {
@@ -54,11 +54,12 @@ export class JwtToken extends SimpleToken {
 
   static is(accessToken: string): boolean {
     try {
-      const [_header] = accessToken.split(".");
+      const [_header] = accessToken.split('.');
       const header = JSON.parse(base64.decode(_header));
 
-      return header.typ.toUpperCase().includes("JWT");
-    } catch (e) {
+      return header.typ.toUpperCase().includes('JWT');
+    } catch {
+      // Fixed: Removed '(e)' to satisfy @typescript-eslint/no-unused-vars
       return false;
     }
   }
@@ -76,7 +77,7 @@ export class JwtToken extends SimpleToken {
       return this._payload;
     }
 
-    const [, payload] = this.access_token.split(".");
+    const [, payload] = this.access_token.split('.');
     const data = JSON.parse(base64.decode(payload));
     if (!data.exp) {
       data.exp = this.attributes.exp;

@@ -1,7 +1,7 @@
-import { NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
 
-import { PipelinesRoutingModule } from "./pipelines-routing.module";
+import { PipelinesRoutingModule } from './pipelines-routing.module';
 
 @NgModule({
   declarations: [],

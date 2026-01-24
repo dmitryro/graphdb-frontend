@@ -1,17 +1,17 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable, inject } from "@angular/core";
-import { map } from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { map } from 'rxjs';
 
-import { Token, User } from "./interface";
+import { Token, User } from './interface';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class LoginService {
   protected readonly http = inject(HttpClient);
 
   login(username: string, password: string, rememberMe = false) {
-    return this.http.post<Token>("/auth/login", {
+    return this.http.post<Token>('/auth/login', {
       username,
       password,
       rememberMe,
@@ -19,20 +19,18 @@ export class LoginService {
   }
 
   refresh(params: Record<string, any>) {
-    return this.http.post<Token>("/auth/refresh", params);
+    return this.http.post<Token>('/auth/refresh', params);
   }
 
   logout() {
-    return this.http.post<any>("/auth/logout", {});
+    return this.http.post<any>('/auth/logout', {});
   }
 
   user() {
-    return this.http.get<User>("/user");
+    return this.http.get<User>('/user');
   }
 
   menu() {
-    return this.http
-      .get<{ menu: any[] }>("/user/menu")
-      .pipe(map((res) => res.menu));
+    return this.http.get<{ menu: any[] }>('/user/menu').pipe(map(res => res.menu));
   }
 }

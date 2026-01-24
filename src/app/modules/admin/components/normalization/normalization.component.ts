@@ -785,6 +785,16 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         this.loadAllData();
       }
 
+      // Handle navigation to a related model
+      // Inside subscribeEvents() in normalization.component.ts
+      if (eventName === 'view_related_model' && eventData) {
+        // Pass the whole payload { modelName, modelId }
+        this.handleRelatedModelNavigation({
+          id: eventData.modelId,
+          name: eventData.modelName,
+        });
+      }
+
       if (eventName === 'open_edit_mapping') {
         // Initialize with the received data
         this.isEditingMapping = true;
@@ -2556,132 +2566,210 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     // Field mapping data types
     const fieldTypes = ['String', 'Number', 'Date', 'Boolean', 'Enum', 'Object'];
-    const mappingTypes = ['Direct', 'Derived', 'Constant'];
     const requirements = ['Required', 'Optional'];
-
-    console.log(`Added new values for fieldTypes: ${JSON.stringify(fieldTypes)}`);
-    console.log(`Added new values for mappingTypes: ${JSON.stringify(mappingTypes)}`);
-    console.log(`Added new values for requirements: ${JSON.stringify(requirements)}`);
-
-    // 1. Models Data (Standard structure)
-    this.originalModelData = Array.from({ length: 35 }, (_, i) => {
-      const gType = i === 0 ? 'Canonical' : governanceTypes[i % 3];
-      const gStatus = i === 0 ? 'Active' : governanceStatuses[i % 4];
-      const gUsage = usageTypes[i % 5];
-      const day = Math.max(1, 15 - (i % 14))
+    console.log(`Requirements options ${JSON.stringify(requirements)}`);
+    // 1. Models Data (Updated to include Field Objects)
+    this.originalModelData = Array.from({ length: 35 }, (_, index) => {
+      const governanceType = index === 0 ? 'Canonical' : governanceTypes[index % 3];
+      const governanceStatus = index === 0 ? 'Active' : governanceStatuses[index % 4];
+      const governanceUsage = usageTypes[index % 5];
+      const day = Math.max(1, 15 - (index % 14))
         .toString()
         .padStart(2, '0');
-      const dateStr = `2026-01-${day}`;
+      const dateString = `2026-01-${day}`;
+
+      // Generate actual Field Objects for each model
+      const fieldCount = 15 + (index % 20);
+      const modelFields = Array.from({ length: fieldCount }, (_, fIndex) => {
+        const isPatientId = index === 0 && fIndex === 0;
+        return {
+          id: `f-${index}-${fIndex}`,
+          fieldName: isPatientId ? 'patient_id' : `field_${fIndex + 1}`,
+          type: isPatientId ? 'String' : fieldTypes[fIndex % fieldTypes.length],
+          requirement: fIndex < 3 ? 'Required' : 'Optional',
+          references: Math.floor(Math.random() * 5),
+          constraints: fIndex % 5 === 0 ? 'Max Length' : 'None',
+          constraintDetails: fIndex % 5 === 0 ? '255' : '',
+          status: 'Existing',
+        };
+      });
 
       return {
-        id: i === 0 ? 'GR-GOLDEN' : `m-${i}`,
-        name: i === 0 ? 'Patient Golden Record' : `Clinical Model ${i + 1}`,
-        type: gType,
-        usage: gUsage,
-        status: gStatus,
-        fields: 15 + (i % 20),
-        dependencies: i % 4,
-        lastModified: dateStr,
+        id: index === 0 ? 'GR-GOLDEN' : `model-${index}`,
+        name: index === 0 ? 'Patient Golden Record' : `Clinical Model ${index + 1}`,
+        type: governanceType,
+        usage: governanceUsage,
+        status: governanceStatus,
+        fields: modelFields, // Now an Array, not a Number
+        fieldCount: fieldCount, // Keep the count for the summary table
+        dependencies: index % 4,
+        lastModified: dateString,
+        description:
+          index === 0
+            ? 'The core representation of a patient entity for unified medical data normalization.'
+            : `Automated structural definition for ${governanceType} data processing.`,
       };
     });
 
-    // 2. Enhanced Mapping Data with complete field-level details
-    this.originalMappingData = Array.from({ length: 35 }, (_, i) => {
-      const sourceSystem = i % 2 === 0 ? 'Epic' : 'QuestLab';
-      const targetModel = i % 2 === 0 ? 'Patient' : 'Lab Result';
-      const day = Math.max(1, 15 - (i % 14))
-        .toString()
-        .padStart(2, '0');
-      const dateStr = `2026-01-${day}`;
-      const fieldCount = 10 + (i % 15);
-
-      // Generate rich field-level mapping data
-      const fields = this.generateFieldMappings(sourceSystem, targetModel, fieldCount, i);
-
-      // Generate usage and impact data
-      const pipelines = this.generatePipelineUsage(sourceSystem, targetModel, i);
-      const rules = this.generateRuleReferences(sourceSystem, targetModel, i);
+    // Post-processing: Inject consistent Dependency Data into Models
+    this.originalModelData = this.originalModelData.map((model, index) => {
+      const relatedModel1 = this.originalModelData[(index + 1) % 35];
+      const relatedModel2 = this.originalModelData[(index + 5) % 35];
 
       return {
-        id: `map-${i}`,
-        name: `${sourceSystem} → ${targetModel}`,
-        source: i % 2 === 0 ? 'Epic Health Network' : 'QuestLab Systems',
-        target: targetModel,
+        ...model,
+        dependencyData: {
+          relatedModels: [
+            {
+              id: relatedModel1.id,
+              modelName: relatedModel1.name,
+              relationshipContext: 'Mappings, Rules',
+              impactScope: 'Structural',
+              references: 12 + (index % 5),
+            },
+            {
+              id: relatedModel2.id,
+              modelName: relatedModel2.name,
+              relationshipContext: 'Graph, Rules',
+              impactScope: 'Behavioral',
+              references: 7 + (index % 3),
+            },
+          ],
+          upstream: [
+            {
+              sourceName: index % 2 === 0 ? 'Epic_Raw_ADT' : 'Quest_LIMS_v2',
+              type: 'Source Schema',
+              status: 'Active',
+              lastUpdated: 'Jan 10, 2026',
+            },
+            {
+              sourceName: 'Enterprise_Master_Index',
+              type: 'External Model',
+              status: 'Active',
+              lastUpdated: 'Dec 18, 2025',
+            },
+          ],
+          downstream: [
+            {
+              dependentName: `${model.name}_Export_v1`,
+              type: 'Pipeline',
+              status: 'Active',
+              environment: 'Production',
+            },
+            {
+              dependentName: 'Analytics_Data_Warehouse',
+              type: 'Database',
+              status: 'Active',
+              environment: 'Production',
+            },
+          ],
+        },
+        aliases: ['PT', 'PatientRecord', `Alias_${index}`],
+      };
+    });
+
+    // 2. Enhanced Mapping Data
+    this.originalMappingData = Array.from({ length: 35 }, (_, index) => {
+      const sourceSystem = index % 2 === 0 ? 'Epic' : 'QuestLab';
+      const targetModelObject = this.originalModelData[index % 35];
+      const day = Math.max(1, 15 - (index % 14))
+        .toString()
+        .padStart(2, '0');
+      const dateString = `2026-01-${day}`;
+      const fieldCount = 10 + (index % 15);
+
+      // Assuming generateFieldMappings exists in your component
+      const fields = this.generateFieldMappings(
+        sourceSystem,
+        targetModelObject.name,
+        fieldCount,
+        index,
+      );
+      const pipelines = this.generatePipelineUsage(sourceSystem, targetModelObject.name, index);
+      const rules = this.generateRuleReferences(sourceSystem, targetModelObject.name, index);
+
+      return {
+        id: `mapping-${index}`,
+        name: `${sourceSystem} → ${targetModelObject.name}`,
+        source: index % 2 === 0 ? 'Epic Health Network' : 'QuestLab Systems',
+        target: targetModelObject.name,
+        targetId: targetModelObject.id,
         fields: fields,
         fieldCount: fieldCount,
-        coverage: `${15 + (i % 5)} / 20`,
-        status: governanceStatuses[i % 4],
-        lastModified: dateStr,
-        version: `v${Math.floor(i / 5) + 1}.${i % 5}`,
-        lastSavedBy: i % 3 === 0 ? 'admin' : i % 3 === 1 ? 'brianna.wilson' : 'mason.adams',
-        lastSavedRelative: `${Math.floor(i / 2) + 1} hours ago`,
-
-        // Usage and Impact data
+        coverage: `${15 + (index % 5)} / 20`,
+        status: governanceStatuses[index % 4],
+        lastModified: dateString,
+        version: `v${Math.floor(index / 5) + 1}.${index % 5}`,
+        lastSavedBy: index % 3 === 0 ? 'admin' : index % 3 === 1 ? 'brianna.wilson' : 'mason.adams',
+        lastSavedRelative: `${Math.floor(index / 2) + 1} hours ago`,
         usageData: {
           pipelines: pipelines,
           pipelineCount: pipelines.length,
           rules: rules,
           ruleCount: rules.length,
-          targetModel: targetModel,
-          normalizationActive: i % 4 !== 3, // Most are active
+          targetModel: targetModelObject.name,
+          normalizationActive: index % 4 !== 3,
         },
       };
     });
 
     // 3. Rules Data
-    this.originalRuleData = Array.from({ length: 35 }, (_, i) => {
-      const severity = ruleSeverities[i % 4];
-      const scope = ruleScopes[i % 3];
-      const trigger = ruleTriggers[i % 3];
-      const status = i % 10 === 0 ? 'Draft' : i % 12 === 0 ? 'Archived' : 'Active';
-      const day = Math.max(1, 15 - (i % 14))
+    this.originalRuleData = Array.from({ length: 35 }, (_, index) => {
+      const severity = ruleSeverities[index % 4];
+      const scope = ruleScopes[index % 3];
+      const trigger = ruleTriggers[index % 3];
+      const status = index % 10 === 0 ? 'Draft' : index % 12 === 0 ? 'Archived' : 'Active';
+      const day = Math.max(1, 15 - (index % 14))
         .toString()
         .padStart(2, '0');
-      const dateStr = `2026-01-${day}`;
+      const dateString = `2026-01-${day}`;
 
       return {
-        id: `rule-${i}`,
+        id: `rule-${index}`,
         ruleName:
-          i % 5 === 0 ? `Required Field Missing (patient_id)` : `Normalization_Rule_${100 + i}`,
+          index % 5 === 0
+            ? `Required Field Missing (patient_id)`
+            : `Normalization_Rule_${100 + index}`,
         severity: severity,
         scope: scope,
         trigger: trigger,
         status: status,
-        sourcesAffected: (i % 6) + 1,
-        lastModified: dateStr,
+        sourcesAffected: (index % 6) + 1,
+        lastModified: dateString,
       };
     });
 
-    // 4. Version History (Logging into the graph of events)
-    this.versionHistory = Array.from({ length: 26 }, (_, i): IVersionCommit => {
-      const isBrianna = i % 3 === 0;
-      let testSubject = i % 3 === 0 ? 'Epic Integration Mapping' : 'Missing Required Field (v4)';
-      if (i % 4 === 1) testSubject = 'Epic - Patient (v3) Model';
-      if (i % 5 === 2) testSubject = 'Age Under 18 Rule';
+    // 4. Version History Data
+    this.versionHistory = Array.from({ length: 26 }, (_, index) => {
+      const isBrianna = index % 3 === 0;
+      let testSubject =
+        index % 3 === 0 ? 'Epic Integration Mapping' : 'Missing Required Field (v4)';
+      if (index % 4 === 1) testSubject = 'Epic - Patient (v3) Model';
+      if (index % 5 === 2) testSubject = 'Age Under 18 Rule';
 
       return {
-        id: `commit-${i}`,
+        id: `commit-${index}`,
         hash: Math.random().toString(16).substring(2, 9).toUpperCase(),
         author: {
           name: isBrianna ? 'Brianna Wilson' : 'Mason Adams',
-          avatar: `https://i.pravatar.cc/150?u=${i + 10}`,
+          avatar: `https://i.pravatar.cc/150?u=${index + 10}`,
         },
-        relativeTime: `${i + 1} days ago`,
-        absoluteTime: `2026-01-${Math.max(1, 12 - i)
+        relativeTime: `${index + 1} days ago`,
+        absoluteTime: `2026-01-${Math.max(1, 12 - index)
           .toString()
           .padStart(2, '0')}T10:30:00`,
         events: [
           {
             action: 'Added',
             subject: testSubject,
-            version: `v2.${i}.0`,
+            version: `v2.${index}.0`,
             type: 'Model',
             timestamp: '10:30 AM',
             scopeChange: 'Field-level → System',
             statusIcon: 'check_circle',
             nested: {
               title: 'System Validation Check',
-              tag: i % 5 === 2 ? 'Age-Tag' : 'Normalization',
+              tag: index % 5 === 2 ? 'Age-Tag' : 'Normalization',
               time: '10:31 AM',
             },
           },
@@ -2689,43 +2777,93 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       };
     });
 
-    // 5. Code Systems Data (Fully populated for the UI columns)
-    this.originalCodeData = Array.from({ length: 35 }, (_, i) => {
+    // 5. Code Systems Data
+    this.originalCodeData = Array.from({ length: 35 }, (_, index) => {
       const systems = ['SNOMED CT', 'LOINC', 'ICD-10-CM', 'RxNorm', 'CPT'];
       const categories = ['Diagnosis', 'Lab Test', 'Demographics', 'Medication', 'Procedure'];
-      const day = Math.max(1, 15 - (i % 14))
+      const day = Math.max(1, 15 - (index % 14))
         .toString()
         .padStart(2, '0');
-      const dateStr = `2026-01-${day}`;
+      const dateString = `2026-01-${day}`;
 
       return {
-        id: `code-${i}`,
-        valueSetName: `${systems[i % 5]} - ${i % 2 === 0 ? 'Core Set' : 'Extended'}`,
-        category: categories[i % 5],
-        status: i % 8 === 0 ? 'Draft' : 'Active',
-        codeCount: 150 + i * 12,
-        references: (i % 5) + 2,
-        lastModified: dateStr,
-        oid: `2.16.840.1.113883.6.${100 + i}`,
-        usage: usageTypes[i % 5],
-        source: systems[i % 5],
+        id: `code-${index}`,
+        valueSetName: `${systems[index % 5]} - ${index % 2 === 0 ? 'Core Set' : 'Extended'}`,
+        category: categories[index % 5],
+        status: index % 8 === 0 ? 'Draft' : 'Active',
+        codeCount: 150 + index * 12,
+        references: (index % 5) + 2,
+        lastModified: dateString,
+        oid: `2.16.840.1.113883.6.${100 + index}`,
+        usage: usageTypes[index % 5],
+        source: systems[index % 5],
       };
     });
 
-    // Initialize all data sources for the 2026 MPI environment
-    // We use spread to ensure fresh references for Angular change detection
+    // Initialize all data sources
     this.modelDataSource.data = [...this.originalModelData];
     this.mappingDataSource.data = [...this.originalMappingData];
     this.ruleDataSource.data = [...this.originalRuleData];
     this.versionDataSource.data = [...this.versionHistory];
     this.codeDataSource.data = [...this.originalCodeData];
 
-    // Apply initial governance filters to ensure table view is consistent with selected dropdowns
+    // Apply initial governance filters
     this.applyMappingFilter();
     this.applyModelFilter();
     this.applyRuleFilter();
     this.applyVersionFilter();
     this.applyCodeFilter();
+  }
+
+  // 1. Add a method to generate mock dependencies based on a model
+  private getModelDependencies(model: any, index: number) {
+    return {
+      // Related Models: Use actual names from your local model list for consistency
+      relatedModels: [
+        {
+          id: this.originalModelData[(index + 1) % 10]?.id || 'm-1',
+          name: this.originalModelData[(index + 1) % 10]?.name || 'Encounter',
+          relationshipContext: 'Mappings, Rules',
+          references: 12 + (index % 5),
+        },
+        {
+          id: this.originalModelData[(index + 2) % 10]?.id || 'm-2',
+          name: this.originalModelData[(index + 2) % 10]?.name || 'Lab Result',
+          relationshipContext: 'Graph, Rules',
+          references: 7 + (index % 3),
+        },
+      ],
+      // Upstream (Source systems/schemas)
+      upstream: [
+        {
+          sourceName: index % 2 === 0 ? 'Epic_Raw_ADT' : 'Quest_LIMS_v2',
+          type: 'Source Schema',
+          status: 'Active',
+          lastUpdated: 'Jan 10, 2026',
+        },
+        {
+          sourceName: 'Enterprise_Master_Index',
+          type: 'External Model',
+          status: 'Active',
+          lastUpdated: 'Dec 18, 2025',
+        },
+      ],
+      // Downstream (Where this data goes)
+      downstream: [
+        {
+          dependentName: `${model.name}_Export_v1`,
+          type: 'Pipeline',
+          status: 'Active',
+          environment: 'Production',
+        },
+        {
+          dependentName: 'Analytics_Data_Warehouse',
+          type: 'Database',
+          status: 'Active',
+          environment: 'Production',
+        },
+      ],
+    };
   }
 
   // Helper method to generate field mappings for each source-target pair
@@ -2904,6 +3042,44 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       ...r,
       appliedTo: `${sourceSystem} → ${targetModel}`,
     }));
+  }
+
+  /**
+   * * Receives a model name, finds the data, and triggers the same transition logic as a manual row click.
+   * and re-initializes the View Model component with new data.
+   */
+  private handleRelatedModelNavigation(modelRef: any): void {
+    let targetModel = null;
+    // 1. If we have an ID (Best Practice)
+    if (modelRef.id) {
+      targetModel = this.originalModelData.find(m => m.id === modelRef.id);
+    }
+
+    // 2. Fallback to flexible name matching if no ID or no match found
+    if (!targetModel && modelRef.name) {
+      const searchName = modelRef.name.trim().toLowerCase();
+      targetModel = this.originalModelData.find(m => m.name.trim().toLowerCase() === searchName);
+    }
+
+    if (targetModel) {
+      this.selectedModelData = { ...targetModel };
+      this.showModelDetail = true;
+      this.isEditingModel = false;
+
+      this.updateBreadcrumbPath('View Model');
+
+      // Trigger transition animation
+      setTimeout(() => {
+        const container = document.querySelector('.normalization-main-container');
+        if (container) {
+          container.classList.add('slide-out');
+        }
+      }, 0);
+
+      this.cdr.detectChanges();
+    } else {
+      console.error(`[Normalization] Target model not found for:`, modelRef);
+    }
   }
 
   onCloseEditMapping(): void {

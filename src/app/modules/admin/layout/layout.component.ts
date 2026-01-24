@@ -1,15 +1,15 @@
-import { Component, OnInit, OnDestroy } from "@angular/core";
-import { Subscription } from "rxjs";
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 
 @Component({
-  selector: "app-layout",
+  selector: 'app-layout',
   standalone: false,
-  templateUrl: "./layout.component.html",
-  styleUrls: ["./layout.component.scss"],
+  templateUrl: './layout.component.html',
+  styleUrls: ['./layout.component.scss'],
 })
 export class LayoutComponent implements OnInit, OnDestroy {
   sideNavOpened = true;
-  sideNavMode: "side" | "over" = "side";
+  sideNavMode: 'side' | 'over' = 'side';
   toolBarHeight = 64;
   private readonly mediaWatcher: Subscription;
   constructor() {
@@ -30,7 +30,9 @@ export class LayoutComponent implements OnInit, OnDestroy {
     //   }
     // });
   }
-  ngOnInit() {}
+  ngOnInit() {
+    console.log('Will implement it later');
+  }
 
   ngOnDestroy(): void {
     // this.mediaWatcher.unsubscribe();

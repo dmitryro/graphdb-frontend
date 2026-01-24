@@ -1,10 +1,10 @@
-import { NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { MatCardModule } from "@angular/material/card";
-import { MatButtonModule } from "@angular/material/button";
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 
-import { MatGridRoutingModule } from "./mat-grid-routing.module";
-import { GridComponent } from "./grid/grid.component";
+import { GridComponent } from './grid/grid.component';
+import { MatGridRoutingModule } from './mat-grid-routing.module';
 
 @NgModule({
   imports: [CommonModule, MatGridRoutingModule, MatCardModule, MatButtonModule],

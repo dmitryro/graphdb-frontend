@@ -21,7 +21,7 @@
           <span>Change Status</span>
         </button>
         <mat-divider></mat-divider>
-        <button mat-menu-item class="danger-action">
+        <button mat-menu-item class="danger-action" (click)="onDelete()">
           <mat-icon>delete</mat-icon>
           <span>Delete Model</span>
         </button>
@@ -119,14 +119,14 @@
             </td>
           </ng-container>
 
-          <ng-container matColumnDef="dataType">
+          <ng-container matColumnDef="type">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Data Type</th>
             <td mat-cell *matCellDef="let row">
               <mat-form-field
                 appearance="outline"
                 class="compact-select"
-                [class.modified-field]="isFieldModified(row, 'dataType')">
-                <mat-select [(ngModel)]="row.dataType" (selectionChange)="onFieldValueChange(row)">
+                [class.modified-field]="isFieldModified(row, 'type')">
+                <mat-select [(ngModel)]="row.type" (selectionChange)="onFieldValueChange(row)">
                   <mat-option *ngFor="let type of dataTypeOptions" [value]="type">
                     {{ type }}
                   </mat-option>
@@ -135,14 +135,16 @@
             </td>
           </ng-container>
 
-          <ng-container matColumnDef="required">
+          <ng-container matColumnDef="requirement">
             <th mat-header-cell *matHeaderCellDef mat-sort-header>Required</th>
             <td mat-cell *matCellDef="let row">
               <mat-form-field
                 appearance="outline"
                 class="compact-select"
-                [class.modified-field]="isFieldModified(row, 'required')">
-                <mat-select [(ngModel)]="row.required" (selectionChange)="onFieldValueChange(row)">
+                [class.modified-field]="isFieldModified(row, 'requirement')">
+                <mat-select
+                  [(ngModel)]="row.requirement"
+                  (selectionChange)="onFieldValueChange(row)">
                   <mat-option *ngFor="let opt of requiredOptions" [value]="opt">
                     {{ opt }}
                   </mat-option>
@@ -202,7 +204,9 @@
                   <mat-icon>settings_backup_restore</mat-icon>
                 </button>
               }
-              @if (row.status === 'New' || row.status === 'Unchanged') {
+              @if (
+                row.status === 'New' || row.status === 'Existing' || row.status === 'Unchanged'
+              ) {
                 <button
                   mat-icon-button
                   color="warn"
@@ -233,12 +237,10 @@
         </mat-paginator>
       </div>
 
-      <!-- Dependencies Section -->
       <div class="dependencies-edit-section">
         <h2 class="section-title">Dependencies</h2>
 
         <mat-tab-group class="dependencies-tabs">
-          <!-- Related Models Tab -->
           <mat-tab label="Related Models">
             <div class="tab-content">
               @if (relatedModelsDataSource.data.length > 0) {
@@ -252,7 +254,9 @@
                     <ng-container matColumnDef="modelName">
                       <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
                       <td mat-cell *matCellDef="let row">
-                        <a class="model-link">{{ row.modelName }}</a>
+                        <a class="model-link" (click)="viewRelatedModel(row)">{{
+                          row.modelName
+                        }}</a>
                       </td>
                     </ng-container>
 
@@ -303,7 +307,6 @@
             </div>
           </mat-tab>
 
-          <!-- Upstream Tab (Read-only) -->
           <mat-tab label="Upstream">
             <div class="tab-content">
               <div class="readonly-notice">
@@ -346,7 +349,6 @@
             </div>
           </mat-tab>
 
-          <!-- Downstream Tab (Read-only) -->
           <mat-tab label="Downstream">
             <div class="tab-content">
               <div class="readonly-notice">

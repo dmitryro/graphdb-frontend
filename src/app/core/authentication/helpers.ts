@@ -1,18 +1,18 @@
-import { fromByteArray, toByteArray } from "base64-js";
+import { fromByteArray, toByteArray } from 'base64-js';
 
 export class Base64 {
   static encode(plainText: string): string {
-    return fromByteArray(pack(plainText)).replace(/[+/=]/g, (m) => {
-      return { "+": "-", "/": "_", "=": "" }[m] as string;
+    return fromByteArray(pack(plainText)).replace(/[+/=]/g, m => {
+      return { '+': '-', '/': '_', '=': '' }[m] as string;
     });
   }
 
   static decode(b64: string): string {
-    b64 = b64.replace(/[-_]/g, (m) => {
-      return { "-": "+", _: "/" }[m] as string;
+    b64 = b64.replace(/[-_]/g, m => {
+      return { '-': '+', _: '/' }[m] as string;
     });
     while (b64.length % 4) {
-      b64 += "=";
+      b64 += '=';
     }
 
     return unpack(toByteArray(b64));
@@ -35,10 +35,7 @@ export function unpack(byteArray: any) {
 export const base64 = { encode: Base64.encode, decode: Base64.decode };
 
 export function capitalize(text: string): string {
-  return (
-    text.substring(0, 1).toUpperCase() +
-    text.substring(1, text.length).toLowerCase()
-  );
+  return text.substring(0, 1).toUpperCase() + text.substring(1, text.length).toLowerCase();
 }
 
 export function currentTimestamp(): number {
@@ -51,9 +48,7 @@ export function timeLeft(expiredAt: number): number {
 
 export function filterObject<T extends Record<string, unknown>>(obj: T) {
   return Object.fromEntries(
-    Object.entries(obj).filter(
-      ([, value]) => value !== undefined && value !== null,
-    ),
+    Object.entries(obj).filter(([, value]) => value !== undefined && value !== null),
   );
 }
 

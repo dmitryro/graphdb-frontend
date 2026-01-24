@@ -1,0 +1,64 @@
+@if (isVisible) {
+  <div class="modal-overlay" (click)="close()">
+    <div
+      class="modal-container confirmation-compact"
+      [class.dark]="theme === 'dark'"
+      [class.light]="theme === 'light'"
+      (click)="$event.stopPropagation()">
+      <div class="modal-header" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+        <div class="header-title-wrapper">
+          <mat-icon class="status-icon">
+            {{ command === 'delete' ? 'report_problem' : 'help_outline' }}
+          </mat-icon>
+          <div class="text-content">
+            <span class="subtitle">System Action</span>
+            <h2>{{ title }}</h2>
+          </div>
+        </div>
+
+        <button mat-icon-button class="close-btn" (click)="close()" type="button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+        <div class="confirmation-content">
+          <p class="main-message">{{ message }}</p>
+
+          @if (itemName) {
+            <div
+              class="item-highlight"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              "{{ itemName }}"
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+        <button mat-button class="cancel-btn" (click)="close()" type="button">Cancel</button>
+
+        @if (command === 'save') {
+          <button mat-flat-button class="action-btn save" (click)="executeAction()">SAVE</button>
+        }
+
+        @if (command === 'delete') {
+          <button mat-flat-button class="action-btn delete" (click)="executeAction()">
+            DELETE
+          </button>
+        }
+
+        @if (command === 'reset') {
+          <button mat-flat-button class="action-btn reset" (click)="executeAction()">RESET</button>
+        }
+
+        @if (command === 'confirm') {
+          <button mat-flat-button color="primary" class="action-btn" (click)="executeAction()">
+            CONFIRM
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

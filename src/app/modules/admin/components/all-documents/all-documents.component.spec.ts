@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AllDocumentsComponent } from "./all-documents.component";
+import { AllDocumentsComponent } from './all-documents.component';
 
-describe("AllDocumentsComponent", () => {
+describe('AllDocumentsComponent', () => {
   let component: AllDocumentsComponent;
   let fixture: ComponentFixture<AllDocumentsComponent>;
 
@@ -16,7 +16,7 @@ describe("AllDocumentsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

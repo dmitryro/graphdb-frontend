@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RolesPermissionsComponent } from "./roles-permissions.component";
+import { RolesPermissionsComponent } from './roles-permissions.component';
 
-describe("RolesPermissionsComponent", () => {
+describe('RolesPermissionsComponent', () => {
   let component: RolesPermissionsComponent;
   let fixture: ComponentFixture<RolesPermissionsComponent>;
 
@@ -16,7 +16,7 @@ describe("RolesPermissionsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

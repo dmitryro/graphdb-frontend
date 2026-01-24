@@ -1,24 +1,22 @@
-import { Injectable, OnDestroy, inject } from "@angular/core";
-import { BehaviorSubject, Subject, Subscription, share, timer } from "rxjs";
+import { Injectable, OnDestroy, inject } from '@angular/core';
+import { BehaviorSubject, Subject, Subscription, share, timer } from 'rxjs';
 
-import { LocalStorageService } from "@shared";
-import { currentTimestamp, filterObject } from "./helpers";
-import { Token } from "./interface";
-import { BaseToken } from "./token";
-import { TokenFactory } from "./token-factory.service";
+import { LocalStorageService } from '@shared';
+import { currentTimestamp, filterObject } from './helpers';
+import { Token } from './interface';
+import { BaseToken } from './token';
+import { TokenFactory } from './token-factory.service';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class TokenService implements OnDestroy {
-  private readonly key = "ng-matero-token";
+  private readonly key = 'ng-matero-token';
 
   private readonly store = inject(LocalStorageService);
   private readonly factory = inject(TokenFactory);
 
-  private readonly change$ = new BehaviorSubject<BaseToken | undefined>(
-    undefined,
-  );
+  private readonly change$ = new BehaviorSubject<BaseToken | undefined>(undefined);
   private readonly refresh$ = new Subject<BaseToken | undefined>();
 
   private timer$?: Subscription;
@@ -58,7 +56,7 @@ export class TokenService implements OnDestroy {
   }
 
   getBearerToken() {
-    return this.token?.getBearerToken() ?? "";
+    return this.token?.getBearerToken() ?? '';
   }
 
   getRefreshToken() {
@@ -75,13 +73,9 @@ export class TokenService implements OnDestroy {
     if (!token) {
       this.store.remove(this.key);
     } else {
-      const value = Object.assign(
-        { access_token: "", token_type: "Bearer" },
-        token,
-        {
-          exp: token.expires_in ? currentTimestamp() + token.expires_in : null,
-        },
-      );
+      const value = Object.assign({ access_token: '', token_type: 'Bearer' }, token, {
+        exp: token.expires_in ? currentTimestamp() + token.expires_in : null,
+      });
       this.store.set(this.key, filterObject(value));
     }
 

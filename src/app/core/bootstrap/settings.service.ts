@@ -1,18 +1,18 @@
-import { Direction } from "@angular/cdk/bidi";
-import { MediaMatcher } from "@angular/cdk/layout";
-import { DOCUMENT } from "@angular/common";
-import { Injectable, inject } from "@angular/core";
-import { TranslateService } from "@ngx-translate/core";
-import { AppDirectionality, LocalStorageService } from "@shared";
-import { enUS, Locale, zhCN, zhTW } from "date-fns/locale";
-import { BehaviorSubject } from "rxjs";
-import { AppSettings, AppTheme, defaults } from "./settings";
+import { Direction } from '@angular/cdk/bidi';
+import { MediaMatcher } from '@angular/cdk/layout';
+import { DOCUMENT } from '@angular/common';
+import { inject, Injectable } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { AppDirectionality, LocalStorageService } from '@shared';
+import { enUS, Locale, zhCN, zhTW } from 'date-fns/locale';
+import { BehaviorSubject } from 'rxjs';
+import { AppSettings, AppTheme, defaults } from './settings';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class SettingsService {
-  private readonly key = "ng-matero-settings";
+  private readonly key = 'ng-matero-settings';
 
   private readonly document = inject(DOCUMENT);
   private readonly translate = inject(TranslateService);
@@ -26,18 +26,18 @@ export class SettingsService {
     return this.notify$.asObservable();
   }
 
-  private htmlElement = this.document.querySelector("html")!;
+  private htmlElement = this.document.querySelector('html')!;
 
   private storedOptions: AppSettings = this.store.get(this.key);
 
   options: AppSettings = Object.assign(defaults, this.storedOptions);
 
-  languages = ["en-US", "zh-CN", "zh-TW"];
+  languages = ['en-US', 'zh-CN', 'zh-TW'];
 
   localeMap: Record<string, Locale> = {
-    "en-US": enUS,
-    "zh-CN": zhCN,
-    "zh-TW": zhTW,
+    'en-US': enUS,
+    'zh-CN': zhCN,
+    'zh-TW': zhTW,
   };
 
   constructor() {
@@ -65,16 +65,14 @@ export class SettingsService {
   getThemeColor() {
     // Check whether the browser support `prefers-color-scheme`
     if (
-      this.options.theme === "auto" &&
-      this.mediaMatcher.matchMedia("(prefers-color-scheme)").media !== "not all"
+      this.options.theme === 'auto' &&
+      this.mediaMatcher.matchMedia('(prefers-color-scheme)').media !== 'not all'
     ) {
-      const isSystemDark = this.mediaMatcher.matchMedia(
-        "(prefers-color-scheme: dark)",
-      ).matches;
+      const isSystemDark = this.mediaMatcher.matchMedia('(prefers-color-scheme: dark)').matches;
       // Set theme to dark if `prefers-color-scheme` is dark. Otherwise, set it to light.
-      return isSystemDark ? "dark" : "light";
+      return isSystemDark ? 'dark' : 'light';
     } else {
-      return this.options.theme as Exclude<AppTheme, "auto">;
+      return this.options.theme as Exclude<AppTheme, 'auto'>;
     }
   }
 
@@ -82,17 +80,17 @@ export class SettingsService {
     if (theme) {
       this.setOptions({ theme });
     }
-    if (this.getThemeColor() === "dark") {
-      this.htmlElement.classList.add("theme-dark");
+    if (this.getThemeColor() === 'dark') {
+      this.htmlElement.classList.add('theme-dark');
     } else {
-      this.htmlElement.classList.remove("theme-dark");
+      this.htmlElement.classList.remove('theme-dark');
     }
   }
 
   getTranslateLang() {
-    if (this.options.language === "auto") {
+    if (this.options.language === 'auto') {
       const browserLang = navigator.language;
-      return this.languages.includes(browserLang) ? browserLang : "en-US";
+      return this.languages.includes(browserLang) ? browserLang : 'en-US';
     }
     return this.options.language;
   }

@@ -1,5 +1,6 @@
 <div
-  class="model-detail-container"
+  #scrollContainer
+  class="view-model-scroll-container model-detail-container"
   [class.slide-out-to-left]="isEditing"
   [class.slide-in-from-left]="!isEditing">
   <div class="view-content-wrapper">
@@ -55,26 +56,41 @@
         </button>
 
         <mat-menu #statusMenu="matMenu">
-          <button mat-menu-item [disabled]="modelData?.status === 'Draft'">
+          <button
+            mat-menu-item
+            (click)="onChangeStatus('Draft')"
+            [disabled]="modelData?.status === 'Draft'">
             <mat-icon>edit_note</mat-icon>
             <span>Draft {{ modelData?.status === 'Draft' ? '(current)' : '' }}</span>
           </button>
-          <button mat-menu-item [disabled]="modelData?.status === 'Active' || !modelData?.status">
+
+          <button
+            mat-menu-item
+            (click)="onChangeStatus('Active')"
+            [disabled]="modelData?.status === 'Active' || !modelData?.status">
             <mat-icon class="status-active">check_circle</mat-icon>
             <span
               >Active
               {{ modelData?.status === 'Active' || !modelData?.status ? '(current)' : '' }}</span
             >
           </button>
+
           <mat-divider></mat-divider>
+
           <button
             mat-menu-item
             class="warning-action"
+            (click)="onChangeStatus('Deprecated')"
             [disabled]="modelData?.status === 'Deprecated'">
             <mat-icon>block</mat-icon>
             <span>Deprecated {{ modelData?.status === 'Deprecated' ? '(current)' : '' }}</span>
           </button>
-          <button mat-menu-item class="danger-action" [disabled]="modelData?.status === 'Archived'">
+
+          <button
+            mat-menu-item
+            class="danger-action"
+            (click)="onChangeStatus('Archived')"
+            [disabled]="modelData?.status === 'Archived'">
             <mat-icon>archive</mat-icon>
             <span>Archived {{ modelData?.status === 'Archived' ? '(current)' : '' }}</span>
           </button>
@@ -84,7 +100,6 @@
 
     <div class="content-grid">
       <div class="left-column">
-        <!-- Overview Section -->
         <div class="info-block overview-block">
           <h2 class="block-title">Overview</h2>
           <p class="description">
@@ -125,7 +140,6 @@
           </div>
         </div>
 
-        <!-- Fields Section -->
         <div class="fields-section">
           <h2 class="section-title">Fields</h2>
           <p class="section-subtitle">Inspect model structure without becoming a schema editor.</p>
@@ -182,7 +196,6 @@
             [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
         </div>
 
-        <!-- Dependencies Section -->
         <div class="dependencies-section">
           <h2 class="section-title">Dependencies</h2>
           <p class="section-subtitle">
@@ -190,7 +203,6 @@
           </p>
 
           <mat-tab-group class="dependencies-tabs">
-            <!-- Related Models Tab -->
             <mat-tab label="Related Models">
               <div class="tab-content">
                 @if (relatedModelsDataSource.data.length > 0) {
@@ -203,7 +215,7 @@
                     <ng-container matColumnDef="modelName">
                       <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
                       <td mat-cell *matCellDef="let element">
-                        <a class="model-link" (click)="viewRelatedModel(element.modelName)">
+                        <a class="model-link" (click)="viewRelatedModel(element)">
                           {{ element.modelName }}
                         </a>
                       </td>
@@ -247,7 +259,6 @@
               </div>
             </mat-tab>
 
-            <!-- Upstream Tab -->
             <mat-tab label="Upstream">
               <div class="tab-content">
                 @if (upstreamDataSource.data.length > 0) {
@@ -313,7 +324,6 @@
               </div>
             </mat-tab>
 
-            <!-- Downstream Tab -->
             <mat-tab label="Downstream">
               <div class="tab-content">
                 @if (downstreamDataSource.data.length > 0) {
@@ -390,7 +400,6 @@
       </div>
 
       <div class="right-column">
-        <!-- Usage & Impact Block -->
         <div class="info-block usage-impact-block">
           <h3 class="block-title">Usage & Impact</h3>
           <p class="block-subtitle">
@@ -440,7 +449,6 @@
           </div>
         </div>
 
-        <!-- Status Block -->
         <div class="info-block status-block">
           <h3 class="block-title">Status</h3>
           <div

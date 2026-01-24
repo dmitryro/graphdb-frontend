@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { UploadDocumentsComponent } from "./upload-documents.component";
+import { UploadDocumentsComponent } from './upload-documents.component';
 
-describe("UploadDocumentsComponent", () => {
+describe('UploadDocumentsComponent', () => {
   let component: UploadDocumentsComponent;
   let fixture: ComponentFixture<UploadDocumentsComponent>;
 
@@ -16,7 +16,7 @@ describe("UploadDocumentsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

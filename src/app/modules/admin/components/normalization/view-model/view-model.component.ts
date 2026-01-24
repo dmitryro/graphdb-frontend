@@ -2,12 +2,15 @@ import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
   Component,
+  ElementRef,
   EventEmitter,
   HostBinding,
   Input,
+  OnChanges,
   OnDestroy,
   OnInit,
   Output,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -39,6 +42,7 @@ interface ModelField {
 }
 
 interface RelatedModel {
+  id: string;
   modelName: string;
   relationshipContext: string;
   references: number;
@@ -81,23 +85,33 @@ interface DownstreamDependency {
   templateUrl: './view-model.component.html',
   styleUrls: ['./view-model.component.scss'],
 })
-export class ViewModelComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ViewModelComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   @Input() modelData: any;
   @Output() closeView = new EventEmitter<void>();
+
+  // Use a ViewChild to target the scrollable container in the HTML
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef;
 
   // --- Animation handling ---
   isExiting = false;
   isEditing = false;
+  isRefreshing = false;
 
+  // Host Bindings for Animation and State
   @HostBinding('class.slide-out-to-left') isExitedToLeft = false;
   @HostBinding('class.slide-in-from-left') isReturningFromLeft = false;
+
+  @HostBinding('class.refreshing-data') get refreshClass() {
+    return this.isRefreshing;
+  }
 
   @HostBinding('class.slide-out-to-right') get exitClass() {
     return this.isExiting;
   }
 
   @HostBinding('style.pointer-events') get pointerEvents() {
-    return this.isExitedToLeft ? 'none' : 'auto';
+    // Prevent interactions while the view is slid out to the left (editing mode)
+    return this.isExitedToLeft || this.isEditing ? 'none' : 'auto';
   }
 
   // Fields Table
@@ -147,13 +161,72 @@ export class ViewModelComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupFieldsFilterPredicate();
-    this.loadFields();
-    this.loadDependencies();
-    this.loadAliases();
+    this.refreshAllData();
     this.subscribeToEvents();
   }
 
   ngAfterViewInit(): void {
+    this.assignDataSources();
+  }
+
+  /**
+   * Detects when the Input modelData changes to trigger scroll and refresh animations
+   */
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['modelData'] && !changes['modelData'].firstChange) {
+      this.triggerModelSwapTransition();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.eventSubs?.unsubscribe();
+  }
+
+  /**
+   * Internal logic to handle the visual transition between two different models
+   */
+  private triggerModelSwapTransition(): void {
+    this.isRefreshing = true;
+    this.refreshAllData();
+
+    // Use a small timeout to ensure data binding is complete before scrolling
+    setTimeout(() => {
+      this.scrollToTop();
+    }, 10);
+
+    setTimeout(() => {
+      this.isRefreshing = false;
+    }, 400);
+  }
+
+  /**
+   * Scrolls the designated container or window to the top smoothly
+   */
+  private scrollToTop(): void {
+    if (this.scrollContainer && this.scrollContainer.nativeElement) {
+      const el = this.scrollContainer.nativeElement;
+      el.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+      // Fallback: Force instant scroll if smooth scroll is blocked or delayed
+      el.scrollTop = 0;
+    } else {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+      document.documentElement.scrollTop = 0;
+    }
+  }
+
+  private refreshAllData(): void {
+    this.loadFields();
+    this.loadDependencies();
+    this.loadAliases();
+  }
+
+  private assignDataSources(): void {
     this.fieldsDataSource.sort = this.fieldsSort;
     this.fieldsDataSource.paginator = this.fieldsPaginator;
 
@@ -167,25 +240,15 @@ export class ViewModelComponent implements OnInit, AfterViewInit, OnDestroy {
     this.downstreamDataSource.paginator = this.downstreamPaginator;
   }
 
-  ngOnDestroy(): void {
-    this.eventSubs?.unsubscribe();
-  }
-
-  /**
-   * UPDATED: Subscribe to relevant events for animation and breadcrumb handling
-   */
   private subscribeToEvents(): void {
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       const eventName = state?.items?.event;
       const payload = state?.items?.payload;
 
-      // Listen for the Edit component's cancel/close event
       if (eventName === 'close_edit_model') {
         this.onCloseEdit();
       }
 
-      // NEW: Handle breadcrumb clicks while in Edit Mode
-      // If we are currently editing and the user clicks the "View Model" breadcrumb
       if (
         this.isEditing &&
         eventName === 'breadcrumb_navigate' &&
@@ -198,228 +261,120 @@ export class ViewModelComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private setupFieldsFilterPredicate(): void {
     this.fieldsDataSource.filterPredicate = (data: ModelField, filter: string) => {
-      const searchStr = `${data.fieldName} ${data.type}`.toLowerCase();
-      return _.includes(searchStr, filter.toLowerCase());
+      const searchString = `${data.fieldName} ${data.type}`.toLowerCase();
+      return _.includes(searchString, filter.toLowerCase());
     };
   }
 
   private loadFields(): void {
-    const fields: ModelField[] = [
-      {
-        fieldName: 'patient_id',
-        type: 'String',
-        requirement: 'Required',
-      },
-      {
-        fieldName: 'first_name',
-        type: 'String',
-        requirement: 'Required',
-      },
-      {
-        fieldName: 'last_name',
-        type: 'String',
-        requirement: 'Required',
-      },
-      {
-        fieldName: 'birth_date',
-        type: 'Date',
-        requirement: 'Required',
-      },
-      {
-        fieldName: 'gender',
-        type: 'String',
-        requirement: 'Optional',
-      },
-      {
-        fieldName: 'email',
-        type: 'String',
-        requirement: 'Optional',
-      },
-      {
-        fieldName: 'phone',
-        type: 'String',
-        requirement: 'Optional',
-      },
-      {
-        fieldName: 'address',
-        type: 'String',
-        requirement: 'Optional',
-      },
-    ];
-
-    this.fieldsDataSource.data = fields;
+    // FIX: Check if modelData contains real fields from normalization.component
+    if (this.modelData && this.modelData.fields && this.modelData.fields.length > 0) {
+      this.fieldsDataSource.data = this.modelData.fields;
+    } else {
+      // Fallback only if no data is provided via Input
+      const fields: ModelField[] = [
+        { fieldName: 'patient_id', type: 'String', requirement: 'Required' },
+        { fieldName: 'first_name', type: 'String', requirement: 'Required' },
+        { fieldName: 'last_name', type: 'String', requirement: 'Required' },
+        { fieldName: 'birth_date', type: 'Date', requirement: 'Required' },
+        { fieldName: 'gender', type: 'String', requirement: 'Optional' },
+        { fieldName: 'email', type: 'String', requirement: 'Optional' },
+        { fieldName: 'phone', type: 'String', requirement: 'Optional' },
+        { fieldName: 'address', type: 'String', requirement: 'Optional' },
+      ];
+      this.fieldsDataSource.data = fields;
+    }
   }
 
   private loadDependencies(): void {
-    // Related Models
-    const relatedModels: RelatedModel[] = [
-      {
-        modelName: 'Encounter',
-        relationshipContext: 'Mappings, Rules',
-        references: 12,
-      },
-      {
-        modelName: 'Lab Result',
-        relationshipContext: 'Graph, Rules',
-        references: 7,
-      },
-      {
-        modelName: 'Medication',
-        relationshipContext: 'Mappings',
-        references: 4,
-      },
-    ];
-    this.relatedModelsDataSource.data = relatedModels;
-
-    // Upstream
-    const upstream: UpstreamDependency[] = [
-      {
-        sourceName: 'Patient_Raw',
-        type: 'Dataset',
-        status: 'Active',
-        lastUpdated: 'Jan 10, 2026',
-      },
-      {
-        sourceName: 'Demographics_v2',
-        type: 'Source Schema',
-        status: 'Active',
-        lastUpdated: 'Dec 18, 2025',
-      },
-      {
-        sourceName: 'EHR_Import_Profile',
-        type: 'External Model',
-        status: 'Draft',
-        lastUpdated: 'Nov 02, 2025',
-      },
-      {
-        sourceName: 'Legacy_Patient_v1',
-        type: 'Source Schema',
-        status: 'Deprecated',
-        lastUpdated: 'Aug 14, 2025',
-      },
-    ];
-    this.upstreamDataSource.data = upstream;
-
-    // Downstream
-    const downstream: DownstreamDependency[] = [
-      {
-        dependentName: 'Patient_Ingest',
-        type: 'Pipeline',
-        status: 'Active',
-        environment: 'Production',
-      },
-      {
-        dependentName: 'Normalize_Demo',
-        type: 'Mapping',
-        status: 'Active',
-        environment: 'Production',
-      },
-      {
-        dependentName: 'Required_ID_Check',
-        type: 'Rule',
-        status: 'Inactive',
-        environment: 'Stage',
-      },
-      {
-        dependentName: 'Patient_Analytics',
-        type: 'Pipeline',
-        status: 'Draft',
-        environment: 'Dev',
-      },
-      {
-        dependentName: 'Legacy_Map_v1',
-        type: 'Mapping',
-        status: 'Deprecated',
-        environment: '-',
-      },
-    ];
-    this.downstreamDataSource.data = downstream;
+    if (this.modelData && this.modelData.dependencyData) {
+      const dependencies = this.modelData.dependencyData;
+      this.relatedModelsDataSource.data = dependencies.relatedModels || [];
+      this.upstreamDataSource.data = dependencies.upstream || [];
+      this.downstreamDataSource.data = dependencies.downstream || [];
+    } else {
+      this.relatedModelsDataSource.data = [];
+      this.upstreamDataSource.data = [];
+      this.downstreamDataSource.data = [];
+    }
   }
 
   private loadAliases(): void {
-    this.aliases = [
-      'PT',
-      'PatientRecord',
-      'PATIENT_MASTER_TABLE_USED_IN_UPSTREAM_OR_DOWNSTREAM_SYSTEMS',
-    ];
+    if (this.modelData && this.modelData.aliases) {
+      this.aliases = this.modelData.aliases;
+    } else {
+      this.aliases = [
+        'PT',
+        'PatientRecord',
+        'PATIENT_MASTER_TABLE_USED_IN_UPSTREAM_OR_DOWNSTREAM_SYSTEMS',
+      ];
+    }
   }
 
   applyFieldsFilter(): void {
     this.fieldsDataSource.filter = this.fieldsSearchTerm.trim();
-
     if (this.fieldsDataSource.paginator) {
       this.fieldsDataSource.paginator.firstPage();
     }
   }
 
   onBackToModels(): void {
-    // 1. Trigger the slide-out to right (Closing the whole view)
     this.isExiting = true;
-
-    // 2. Notify the container level
     const container = document.querySelector('.normalization-main-container');
     if (container) {
       container.classList.remove('slide-out');
       container.classList.add('slide-in');
     }
 
-    // 3. Log transaction
     this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'TAB_MODELS' });
 
-    // 4. Wait for animation to finish before destroying
     setTimeout(() => {
       this.closeView.emit();
     }, 600);
   }
 
-  /**
-   * Opening Edit: View slides out to LEFT, Edit slides in from RIGHT
-   */
   onEdit(): void {
-    // 1. Immediately hide the parent component AND set editing state together
+    // Set state immediately to trigger CSS animations
+    this.isEditing = true;
     this.isExitedToLeft = true;
     this.isReturningFromLeft = false;
-    this.isEditing = true;
 
-    // 2. Publish the open event immediately (no delay needed)
     this.eventService.publish('nf', 'open_edit_model', {
       action: 'open_edit_model',
       modelId: this.modelData?.id,
       fullData: this.modelData,
     });
-
-    // Note: Breadcrumb update is handled by EditModelComponent
   }
 
-  /**
-   * UPDATED: Closing Edit - REVERSE ANIMATION
-   * Edit slides out to RIGHT, View slides in from LEFT
-   */
   onCloseEdit(): void {
-    // 1. Re-enable pointer events immediately so View becomes interactive
+    // Trigger return animation
     this.isExitedToLeft = false;
-
-    // 2. Trigger slide-in animation from left
     this.isReturningFromLeft = true;
 
-    // 3. Clean up the Edit component AFTER its slide-out animation finishes
+    // Wait for animation to finish before resetting the logical editing state
     setTimeout(() => {
       this.isEditing = false;
       this.isReturningFromLeft = false;
-    }, 500); // Match Edit component's animation duration
+    }, 500);
   }
 
-  onChangeStatus(): void {
-    console.log('Change status action triggered');
+  /**
+   * FIX: Updated to accept the new status and update the modelData object locally
+   */
+  onChangeStatus(newStatus: string): void {
+    if (this.modelData) {
+      this.modelData.status = newStatus;
+    }
+
     this.eventService.publish('nf', 'execute_merge_query_with_context', {
       action: 'STATUS_CHANGE',
       modelId: this.modelData?.id,
+      newStatus: newStatus,
       timestamp: new Date().toISOString(),
     });
   }
 
   viewMappings(): void {
-    console.log('Navigate to Mappings filtered by this model');
     this.eventService.publish('nf', 'navigate_to_filtered_view', {
       target: 'MAPPINGS',
       filter: { modelId: this.modelData?.id },
@@ -427,7 +382,6 @@ export class ViewModelComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   viewRules(): void {
-    console.log('Navigate to Rules filtered by this model');
     this.eventService.publish('nf', 'navigate_to_filtered_view', {
       target: 'RULES',
       filter: { modelId: this.modelData?.id },
@@ -435,11 +389,7 @@ export class ViewModelComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   viewPipelines(): void {
-    console.log('Navigate to Pipelines filtered by this model');
-  }
-
-  viewRelatedModel(modelName: string): void {
-    console.log('Navigate to related model:', modelName);
+    console.log('Navigate to Pipelines');
   }
 
   viewUpstreamSource(sourceName: string): void {
@@ -448,5 +398,15 @@ export class ViewModelComponent implements OnInit, AfterViewInit, OnDestroy {
 
   viewDownstreamDependency(dependentName: string): void {
     console.log('Navigate to downstream dependency:', dependentName);
+  }
+
+  viewRelatedModel(model: any): void {
+    if (!model || !model.modelName) return;
+
+    this.eventService.publish('nf', 'view_related_model', {
+      modelName: model.modelName,
+      modelId: model.id,
+      action: 'view_related_model',
+    });
   }
 }

@@ -150,28 +150,32 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="usage">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Usage</th>
-              <td mat-cell *matCellDef="let element" class="usage-cell">{{ element.usage }}</td>
-            </ng-container>
-
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td mat-cell *matCellDef="let element">
-                <div class="status-pill" [ngClass]="element.status.toLowerCase()">
+                <div class="status-pill" [ngClass]="element.status?.toLowerCase() || ''">
                   <mat-icon>check_circle</mat-icon>{{ element.status }}
                 </div>
               </td>
             </ng-container>
 
+            <ng-container matColumnDef="usage">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Usage</th>
+              <td mat-cell *matCellDef="let element" class="usage-cell">{{ element.usage }}</td>
+            </ng-container>
+
             <ng-container matColumnDef="fields">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Fields</th>
-              <td mat-cell *matCellDef="let element">{{ element.fields }}</td>
+              <td mat-cell *matCellDef="let element">
+                {{ element.fields?.length || 0 }}
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="dependencies">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Dependencies</th>
-              <td mat-cell *matCellDef="let element">{{ element.dependencies }}</td>
+              <td mat-cell *matCellDef="let element">
+                {{ element.dependencyData?.relatedModels?.length || 0 }}
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="lastModified">
@@ -185,6 +189,7 @@
                 <button
                   mat-icon-button
                   [matMenuTriggerFor]="modelMenu"
+                  (click)="$event.stopPropagation()"
                   [matMenuTriggerData]="{ item: element }">
                   <mat-icon>more_vert</mat-icon>
                 </button>

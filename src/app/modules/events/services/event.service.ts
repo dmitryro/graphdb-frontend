@@ -12,6 +12,11 @@ export class EventService {
   publish(id: string, event: string, payload: any): void {
     const m = new Map();
     m.set('open_modal', EventActionTypes.OpenModal);
+    m.set('confirmation_delete_confirmed', EventActionTypes.ConfirmationDeleteConfirmed);
+    m.set('confirmation_save_confirmed', EventActionTypes.ConfirmationSaveConfirmed);
+    m.set('confirmation_confirm_confirmed', EventActionTypes.ConfirmationConfirmConfirmed);
+    m.set('confirmation_reset_confirmed', EventActionTypes.ConfirmationResetConfirmed);
+    m.set('open_confirmation_modal', EventActionTypes.OpenConfirmationModal);
     m.set('theme_change', EventActionTypes.ThemeChange);
     m.set('update_breadcrumb', EventActionTypes.UpdateBreadcrumb);
     m.set('open_usage_impact_drawer', EventActionTypes.OpenUsageImpactDrawer);
@@ -20,6 +25,7 @@ export class EventService {
     m.set('open_edit_mapping', EventActionTypes.OpenEditMapping);
     m.set('close_edit_model', EventActionTypes.CloseEditModel);
     m.set('open_edit_model', EventActionTypes.OpenEditModel);
+    m.set('view_related_model', EventActionTypes.ViewRelatedModel);
     m.set('open_new_mapping_modal', EventActionTypes.OpenNewMappingModal);
     m.set('close_new_mapping_modal', EventActionTypes.CloseNewMappingModal);
     m.set('breadcrumb_navigate', EventActionTypes.BreadcrumbNavigate);

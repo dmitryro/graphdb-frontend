@@ -1,8 +1,11 @@
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class EventsService {
-  constructor() {}
+  constructor() {
+    // Future stub
+    console.log('Possible future implementation...');
+  }
 }

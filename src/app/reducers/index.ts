@@ -1,12 +1,8 @@
-import { isDevMode } from "@angular/core";
-import {
-  ActionReducer,
-  ActionReducerMap,
-  createFeatureSelector,
-  createSelector,
-  MetaReducer,
-} from "@ngrx/store";
-export interface State {}
+import { isDevMode } from '@angular/core';
+import { ActionReducerMap, MetaReducer } from '@ngrx/store';
+
+// Changed from interface to type alias to satisfy no-empty-interface
+export type State = Record<string, never>;
 
 export const reducers: ActionReducerMap<State> = {};
 

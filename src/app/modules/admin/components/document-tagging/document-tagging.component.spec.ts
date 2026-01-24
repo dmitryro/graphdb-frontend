@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DocumentTaggingComponent } from "./document-tagging.component";
+import { DocumentTaggingComponent } from './document-tagging.component';
 
-describe("DocumentTaggingComponent", () => {
+describe('DocumentTaggingComponent', () => {
   let component: DocumentTaggingComponent;
   let fixture: ComponentFixture<DocumentTaggingComponent>;
 
@@ -16,7 +16,7 @@ describe("DocumentTaggingComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

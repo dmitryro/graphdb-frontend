@@ -1,10 +1,10 @@
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
 @Component({
-  selector: "app-search",
+  selector: 'app-search',
   standalone: false,
-  templateUrl: "./search.component.html",
-  styleUrl: "./search.component.scss",
+  templateUrl: './search.component.html',
+  styleUrl: './search.component.scss',
 })
 export class SearchComponent {
   index = 0;
@@ -17,11 +17,11 @@ export class SearchComponent {
 
   btnClickHandler() {
     if (this.btnClass) {
-      this.btnClass = "";
-      this.iptClass = "";
+      this.btnClass = '';
+      this.iptClass = '';
     } else {
-      this.btnClass = "close";
-      this.iptClass = "square";
+      this.btnClass = 'close';
+      this.iptClass = 'square';
     }
   }
 }

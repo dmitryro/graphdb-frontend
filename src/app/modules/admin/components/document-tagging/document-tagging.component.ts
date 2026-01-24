@@ -1,9 +1,9 @@
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
 @Component({
-  selector: "app-document-tagging",
+  selector: 'app-document-tagging',
   standalone: false,
-  templateUrl: "./document-tagging.component.html",
-  styleUrl: "./document-tagging.component.scss",
+  templateUrl: './document-tagging.component.html',
+  styleUrl: './document-tagging.component.scss',
 })
 export class DocumentTaggingComponent {}

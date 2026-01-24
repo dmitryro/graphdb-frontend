@@ -1,13 +1,8 @@
-import { mergeMap, of, throwError } from "rxjs";
-import {
-  HttpEvent,
-  HttpHandlerFn,
-  HttpRequest,
-  HttpResponse,
-} from "@angular/common/http";
+import { HttpEvent, HttpHandlerFn, HttpRequest, HttpResponse } from '@angular/common/http';
+import { mergeMap, of, throwError } from 'rxjs';
 
 export function apiInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn) {
-  if (!req.url.includes("/api/")) {
+  if (!req.url.includes('/api/')) {
     return next(req);
   }
 
@@ -17,7 +12,7 @@ export function apiInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn) {
         const body: any = event.body;
         // failure: { code: **, msg: 'failure' }
         // success: { code: 0,  msg: 'success', data: {} }
-        if (body && "code" in body && body.code !== 0) {
+        if (body && 'code' in body && body.code !== 0) {
           if (body.msg) {
             // toast.error(body.msg);
           }

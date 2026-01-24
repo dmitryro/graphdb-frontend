@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PlaceholderComponent } from "./placeholder.component";
+import { PlaceholderComponent } from './placeholder.component';
 
-describe("PlaceholderComponent", () => {
+describe('PlaceholderComponent', () => {
   let component: PlaceholderComponent;
   let fixture: ComponentFixture<PlaceholderComponent>;
 
@@ -16,7 +16,7 @@ describe("PlaceholderComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

@@ -1,20 +1,14 @@
-import {
-  Component,
-  Input,
-  OnInit,
-  ViewEncapsulation,
-  inject,
-} from "@angular/core";
-import { MatIconModule } from "@angular/material/icon";
-import { NavigationEnd, Router } from "@angular/router";
-import { MenuService } from "@core/bootstrap/menu.service";
-import { TranslateModule } from "@ngx-translate/core";
-import { filter, startWith } from "rxjs";
+import { Component, Input, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { NavigationEnd, Router } from '@angular/router';
+import { MenuService } from '@core/bootstrap/menu.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { filter, startWith } from 'rxjs';
 
 @Component({
-  selector: "breadcrumb",
-  templateUrl: "./breadcrumb.component.html",
-  styleUrl: "./breadcrumb.component.scss",
+  selector: 'app-breadcrumb',
+  templateUrl: './breadcrumb.component.html',
+  styleUrl: './breadcrumb.component.scss',
   encapsulation: ViewEncapsulation.None,
   imports: [MatIconModule, TranslateModule],
 })
@@ -33,7 +27,7 @@ export class BreadcrumbComponent implements OnInit {
   ngOnInit() {
     this.router.events
       .pipe(
-        filter((event) => event instanceof NavigationEnd),
+        filter(event => event instanceof NavigationEnd),
         startWith(this.router),
       )
       .subscribe(() => {
@@ -42,12 +36,12 @@ export class BreadcrumbComponent implements OnInit {
   }
 
   genBreadcrumb() {
-    const routes = this.router.url.slice(1).split("/");
+    const routes = this.router.url.slice(1).split('/');
     if (this.nav.length > 0) {
       this.navItems = [...this.nav];
     } else {
       this.navItems = this.menu.getLevel(routes);
-      this.navItems.unshift("home");
+      this.navItems.unshift('home');
     }
   }
 }

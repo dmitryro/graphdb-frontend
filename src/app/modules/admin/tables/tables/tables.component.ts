@@ -1,23 +1,24 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from "@angular/core";
-import { MatPaginator } from "@angular/material/paginator";
-import { MatSort } from "@angular/material/sort";
-import { MatTableDataSource } from "@angular/material/table";
-import { UserData, DataService } from "../data.service";
-import { SelectionModel } from "@angular/cdk/collections";
+import { SelectionModel } from '@angular/cdk/collections';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatSort } from '@angular/material/sort';
+import { MatTableDataSource } from '@angular/material/table';
+import { DataService, UserData } from '../data.service';
 
 @Component({
-  selector: "app-tables",
+  selector: 'app-tables',
   standalone: false,
-  templateUrl: "./tables.component.html",
-  styleUrls: ["./tables.component.scss"],
+  templateUrl: './tables.component.html',
+  styleUrls: ['./tables.component.scss'],
 })
 export class TablesComponent implements OnInit, AfterViewInit {
-  displayedColumns = ["select", "id", "name", "progress", "color"];
-  dataSource: MatTableDataSource<UserData>;
-  selection: SelectionModel<UserData>;
+  displayedColumns = ['select', 'id', 'name', 'progress', 'color'];
+  dataSource!: MatTableDataSource<UserData>; // Added ! for definite assignment
+  selection!: SelectionModel<UserData>; // Added ! for definite assignment
 
-  @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
-  @ViewChild(MatSort, { static: true }) sort: MatSort;
+  @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
+  @ViewChild(MatSort, { static: true }) sort!: MatSort;
+
   constructor(private readonly dataService: DataService) {}
 
   ngOnInit() {
@@ -46,8 +47,11 @@ export class TablesComponent implements OnInit, AfterViewInit {
 
   /** Selects all rows if they are not all selected; otherwise clear selection. */
   masterToggle() {
-    this.isAllSelected()
-      ? this.selection.clear()
-      : this.dataSource.data.forEach((row) => this.selection.select(row));
+    // Fixed: Changed from ternary expression to if/else statement
+    if (this.isAllSelected()) {
+      this.selection.clear();
+    } else {
+      this.dataSource.data.forEach(row => this.selection.select(row));
+    }
   }
 }

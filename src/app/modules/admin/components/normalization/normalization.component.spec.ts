@@ -8,9 +8,8 @@ describe('NormalizationComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [NormalizationComponent]
-    })
-    .compileComponents();
+      imports: [NormalizationComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(NormalizationComponent);
     component = fixture.componentInstance;

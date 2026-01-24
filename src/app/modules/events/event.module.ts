@@ -1,8 +1,6 @@
-import { NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { EventRoutingModule } from "./event-routing.module";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { EventService } from "@modules/events/services/event.service";
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
+import { EventService } from '@modules/events/services/event.service';
 
 @NgModule({
   declarations: [],

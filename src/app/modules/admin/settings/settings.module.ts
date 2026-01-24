@@ -1,7 +1,7 @@
-import { NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
 
-import { SettingsRoutingModule } from "./settings-routing.module";
+import { SettingsRoutingModule } from './settings-routing.module';
 
 @NgModule({
   declarations: [],

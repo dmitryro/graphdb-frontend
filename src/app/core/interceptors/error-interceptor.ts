@@ -1,11 +1,7 @@
-import {
-  HttpErrorResponse,
-  HttpHandlerFn,
-  HttpRequest,
-} from "@angular/common/http";
-import { inject } from "@angular/core";
-import { Router } from "@angular/router";
-import { catchError, throwError } from "rxjs";
+import { HttpErrorResponse, HttpHandlerFn, HttpRequest } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
 
 export enum STATUS {
   UNAUTHORIZED = 401,
@@ -14,16 +10,9 @@ export enum STATUS {
   INTERNAL_SERVER_ERROR = 500,
 }
 
-export function errorInterceptor(
-  req: HttpRequest<unknown>,
-  next: HttpHandlerFn,
-) {
+export function errorInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn) {
   const router = inject(Router);
-  const errorPages = [
-    STATUS.FORBIDDEN,
-    STATUS.NOT_FOUND,
-    STATUS.INTERNAL_SERVER_ERROR,
-  ];
+  const errorPages = [STATUS.FORBIDDEN, STATUS.NOT_FOUND, STATUS.INTERNAL_SERVER_ERROR];
 
   const getMessage = (error: HttpErrorResponse) => {
     if (error.error?.message) {
@@ -42,10 +31,9 @@ export function errorInterceptor(
           skipLocationChange: true,
         });
       } else {
-        console.error("ERROR", error);
-        // toast.error(getMessage(error));
+        console.error('ERROR', error, getMessage(error));
         if (error.status === STATUS.UNAUTHORIZED) {
-          router.navigateByUrl("/auth/login");
+          router.navigateByUrl('/auth/login');
         }
       }
 

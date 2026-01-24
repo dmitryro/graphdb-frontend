@@ -1,11 +1,11 @@
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class LocalStorageService {
   get(key: string) {
-    return JSON.parse(localStorage.getItem(key) || "{}") || {};
+    return JSON.parse(localStorage.getItem(key) || '{}') || {};
   }
 
   set(key: string, value: any): boolean {
@@ -31,7 +31,7 @@ export class MemoryStorageService {
   private store: Record<string, string> = {};
 
   get(key: string) {
-    return JSON.parse(this.store[key] || "{}") || {};
+    return JSON.parse(this.store[key] || '{}') || {};
   }
 
   set(key: string, value: any): boolean {

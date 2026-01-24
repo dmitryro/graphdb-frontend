@@ -1,9 +1,9 @@
-import { Component, inject, OnInit } from "@angular/core";
-import { SettingsService } from "./core/bootstrap/settings.service";
-import { RouterOutlet } from "@angular/router";
+import { Component, inject, OnInit } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { SettingsService } from './core/bootstrap/settings.service';
 
 @Component({
-  selector: "app-root",
+  selector: 'app-root',
   template: `<router-outlet />`,
   imports: [RouterOutlet],
 })

@@ -1,11 +1,11 @@
-export type AppTheme = "light" | "dark" | "auto";
+export type AppTheme = 'light' | 'dark' | 'auto';
 
 export interface AppSettings {
-  navPos: "side" | "top";
-  dir: "ltr" | "rtl";
+  navPos: 'side' | 'top';
+  dir: 'ltr' | 'rtl';
   theme: AppTheme;
   showHeader: boolean;
-  headerPos: "fixed" | "static" | "above";
+  headerPos: 'fixed' | 'static' | 'above';
   showUserPanel: boolean;
   sidenavOpened: boolean;
   sidenavCollapsed: boolean;
@@ -13,13 +13,13 @@ export interface AppSettings {
 }
 
 export const defaults: AppSettings = {
-  navPos: "side",
-  dir: "ltr",
-  theme: "auto",
+  navPos: 'side',
+  dir: 'ltr',
+  theme: 'auto',
   showHeader: true,
-  headerPos: "fixed",
+  headerPos: 'fixed',
   showUserPanel: true,
   sidenavOpened: true,
   sidenavCollapsed: false,
-  language: "auto",
+  language: 'auto',
 };

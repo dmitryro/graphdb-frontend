@@ -3,12 +3,11 @@
   color: $primary-color;
 }
 
-:host{
+:host {
   display: flex;
-      flex-direction: column;
-      gap: 22px;
+  flex-direction: column;
+  gap: 22px;
 }
-
 
 /* Replace fxLayout="row wrap" */
 .stat-container {

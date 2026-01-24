@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { NotificationSettingsComponent } from "./notification-settings.component";
+import { NotificationSettingsComponent } from './notification-settings.component';
 
-describe("NotificationSettingsComponent", () => {
+describe('NotificationSettingsComponent', () => {
   let component: NotificationSettingsComponent;
   let fixture: ComponentFixture<NotificationSettingsComponent>;
 
@@ -16,7 +16,7 @@ describe("NotificationSettingsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

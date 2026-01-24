@@ -1,9 +1,9 @@
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
 @Component({
-  selector: "app-nlp-models",
+  selector: 'app-nlp-models',
   standalone: false,
-  templateUrl: "./nlp-models.component.html",
-  styleUrl: "./nlp-models.component.scss",
+  templateUrl: './nlp-models.component.html',
+  styleUrl: './nlp-models.component.scss',
 })
 export class NlpModelsComponent {}

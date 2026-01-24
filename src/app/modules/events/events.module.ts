@@ -1,7 +1,7 @@
-import { NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
 
-import { EventsRoutingModule } from "./events-routing.module";
+import { EventsRoutingModule } from './events-routing.module';
 
 @NgModule({
   declarations: [],

@@ -1,23 +1,17 @@
-import {
-  AfterContentInit,
-  ContentChildren,
-  Directive,
-  OnDestroy,
-  QueryList,
-} from "@angular/core";
-import { MatTabGroup } from "@angular/material/tabs";
-import { Subscription } from "rxjs";
-import { NavigationEnd, Router } from "@angular/router";
-import { RouterTab } from "./router-tab.directive";
+import { AfterContentInit, ContentChildren, Directive, OnDestroy, QueryList } from '@angular/core';
+import { MatTabGroup } from '@angular/material/tabs';
+import { NavigationEnd, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { RouterTab } from './router-tab.directive';
 
 @Directive({
-  selector: "[routerTabs]",
+  selector: '[appRouterTabs]', // Fixed: Added 'app' prefix to satisfy @angular-eslint/directive-selector
   standalone: false,
 })
 export class RouterTabs implements AfterContentInit, OnDestroy {
-  subscription = new Subscription();
+  private subscription = new Subscription();
 
-  @ContentChildren(RouterTab) routerTabs: QueryList<RouterTab>;
+  @ContentChildren(RouterTab) routerTabs!: QueryList<RouterTab>;
 
   constructor(
     private host: MatTabGroup,
@@ -31,7 +25,7 @@ export class RouterTabs implements AfterContentInit, OnDestroy {
   ngAfterContentInit(): void {
     this.setIndex();
     this.subscription.add(
-      this.router.events.subscribe((e) => {
+      this.router.events.subscribe(e => {
         if (e instanceof NavigationEnd) {
           this.setIndex();
         }
@@ -39,22 +33,28 @@ export class RouterTabs implements AfterContentInit, OnDestroy {
     );
     this.subscription.add(
       this.host.selectedTabChange.subscribe(() => {
-        const tab = this.routerTabs.find((item) => item.tab.isActive);
-        if (!tab) {
-          return;
+        const tab = this.routerTabs.find(item => !!item.tab.isActive);
+        if (tab) {
+          this.router.navigateByUrl(tab.link.urlTree);
         }
-        this.router.navigateByUrl(tab.link.urlTree);
-        return true;
       }),
     );
   }
 
   private setIndex() {
-    this.routerTabs.find((tab, i) => {
-      if (!this.router.isActive(tab.link.urlTree, false)) return false;
-      tab.tab.isActive = true;
-      this.host.selectedIndex = i;
-      return true;
+    // Replaced .find() with .forEach() or a proper check to avoid "unused expression" errors
+    this.routerTabs.forEach((tab, i) => {
+      const isActive = this.router.isActive(tab.link.urlTree, {
+        paths: 'exact',
+        queryParams: 'ignored',
+        fragment: 'ignored',
+        matrixParams: 'ignored',
+      });
+
+      if (isActive) {
+        tab.tab.isActive = true;
+        this.host.selectedIndex = i;
+      }
     });
   }
 }

@@ -180,21 +180,33 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
   private subscribeToEditEvents(): void {
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       const eventName = state?.items?.event;
+      const payload = state?.items?.payload;
 
-      // SYNC: If the drawer tells the app "I am closed",
-      // reset the local boolean so the HTML link knows to 'Open' next.
+      // Sync state for usage drawer
       if (eventName === 'usage_impact_drawer_closed' || eventName === 'close_usage_impact_drawer') {
         this.showUsagePanel = false;
       }
 
-      // NEW: Listen for the breadcrumb navigation request
-      if (eventName === 'breadcrumb_navigate' && state?.items?.payload?.target === 'VIEW_MAPPING') {
-        this.onCancel(); // Reuse the exact cancel logic (animation + events)
+      // Handle Modal Confirmations
+      if (eventName === 'confirmation_save_confirmed') {
+        this.executeActualSave();
+      }
+
+      if (eventName === 'confirmation_delete_confirmed') {
+        this.executeActualDelete();
+      }
+
+      if (eventName === 'confirmation_reset_confirmed') {
+        this.executeActualReset();
+      }
+
+      // Navigation & Loading
+      if (eventName === 'breadcrumb_navigate' && payload?.target === 'VIEW_MAPPING') {
+        this.onCancel();
       }
 
       if (eventName === 'open_edit_mapping') {
-        this.initializeWithData(state?.items?.payload?.fullData);
-        // Update breadcrumb when Edit Mapping opens
+        this.initializeWithData(payload?.fullData);
         this.updateBreadcrumb();
       }
     });
@@ -532,6 +544,12 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private executeActualReset(): void {
+    this.pendingChanges = [];
+    this.pendingCount = 0;
+    this.loadMappingData(this.mappingData);
+  }
+
   /**
    * Legacy wrapper kept for template compatibility
    */
@@ -579,10 +597,19 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * Triggers global reset with confirmation
+   */
   resetAllChanges(): void {
-    this.pendingChanges = [];
-    this.pendingCount = 0;
-    this.loadMappingData(this.mappingData);
+    this.eventService.publish('nf', 'open_confirmation_modal', {
+      title: 'Reset All Changes',
+      theme: this.getActiveTheme(),
+      message:
+        'Are you sure you want to discard all pending changes and revert to the original mapping state?',
+      command: 'reset',
+      action: 'open_confirmation_modal',
+      itemName: 'All Pending Changes',
+    });
   }
 
   /**
@@ -617,7 +644,43 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 500); // Match animation duration
   }
 
+  // 1. Trigger the Modal (WITHOUT calling onCancel)
   onSave(): void {
+    // 1. Close auxiliary drawers
+    this.eventService.publish('nf', 'close_usage_impact_drawer', {
+      action: 'close_usage_impact_drawer',
+    });
+
+    // 2. Open confirmation modal
+    // DO NOT call this.onCancel() here, or the screen will slide away!
+    this.eventService.publish('nf', 'open_confirmation_modal', {
+      title: 'Confirm Mapping Changes',
+      theme: this.getActiveTheme(),
+      message: `You have ${this.pendingChanges.length} pending changes. Are you sure you want to save these updates?`,
+      command: 'save',
+      action: 'open_confirmation_modal',
+      itemName: `${this.mappingData?.source || 'Source'} → ${this.mappingData?.target || 'Target'}`,
+    });
+  }
+
+  onDelete(): void {
+    this.eventService.publish('nf', 'open_confirmation_modal', {
+      title: 'Delete Mapping',
+      theme: this.getActiveTheme(),
+      message:
+        'Are you sure you want to permanently delete this mapping configuration? This action cannot be undone.',
+      command: 'delete',
+      action: 'open_confirmation_modal',
+      itemName: `${this.mappingData?.source || 'Source'}`,
+    });
+  }
+
+  private executeActualDelete(): void {
+    console.log('Mapping deleted successfully');
+    this.onCancel();
+  }
+
+  private executeActualSave(): void {
     const transactionContext = {
       sourceSystem: this.mappingData?.source || 'Epic Health Network',
       targetModel: this.mappingData?.target || 'Patient',
@@ -628,18 +691,14 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
       changes: this.pendingChanges,
     };
 
-    console.log('Saving mapping with context:', transactionContext);
-    console.log(
-      'Modified fields:',
-      this.dataSource.data.filter(row => row.status === 'Modified'),
-    );
+    console.log('Transaction Confirmed. Saving mapping with context:', transactionContext);
 
-    // Ensure separate drawer is closed on save
+    // Logical cleanup
     this.eventService.publish('nf', 'close_usage_impact_drawer', {
       action: 'close_usage_impact_drawer',
     });
 
-    // Same exit animation as cancel
+    // Proceed with exit animation and cleanup
     this.onCancel();
   }
 

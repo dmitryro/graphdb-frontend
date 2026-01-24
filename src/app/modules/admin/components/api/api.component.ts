@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './api.component.html',
   styleUrl: './api.component.scss',
 })
-export class ApiComponent {
-
-}
+export class ApiComponent {}

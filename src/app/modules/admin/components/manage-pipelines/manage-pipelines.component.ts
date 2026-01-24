@@ -1,9 +1,9 @@
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
 @Component({
-  selector: "app-manage-pipelines",
+  selector: 'app-manage-pipelines',
   standalone: false,
-  templateUrl: "./manage-pipelines.component.html",
-  styleUrl: "./manage-pipelines.component.scss",
+  templateUrl: './manage-pipelines.component.html',
+  styleUrl: './manage-pipelines.component.scss',
 })
 export class ManagePipelinesComponent {}

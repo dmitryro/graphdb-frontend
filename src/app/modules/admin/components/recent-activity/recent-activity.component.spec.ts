@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RecentActivityComponent } from "./recent-activity.component";
+import { RecentActivityComponent } from './recent-activity.component';
 
-describe("RecentActivityComponent", () => {
+describe('RecentActivityComponent', () => {
   let component: RecentActivityComponent;
   let fixture: ComponentFixture<RecentActivityComponent>;
 
@@ -16,7 +16,7 @@ describe("RecentActivityComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

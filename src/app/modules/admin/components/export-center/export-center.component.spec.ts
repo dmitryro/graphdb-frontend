@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ExportCenterComponent } from "./export-center.component";
+import { ExportCenterComponent } from './export-center.component';
 
-describe("ExportCenterComponent", () => {
+describe('ExportCenterComponent', () => {
   let component: ExportCenterComponent;
   let fixture: ComponentFixture<ExportCenterComponent>;
 
@@ -16,7 +16,7 @@ describe("ExportCenterComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

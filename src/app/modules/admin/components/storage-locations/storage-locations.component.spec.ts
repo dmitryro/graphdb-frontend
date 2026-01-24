@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { StorageLocationsComponent } from "./storage-locations.component";
+import { StorageLocationsComponent } from './storage-locations.component';
 
-describe("StorageLocationsComponent", () => {
+describe('StorageLocationsComponent', () => {
   let component: StorageLocationsComponent;
   let fixture: ComponentFixture<StorageLocationsComponent>;
 
@@ -16,7 +16,7 @@ describe("StorageLocationsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

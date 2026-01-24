@@ -1,4 +1,5 @@
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
+
 export interface UserData {
   id: string;
   name: string;
@@ -9,52 +10,55 @@ export interface UserData {
 @Injectable()
 export class DataService {
   private readonly colors = [
-    "maroon",
-    "red",
-    "orange",
-    "yellow",
-    "olive",
-    "green",
-    "purple",
-    "fuchsia",
-    "lime",
-    "teal",
-    "aqua",
-    "blue",
-    "navy",
-    "black",
-    "gray",
+    'maroon',
+    'red',
+    'orange',
+    'yellow',
+    'olive',
+    'green',
+    'purple',
+    'fuchsia',
+    'lime',
+    'teal',
+    'aqua',
+    'blue',
+    'navy',
+    'black',
+    'gray',
   ];
   private readonly names = [
-    "Maia",
-    "Asher",
-    "Olivia",
-    "Atticus",
-    "Amelia",
-    "Jack",
-    "Charlotte",
-    "Theodore",
-    "Isla",
-    "Oliver",
-    "Isabella",
-    "Jasper",
-    "Cora",
-    "Levi",
-    "Violet",
-    "Arthur",
-    "Mia",
-    "Thomas",
-    "Elizabeth",
+    'Maia',
+    'Asher',
+    'Olivia',
+    'Atticus',
+    'Amelia',
+    'Jack',
+    'Charlotte',
+    'Theodore',
+    'Isla',
+    'Oliver',
+    'Isabella',
+    'Jasper',
+    'Cora',
+    'Levi',
+    'Violet',
+    'Arthur',
+    'Mia',
+    'Thomas',
+    'Elizabeth',
   ];
 
-  constructor() {}
+  // Fixed: Added a comment inside the constructor to satisfy the linter
+  constructor() {
+    // Intentional empty constructor
+  }
 
   createNewUser(id: number): UserData {
     const name =
       this.names[this.getRandomArrayIndex(this.names.length)] +
-      " " +
+      ' ' +
       this.names[this.getRandomArrayIndex(this.names.length)].charAt(0) +
-      ".";
+      '.';
 
     return {
       id: id.toString(),

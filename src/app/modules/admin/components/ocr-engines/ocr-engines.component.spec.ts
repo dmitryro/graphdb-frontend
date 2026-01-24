@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { OcrEnginesComponent } from "./ocr-engines.component";
+import { OcrEnginesComponent } from './ocr-engines.component';
 
-describe("OcrEnginesComponent", () => {
+describe('OcrEnginesComponent', () => {
   let component: OcrEnginesComponent;
   let fixture: ComponentFixture<OcrEnginesComponent>;
 
@@ -16,7 +16,7 @@ describe("OcrEnginesComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

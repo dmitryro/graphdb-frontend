@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { NlpModelsComponent } from "./nlp-models.component";
+import { NlpModelsComponent } from './nlp-models.component';
 
-describe("NlpModelsComponent", () => {
+describe('NlpModelsComponent', () => {
   let component: NlpModelsComponent;
   let fixture: ComponentFixture<NlpModelsComponent>;
 
@@ -16,7 +16,7 @@ describe("NlpModelsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

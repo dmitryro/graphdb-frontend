@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PerformanceMonitoringComponent } from "./performance-monitoring.component";
+import { PerformanceMonitoringComponent } from './performance-monitoring.component';
 
-describe("PerformanceMonitoringComponent", () => {
+describe('PerformanceMonitoringComponent', () => {
   let component: PerformanceMonitoringComponent;
   let fixture: ComponentFixture<PerformanceMonitoringComponent>;
 
@@ -16,7 +16,7 @@ describe("PerformanceMonitoringComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

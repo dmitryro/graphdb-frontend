@@ -46,7 +46,7 @@ export const IMPACT_SCOPE_OPTIONS = ['Structural', 'Behavioral', 'Informational'
 
 interface PendingChange {
   id: string;
-  rowId: string; // Required for alignment with mapping component logic
+  rowId: string;
   field: string;
   type: string;
   description: string;
@@ -55,14 +55,14 @@ interface PendingChange {
 }
 
 interface ModelField {
-  id: string;
+  id?: string;
   fieldName: string;
-  dataType: string;
-  required: string;
-  references: number;
-  constraints: string;
-  constraintDetails: string;
-  status: string;
+  type: string;
+  requirement: string;
+  references?: number;
+  constraints?: string;
+  constraintDetails?: string;
+  status?: string;
   [key: string]: any;
 }
 
@@ -122,7 +122,6 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('relatedPaginator') relatedPaginator!: MatPaginator;
   @ViewChild('relatedSort') relatedSort!: MatSort;
 
-  // Animation control
   isExiting = false;
 
   @HostBinding('class.slide-out-to-right')
@@ -135,43 +134,36 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
   private originalRelatedBackup: RelatedModel[] = [];
   private originalAliasesBackup: string[] = [];
 
-  // Fields Table
+  // Important: These strings MUST match the matColumnDef="fieldName" in your HTML
   fieldsDataSource = new MatTableDataSource<ModelField>([]);
   fieldsColumns = [
     'fieldName',
-    'dataType',
-    'required',
+    'type',
+    'requirement',
     'references',
     'constraints',
     'constraintDetails',
     'actions',
   ];
 
-  // Related Models Table
   relatedModelsDataSource = new MatTableDataSource<RelatedModel>([]);
   relatedModelsColumns = ['modelName', 'relationshipContext', 'impactScope', 'references'];
 
-  // Upstream/Downstream (read-only in MVP)
   upstreamDataSource = new MatTableDataSource<UpstreamDependency>([]);
   upstreamColumns = ['sourceName', 'type', 'status', 'lastUpdated'];
 
   downstreamDataSource = new MatTableDataSource<DownstreamDependency>([]);
   downstreamColumns = ['dependentName', 'type', 'status', 'environment'];
 
-  // Search
   fieldsSearchTerm = '';
-
-  // Aliases
   aliases: string[] = [];
   newAlias = '';
 
-  // Options
   dataTypeOptions = DATA_TYPE_OPTIONS;
   constraintOptions = CONSTRAINT_OPTIONS;
   impactScopeOptions = IMPACT_SCOPE_OPTIONS;
   requiredOptions = ['Required', 'Optional'];
 
-  // Pending Changes
   pendingChanges: PendingChange[] = [];
 
   constructor(
@@ -181,18 +173,15 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.setupFilterLogic();
-
     if (this.modelData) {
       this.loadModelData(this.modelData);
     }
-
     this.subscribeToEditEvents();
   }
 
   ngAfterViewInit() {
     this.fieldsDataSource.paginator = this.fieldsPaginator;
     this.fieldsDataSource.sort = this.fieldsSort;
-
     this.relatedModelsDataSource.paginator = this.relatedPaginator;
     this.relatedModelsDataSource.sort = this.relatedSort;
   }
@@ -204,23 +193,41 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
   private subscribeToEditEvents(): void {
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       const eventName = state?.items?.event;
+      const payload = state?.items?.payload;
 
-      // NEW: Listen for the breadcrumb navigation request
-      // This matches the EditMappingComponent pattern exactly
-      if (eventName === 'breadcrumb_navigate' && state?.items?.payload?.target === 'VIEW_MODEL') {
-        this.onCancel(); // Reuse the exact cancel logic (animation + events)
+      if (eventName === 'breadcrumb_navigate' && payload?.target === 'VIEW_MODEL') {
+        this.onCancel();
       }
 
       if (eventName === 'open_edit_model') {
-        this.initializeWithData(state?.items?.fullData);
+        const fullData = payload?.fullData || payload;
+        this.initializeWithData(fullData);
         this.updateBreadcrumb();
+      }
+
+      // --- NEW: Listen for confirmation response ---
+      if (eventName === 'confirmation_save_confirmed') {
+        this.finalizeSave();
+      }
+
+      if (eventName === 'confirmation_delete_confirmed') {
+        this.executeActualDelete();
+      }
+
+      if (eventName === 'confirmation_reset_confirmed') {
+        this.executeActualReset();
       }
     });
   }
 
-  /**
-   * Updates the breadcrumb to show the Edit Model path
-   */
+  private getActiveTheme(): 'light' | 'dark' {
+    const isDark =
+      document.body.classList.contains('dark-theme') ||
+      document.body.classList.contains('dark-mode') ||
+      (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return isDark ? 'dark' : 'light';
+  }
+
   private updateBreadcrumb(): void {
     const breadcrumbPath = [
       { label: 'Normalization', target: 'ROOT' },
@@ -237,137 +244,66 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadModelData(data);
   }
 
-  private loadModelData(data?: any): void {
-    // Load Fields
-    let fields: ModelField[] = [];
-    if (data && data.fields && Array.isArray(data.fields)) {
-      fields = _.cloneDeep(data.fields);
-    } else {
-      fields = [
-        {
-          id: '1',
-          fieldName: 'patient_id',
-          dataType: 'String',
-          required: 'Required',
-          references: 12,
-          constraints: 'None',
-          constraintDetails: '',
-          status: 'Unchanged',
-        },
-        {
-          id: '2',
-          fieldName: 'first_name',
-          dataType: 'String',
-          required: 'Required',
-          references: 8,
-          constraints: 'Max Length',
-          constraintDetails: '255',
-          status: 'Unchanged',
-        },
-        {
-          id: '3',
-          fieldName: 'last_name',
-          dataType: 'String',
-          required: 'Required',
-          references: 8,
-          constraints: 'Range',
-          constraintDetails: 'min: 1, max: 200',
-          status: 'Unchanged',
-        },
-        {
-          id: '4',
-          fieldName: 'date_of_birth',
-          dataType: 'Date',
-          required: 'Required',
-          references: 4,
-          constraints: 'Pattern',
-          constraintDetails: 'YYYY-MM-DD',
-          status: 'Unchanged',
-        },
-      ];
-    }
+  private loadModelData(data: any): void {
+    if (!data) return;
 
-    this.originalFieldsBackup = _.cloneDeep(fields);
-    this.fieldsDataSource.data = fields;
-
-    // Load Related Models
-    let relatedModels: RelatedModel[] = [];
-    if (data && data.relatedModels && Array.isArray(data.relatedModels)) {
-      relatedModels = _.cloneDeep(data.relatedModels);
-    } else {
-      relatedModels = [
-        {
-          id: '1',
-          modelName: 'Encounter',
-          relationshipContext: 'Mappings, Rules',
-          impactScope: 'Structural',
-          references: 12,
-        },
-        {
-          id: '2',
-          modelName: 'Lab Result',
-          relationshipContext: 'Graph, Rules',
-          impactScope: 'Behavioral',
-          references: 7,
-        },
-        {
-          id: '3',
-          modelName: 'Medication',
-          relationshipContext: 'Mappings',
-          impactScope: 'Informational',
-          references: 4,
-        },
-      ];
-    }
-
-    this.originalRelatedBackup = _.cloneDeep(relatedModels);
-    this.relatedModelsDataSource.data = relatedModels;
-
-    // Load Aliases
-    if (data && data.aliases && Array.isArray(data.aliases)) {
-      this.aliases = _.cloneDeep(data.aliases);
-    } else {
-      this.aliases = ['PT', 'PatientRecord'];
-    }
-    this.originalAliasesBackup = _.cloneDeep(this.aliases);
-
+    // Load Fields - prioritizing Input from Parent
+    this.loadFields();
+    // Load Dependencies - prioritizing Input from Parent
     this.loadDependencies();
+    // Load Aliases - prioritizing Input from Parent
+    this.loadAliases();
+
     this.applyFieldsSearch();
   }
 
-  private loadDependencies(): void {
-    const upstream: UpstreamDependency[] = [
-      { sourceName: 'Patient_Raw', type: 'Dataset', status: 'Active', lastUpdated: 'Jan 10, 2026' },
-      {
-        sourceName: 'Demographics_v2',
-        type: 'Source Schema',
-        status: 'Active',
-        lastUpdated: 'Dec 18, 2025',
-      },
-    ];
-    this.upstreamDataSource.data = upstream;
+  private loadFields(): void {
+    // Correctly handle the transition from numeric count to field array
+    if (this.modelData && Array.isArray(this.modelData.fields)) {
+      const fields = _.cloneDeep(this.modelData.fields);
+      this.originalFieldsBackup = _.cloneDeep(fields);
+      this.fieldsDataSource.data = fields;
+    } else {
+      // If parent still sends a number or null, reset to empty to avoid MatTable errors
+      this.fieldsDataSource.data = [];
+      this.originalFieldsBackup = [];
+    }
+  }
 
-    const downstream: DownstreamDependency[] = [
-      {
-        dependentName: 'Patient_Ingest',
-        type: 'Pipeline',
-        status: 'Active',
-        environment: 'Production',
-      },
-      {
-        dependentName: 'Normalize_Demo',
-        type: 'Mapping',
-        status: 'Active',
-        environment: 'Production',
-      },
-    ];
-    this.downstreamDataSource.data = downstream;
+  private loadDependencies(): void {
+    if (this.modelData && this.modelData.dependencyData) {
+      const dependencies = this.modelData.dependencyData;
+
+      const related = (dependencies.relatedModels || []).map((rm: any) => ({
+        ...rm,
+        impactScope: rm.impactScope || 'Structural',
+      }));
+
+      this.originalRelatedBackup = _.cloneDeep(related);
+      this.relatedModelsDataSource.data = related;
+
+      this.upstreamDataSource.data = dependencies.upstream || [];
+      this.downstreamDataSource.data = dependencies.downstream || [];
+    } else {
+      this.relatedModelsDataSource.data = [];
+      this.upstreamDataSource.data = [];
+      this.downstreamDataSource.data = [];
+    }
+  }
+
+  private loadAliases(): void {
+    if (this.modelData && Array.isArray(this.modelData.aliases)) {
+      this.aliases = _.cloneDeep(this.modelData.aliases);
+    } else {
+      this.aliases = [];
+    }
+    this.originalAliasesBackup = _.cloneDeep(this.aliases);
   }
 
   private setupFilterLogic(): void {
     this.fieldsDataSource.filterPredicate = (data: ModelField): boolean => {
       const search = _.toLower(_.trim(this.fieldsSearchTerm));
-      const searchableContent = _.toLower([data.fieldName, data.dataType, data.required].join(' '));
+      const searchableContent = _.toLower([data.fieldName, data.type, data.requirement].join(' '));
       return !search || searchableContent.includes(search);
     };
   }
@@ -381,7 +317,7 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
 
   isFieldModified(row: ModelField | RelatedModel, fieldName: string): boolean {
     if ('fieldName' in row) {
-      const original = this.originalFieldsBackup.find(o => o.id === row.id);
+      const original = this.originalFieldsBackup.find(o => o.fieldName === row.fieldName);
       if (!original) return false;
       return row[fieldName] !== original[fieldName];
     } else {
@@ -392,29 +328,28 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onFieldValueChange(row: ModelField): void {
-    const original = this.originalFieldsBackup.find(o => o.id === row.id);
+    const original = this.originalFieldsBackup.find(o => o.fieldName === row.fieldName);
     if (!original) return;
 
-    this.pendingChanges = this.pendingChanges.filter(c => c.rowId !== row.id);
+    this.pendingChanges = this.pendingChanges.filter(c => c.field !== row.fieldName);
 
-    const fieldsToTrack = ['fieldName', 'dataType', 'required', 'constraints', 'constraintDetails'];
+    const fieldsToTrack = ['fieldName', 'type', 'requirement', 'constraints', 'constraintDetails'];
     let rowHasAnyChange = false;
 
     fieldsToTrack.forEach(field => {
       if (row[field] !== original[field]) {
         rowHasAnyChange = true;
-
         const labels: Record<string, string> = {
           fieldName: 'Field Name',
-          dataType: 'Data Type',
-          required: 'Requirement',
+          type: 'Data Type',
+          requirement: 'Requirement',
           constraints: 'Constraint',
           constraintDetails: 'Constraint Details',
         };
 
         this.pendingChanges.push({
-          id: `${row.id}-${field}`,
-          rowId: row.id,
+          id: `${row.fieldName}-${field}`,
+          rowId: row.fieldName,
           field: row.fieldName,
           type: labels[field] || 'Field',
           description: `Changed ${labels[field] || field}`,
@@ -424,18 +359,16 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-    if (rowHasAnyChange) {
-      row.status = 'Modified';
-    } else {
-      row.status = original.status;
-    }
+    row.status = rowHasAnyChange ? 'Modified' : original.status || 'Existing';
   }
 
   onRelatedModelChange(row: RelatedModel): void {
     const original = this.originalRelatedBackup.find(o => o.id === row.id);
     if (!original) return;
 
-    this.pendingChanges = this.pendingChanges.filter(c => c.rowId !== row.id);
+    this.pendingChanges = this.pendingChanges.filter(
+      c => c.rowId !== row.id || c.type !== 'Impact Scope',
+    );
 
     if (row.impactScope !== original.impactScope) {
       this.pendingChanges.push({
@@ -459,17 +392,16 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
 
   addAlias(): void {
     if (this.newAlias && this.newAlias.trim() && !this.aliases.includes(this.newAlias.trim())) {
-      this.aliases.push(this.newAlias.trim());
-
+      const aliasValue = this.newAlias.trim();
+      this.aliases.push(aliasValue);
       this.pendingChanges.push({
         id: `alias-add-${Date.now()}`,
         rowId: 'alias-group',
         field: 'Aliases',
         type: 'Alias Added',
-        description: `Added alias: ${this.newAlias.trim()}`,
-        newValue: this.newAlias.trim(),
+        description: `Added alias: ${aliasValue}`,
+        newValue: aliasValue,
       });
-
       this.newAlias = '';
     }
   }
@@ -478,7 +410,6 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
     const index = this.aliases.indexOf(alias);
     if (index > -1) {
       this.aliases.splice(index, 1);
-
       this.pendingChanges.push({
         id: `alias-remove-${Date.now()}`,
         rowId: 'alias-group',
@@ -491,38 +422,27 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   addNewField(): void {
-    const newId = `new-${Date.now()}`;
     const newField: ModelField = {
-      id: newId,
       fieldName: '',
-      dataType: 'String',
-      required: 'Optional',
+      type: 'String',
+      requirement: 'Optional',
       references: 0,
       constraints: 'None',
       constraintDetails: '',
       status: 'New',
     };
-
     this.fieldsDataSource.data = [...this.fieldsDataSource.data, newField];
-
-    this.pendingChanges.push({
-      id: `${newId}-add`,
-      rowId: newId,
-      field: '(New Field)',
-      type: 'Field Added',
-      description: 'New field added',
-      newValue: 'New',
-    });
   }
 
   deleteField(row: ModelField): void {
-    this.fieldsDataSource.data = this.fieldsDataSource.data.filter(f => f.id !== row.id);
-    this.pendingChanges = this.pendingChanges.filter(c => c.rowId !== row.id);
-
+    this.fieldsDataSource.data = this.fieldsDataSource.data.filter(
+      f => f.fieldName !== row.fieldName,
+    );
+    this.pendingChanges = this.pendingChanges.filter(c => c.rowId !== row.fieldName);
     this.pendingChanges.push({
-      id: `${row.id}-delete`,
-      rowId: row.id,
-      field: row.fieldName,
+      id: `${row.fieldName}-delete`,
+      rowId: row.fieldName,
+      field: row.fieldName || '(Unnamed Field)',
       type: 'Field Deleted',
       description: `Deleted field: ${row.fieldName}`,
       originalValue: row.fieldName,
@@ -530,15 +450,27 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   resetField(row: ModelField): void {
-    const original = this.originalFieldsBackup.find(o => o.id === row.id);
+    const original = this.originalFieldsBackup.find(o => o.fieldName === row.fieldName);
     if (original) {
       Object.assign(row, _.cloneDeep(original));
-      this.pendingChanges = this.pendingChanges.filter(c => c.rowId !== row.id);
+      this.pendingChanges = this.pendingChanges.filter(c => c.field !== row.fieldName);
       this.fieldsDataSource.data = [...this.fieldsDataSource.data];
     }
   }
 
   resetAllChanges(): void {
+    const modalPayload = {
+      title: 'Reset All Changes',
+      message: 'Are you sure you want to discard all pending changes for this model?',
+      command: 'reset',
+      itemName: this.modelData?.name || 'Model Changes',
+      theme: this.getActiveTheme(),
+      action: 'open_confirmation_modal',
+    };
+    this.eventService.publish('nf', 'open_confirmation_modal', modalPayload);
+  }
+
+  private executeActualReset(): void {
     this.pendingChanges = [];
     this.loadModelData(this.modelData);
   }
@@ -552,16 +484,15 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
         this.relatedModelsDataSource.data = [...this.relatedModelsDataSource.data];
       }
     } else {
-      const targetRow = this.fieldsDataSource.data.find(row => row.id === change.rowId);
+      const targetRow = this.fieldsDataSource.data.find(row => row.fieldName === change.rowId);
       if (targetRow) {
         const propertyMap: Record<string, string> = {
           'Field Name': 'fieldName',
-          'Data Type': 'dataType',
-          Requirement: 'required',
+          'Data Type': 'type',
+          Requirement: 'requirement',
           Constraint: 'constraints',
           'Constraint Details': 'constraintDetails',
         };
-
         const propName = propertyMap[change.type];
         if (propName) {
           targetRow[propName] = change.newValue;
@@ -574,34 +505,97 @@ export class EditModelComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onCancel(): void {
     this.isExiting = true;
-
     const breadcrumbPath = [
       { label: 'Normalization', target: 'ROOT' },
       { label: 'Models', target: 'TAB_MODELS' },
       { label: 'View Model', active: true },
     ];
     this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
-
-    this.eventService.publish('nf', 'close_edit_model', {
-      action: 'close_edit_model',
-    });
-
+    this.eventService.publish('nf', 'close_edit_model', { action: 'close_edit_model' });
     setTimeout(() => {
       this.closeEdit.emit();
     }, 500);
   }
 
-  onSave(): void {
-    const transactionContext = {
-      modelName: this.modelData?.name || 'Patient',
+  onDelete(): void {
+    const modalPayload = {
+      title: 'Delete Model',
+      message: `Are you sure you want to delete the model "${this.modelData?.name}"? This action cannot be undone.`,
+      command: 'delete',
+      itemName: this.modelData?.name || 'Model',
+      theme: this.getActiveTheme(),
+      action: 'open_confirmation_modal',
+    };
+    this.eventService.publish('nf', 'open_confirmation_modal', modalPayload);
+  }
+
+  private executeActualDelete(): void {
+    this.eventService.publish('nf', 'model_delete_confirmed', {
       modelId: this.modelData?.id,
-      timestamp: new Date().toISOString(),
-      action: 'EDIT_MODEL_SAVE',
-      changesCount: this.pendingChanges.length,
-      changes: this.pendingChanges,
+      action: 'delete_model',
+    });
+    this.onCancel();
+  }
+
+  onSave(): void {
+    // 1. Check if there are any pending changes
+    if (this.pendingChanges.length === 0) {
+      // No changes to save, just exit
+      this.onCancel();
+      return;
+    }
+
+    // 2. Prepare the confirmation payload
+    const modalPayload = {
+      title: 'Save Changes',
+      message: `You have ${this.pendingChanges.length} pending change(s). Would you like to apply these updates to "${this.modelData?.name || 'this model'}"?`,
+      command: 'save',
+      itemName: this.modelData?.name || 'Model Update',
+      theme: this.getActiveTheme(),
+      action: 'open_confirmation_modal',
     };
 
-    console.log('Saving model with context:', transactionContext);
+    // 3. Open the confirmation modal via EventService
+    this.eventService.publish('nf', 'open_confirmation_modal', modalPayload);
+  }
+
+  private finalizeSave(): void {
+    // 1. Construct the final data object
+    const updatedModelData = {
+      ...this.modelData,
+      fields: _.cloneDeep(this.fieldsDataSource.data),
+      aliases: _.cloneDeep(this.aliases),
+      dependencyData: {
+        ...this.modelData.dependencyData,
+        relatedModels: _.cloneDeep(this.relatedModelsDataSource.data),
+      },
+      lastModified: new Date().toISOString(),
+      changeLog: this.pendingChanges, // Optional: pass the log to the backend
+    };
+
+    // 2. Publish the save event to the store/effect
+    this.eventService.publish('nf', 'model_save_submitted', {
+      modelId: this.modelData?.id,
+      data: updatedModelData,
+      action: 'save_model',
+    });
+
+    // 3. Visual feedback (Optional) and Exit
+    console.log('Model data saved successfully:', updatedModelData);
+
+    // Clear pending changes before exiting
+    this.pendingChanges = [];
+
+    // Exit edit mode
     this.onCancel();
+  }
+
+  viewRelatedModel(model: any): void {
+    if (!model || !model.modelName) return;
+    this.eventService.publish('nf', 'view_related_model', {
+      modelName: model.modelName,
+      modelId: model.id,
+      action: 'view_related_model',
+    });
   }
 }

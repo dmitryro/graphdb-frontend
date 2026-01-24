@@ -1,12 +1,9 @@
-import { HttpHandlerFn, HttpRequest, HttpResponse } from "@angular/common/http";
-import { inject } from "@angular/core";
-import { MessageService } from "@shared";
-import { finalize, tap } from "rxjs";
+import { HttpHandlerFn, HttpRequest, HttpResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { MessageService } from '@shared';
+import { finalize, tap } from 'rxjs';
 
-export function loggingInterceptor(
-  req: HttpRequest<unknown>,
-  next: HttpHandlerFn,
-) {
+export function loggingInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn) {
   const messenger = inject(MessageService);
   const started = Date.now();
 
@@ -16,9 +13,9 @@ export function loggingInterceptor(
   return next(req).pipe(
     tap({
       // Succeeds when there is a response; ignore other events
-      next: (event) => (ok = event instanceof HttpResponse ? "succeeded" : ""),
-      // Operation failed; error is an HttpErrorResponse
-      error: (error) => (ok = "failed"),
+      next: event => (ok = event instanceof HttpResponse ? 'succeeded' : ''),
+      // Fixed: Removed the variable entirely to satisfy strict 'no-unused-vars'
+      error: () => (ok = 'failed'),
     }),
     // Log when response observable either completes or errors
     finalize(() => {

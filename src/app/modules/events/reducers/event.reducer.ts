@@ -100,15 +100,6 @@ export function eventReducer(
     case EventActionTypes.MSAuthFailure: {
       return { modal: true, items: action.payload };
     }
-    case EventActionTypes.VKCodeReceived: {
-      return { modal: true, items: action.payload };
-    }
-    case EventActionTypes.VKAuthSuccess: {
-      return { modal: true, items: action.payload };
-    }
-    case EventActionTypes.VKAuthFailure: {
-      return { modal: true, items: action.payload };
-    }
     case EventActionTypes.CloseLoginDialog: {
       return { modal: true, items: action.payload };
     }
@@ -285,6 +276,42 @@ export function eventReducer(
       };
     }
     case EventActionTypes.CloseNewMappingModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.ViewRelatedModel: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenConfirmationModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.ConfirmationDeleteConfirmed: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.ConfirmationSaveConfirmed: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.ConfirmationConfirmConfirmed: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.ConfirmationResetConfirmed: {
       return {
         ...state,
         items: (action as any).payload,

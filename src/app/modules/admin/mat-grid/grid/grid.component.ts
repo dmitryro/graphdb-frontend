@@ -1,13 +1,17 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: "app-grid",
+  selector: 'app-grid',
   standalone: false,
-  templateUrl: "./grid.component.html",
-  styleUrls: ["./grid.component.scss"],
+  templateUrl: './grid.component.html',
+  styleUrls: ['./grid.component.scss'],
 })
 export class GridComponent implements OnInit {
-  constructor() {}
+  constructor() {
+    // Intentional empty constructor
+  }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Intentional empty lifecycle hook
+  }
 }

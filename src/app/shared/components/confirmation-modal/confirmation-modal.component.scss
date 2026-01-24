@@ -1,0 +1,221 @@
+@use 'src/scss/variables' as *;
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-container.confirmation-compact {
+  width: 460px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  animation: modalIn 0.2s ease-out;
+
+  &.dark {
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: #e0e0e0;
+  }
+
+  &.light {
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #333;
+  }
+}
+
+.modal-header {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  &.dark {
+    background: #252525;
+    border-bottom: 1px solid #2a2a2a;
+    .status-icon {
+      color: #5b9bd5;
+    }
+    .text-content h2 {
+      color: #e0e0e0;
+    }
+    .subtitle {
+      color: #999;
+    }
+  }
+
+  &.light {
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    .status-icon {
+      color: #1976d2;
+    }
+    .text-content h2 {
+      color: #333;
+    }
+    .subtitle {
+      color: #666;
+    }
+  }
+}
+
+.header-title-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.header-title-wrapper .status-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.header-title-wrapper .text-content .subtitle {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+}
+
+.header-title-wrapper .text-content h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* Tiny Close Button Fixes */
+.close-btn {
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #888 !important;
+  padding: 0 !important;
+  min-width: unset !important;
+  border-radius: 50% !important;
+}
+
+.close-btn mat-icon {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.close-btn:hover {
+  background: rgba(128, 128, 128, 0.15) !important;
+  color: inherit !important;
+}
+
+.modal-body {
+  padding: 24px;
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #fff;
+  }
+}
+
+.confirmation-content {
+  text-align: center;
+}
+
+.confirmation-content .main-message {
+  font-size: 15px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  .dark & {
+    color: #bbb;
+  }
+  .light & {
+    color: #555;
+  }
+}
+
+.confirmation-content .item-highlight {
+  font-weight: 600;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  display: inline-block;
+
+  &.dark {
+    color: #5b9bd5;
+    background: rgba(91, 155, 213, 0.05);
+  }
+  &.light {
+    color: #1976d2;
+    background: rgba(25, 118, 210, 0.05);
+  }
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  &.dark {
+    background: #222;
+    border-top: 1px solid #2a2a2a;
+    .cancel-btn {
+      color: #999;
+    }
+  }
+
+  &.light {
+    background: #f5f5f5;
+    border-top: 1px solid #ddd;
+    .cancel-btn {
+      color: #666;
+    }
+  }
+}
+
+.modal-footer .action-btn {
+  min-width: 90px;
+  font-weight: 600;
+  height: 36px;
+  border-radius: 6px;
+}
+
+.modal-footer .action-btn.save {
+  background-color: #1976d2;
+  color: white;
+}
+
+.modal-footer .action-btn.delete {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.modal-footer .action-btn.reset {
+  background-color: #d32f2f;
+  color: white;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

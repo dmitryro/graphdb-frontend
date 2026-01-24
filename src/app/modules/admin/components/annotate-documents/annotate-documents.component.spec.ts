@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AnnotateDocumentsComponent } from "./annotate-documents.component";
+import { AnnotateDocumentsComponent } from './annotate-documents.component';
 
-describe("AnnotateDocumentsComponent", () => {
+describe('AnnotateDocumentsComponent', () => {
   let component: AnnotateDocumentsComponent;
   let fixture: ComponentFixture<AnnotateDocumentsComponent>;
 
@@ -16,7 +16,7 @@ describe("AnnotateDocumentsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });

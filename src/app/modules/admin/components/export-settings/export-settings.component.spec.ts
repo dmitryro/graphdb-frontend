@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ExportSettingsComponent } from "./export-settings.component";
+import { ExportSettingsComponent } from './export-settings.component';
 
-describe("ExportSettingsComponent", () => {
+describe('ExportSettingsComponent', () => {
   let component: ExportSettingsComponent;
   let fixture: ComponentFixture<ExportSettingsComponent>;
 
@@ -16,7 +16,7 @@ describe("ExportSettingsComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create", () => {
+  it('should create', () => {
     expect(component).toBeTruthy();
   });
 });
