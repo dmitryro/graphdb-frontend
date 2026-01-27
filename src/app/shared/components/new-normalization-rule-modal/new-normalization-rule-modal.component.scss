@@ -1,0 +1,1498 @@
+// COMPLETE CORRECTED SCSS - NO CONDENSING - NO OMISSIONS
+// ============================================================================
+// 1. OVERLAY & CONTAINER
+// ============================================================================
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  width: 900px;
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: modalIn 0.25s ease-out;
+  border: 1px solid #333;
+
+  &.dark {
+    background: #1e1e1e;
+    color: #e0e0e0;
+  }
+
+  &.light {
+    background: #fff;
+    color: #333;
+    border-color: #ddd;
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================================================
+// 2. HEADER
+// ============================================================================
+.modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  &.dark {
+    background: #252525;
+    border-bottom: 1px solid #333;
+    .header-title {
+      mat-icon {
+        color: #5b9bd5;
+      }
+      .subtitle {
+        color: #999;
+      }
+    }
+  }
+
+  &.light {
+    background: #f5f5f5;
+    border-color: #ddd;
+    .header-title {
+      mat-icon {
+        color: #1976d2;
+      }
+      .subtitle {
+        color: #666;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 3. CUSTOM STEPPER
+// ============================================================================
+.stepper-nav {
+  display: flex;
+  padding: 16px 24px;
+  gap: 32px;
+
+  &.dark {
+    background: #252525;
+    border-bottom: 1px solid #333;
+  }
+
+  &.light {
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .step-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .step-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    &:not(.active):not(.completed) {
+      .step-circle {
+        background: #3a3a3a;
+        color: #999;
+      }
+      .step-label {
+        color: #999;
+      }
+    }
+
+    &.active {
+      .step-circle {
+        background: #5b9bd5 !important;
+        color: #fff;
+      }
+      .step-label {
+        color: #e0e0e0;
+      }
+    }
+
+    &.completed {
+      .step-circle {
+        background: #5b9bd5 !important;
+        color: #fff;
+      }
+      .step-label {
+        color: #e0e0e0;
+      }
+    }
+  }
+
+  &.light .step-item {
+    &:not(.active):not(.completed) {
+      .step-circle {
+        background: #e0e0e0;
+        color: #666;
+      }
+      .step-label {
+        color: #666;
+      }
+    }
+
+    &.active {
+      .step-circle {
+        background: #1976d2 !important;
+      }
+      .step-label {
+        color: #333;
+      }
+    }
+
+    &.completed {
+      .step-circle {
+        background: #1976d2 !important;
+      }
+      .step-label {
+        color: #333;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 4. STEP CONTENT WRAPPER
+// ============================================================================
+.step-content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #fff;
+  }
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &.dark::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+  }
+  &.light::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+  }
+}
+
+// ============================================================================
+// 5. STANDARD STEP CONTENT
+// ============================================================================
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px 48px;
+  min-height: 450px;
+  flex: 1;
+
+  .step-description {
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0 0 8px 0;
+    color: #999;
+  }
+
+  &.light .step-description {
+    color: #666;
+  }
+
+  .required {
+    color: #f44336;
+  }
+}
+
+// ============================================================================
+// 6. FORM FIELDS
+// ============================================================================
+%field-label-fix {
+  ::ng-deep {
+    .mat-mdc-form-field {
+      width: 100%;
+    }
+    .mat-mdc-text-field-wrapper {
+      height: 56px !important;
+    }
+    .mdc-floating-label {
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+    }
+    .mdc-floating-label--float-above {
+      top: 28px !important;
+      transform: translateY(-40px) scale(0.8) !important;
+    }
+    .mat-mdc-chip-row {
+      background-color: #3d3d3d !important;
+      color: #fff !important;
+      .mdc-evolution-chip__text-label {
+        color: #fff !important;
+      }
+    }
+  }
+}
+
+.dark-field,
+.dark {
+  @extend %field-label-fix;
+
+  ::ng-deep {
+    input,
+    textarea {
+      color: #e0e0e0 !important;
+      caret-color: #5b9bd5 !important;
+    }
+
+    .mat-mdc-input-element::placeholder {
+      color: rgba(255, 255, 255, 0.4) !important;
+      opacity: 0 !important;
+      transition: opacity 0.2s;
+    }
+
+    .mat-form-field-should-float .mat-mdc-input-element::placeholder {
+      opacity: 1 !important;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #555 !important;
+    }
+
+    .mdc-text-field--focused {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #5b9bd5 !important;
+      }
+    }
+
+    .mat-mdc-floating-label,
+    mat-label {
+      color: #bbb !important;
+    }
+
+    .mat-mdc-select-value {
+      color: #e0e0e0 !important;
+    }
+
+    .mat-mdc-select-arrow svg {
+      fill: rgba(255, 255, 255, 0.7) !important;
+    }
+  }
+}
+
+.light-field,
+.light {
+  @extend %field-label-fix;
+
+  ::ng-deep {
+    input,
+    textarea {
+      color: #333 !important;
+      caret-color: #1976d2 !important;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #ccc !important;
+    }
+
+    .mdc-text-field--focused {
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: #1976d2 !important;
+      }
+    }
+
+    .mat-mdc-floating-label,
+    mat-label {
+      color: #666 !important;
+    }
+
+    .mat-mdc-select-value {
+      color: #333 !important;
+    }
+
+    .mat-mdc-select-arrow svg {
+      fill: rgba(0, 0, 0, 0.54) !important;
+    }
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  .flex-1 {
+    flex: 1;
+  }
+  .flex-2 {
+    flex: 2;
+  }
+}
+
+// ============================================================================
+// 7. STEP 1 - SEVERITY RADIOS (UPDATED & VERIFIED)
+// ============================================================================
+.severity-section {
+  .severity-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  // Label Colors
+  &.dark .severity-label {
+    color: #e0e0e0;
+  }
+  &.light .severity-label {
+    color: #333;
+  }
+
+  .severity-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .severity-option {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+
+    .severity-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .severity-desc {
+      display: block;
+      font-size: 12px;
+      margin-left: 32px; // Align under the text, not the radio circle
+      margin-top: -4px;
+      line-height: 1.4;
+    }
+  }
+
+  // --- DARK THEME RADIOS ---
+  &.dark .severity-option {
+    border-color: #333;
+    background: #252525;
+
+    &:hover {
+      border-color: #5b9bd5;
+      background: rgba(91, 155, 213, 0.05);
+    }
+
+    .severity-desc {
+      color: #999;
+    }
+
+    // Highlight border if internal radio is checked
+    &:has(.mat-mdc-radio-checked) {
+      border-color: #5b9bd5;
+      background: rgba(91, 155, 213, 0.1);
+    }
+  }
+
+  // --- LIGHT THEME RADIOS ---
+  &.light .severity-option {
+    border-color: #ddd;
+    background: #fff;
+
+    &:hover {
+      border-color: #1976d2;
+      background: rgba(25, 118, 210, 0.03);
+    }
+
+    .severity-desc {
+      color: #666;
+    }
+
+    // Highlight border if internal radio is checked
+    &:has(.mat-mdc-radio-checked) {
+      border-color: #1976d2;
+      background: rgba(25, 118, 210, 0.05);
+    }
+  }
+}
+
+// Internal Angular Material Radio Overrides
+.dark-radio ::ng-deep {
+  .mdc-radio__outer-circle {
+    border-color: #666 !important;
+  }
+  .mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__outer-circle {
+    border-color: #5b9bd5 !important;
+  }
+  .mat-mdc-radio-button .mdc-radio__inner-circle {
+    background-color: #5b9bd5 !important;
+  }
+  .mdc-label {
+    color: #e0e0e0 !important;
+  }
+}
+
+.light-radio ::ng-deep {
+  .mdc-radio__outer-circle {
+    border-color: #ccc !important;
+  }
+  .mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__outer-circle {
+    border-color: #1976d2 !important;
+  }
+  .mat-mdc-radio-button .mdc-radio__inner-circle {
+    background-color: #1976d2 !important;
+  }
+  .mdc-label {
+    color: #333 !important;
+  }
+}
+
+// ============================================================================
+// 8. STEP 2 - INFO CALLOUT
+// ============================================================================
+.info-callout {
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+
+  &.dark {
+    background: rgba(91, 155, 213, 0.1);
+    border-left: 3px solid #5b9bd5;
+    strong {
+      color: #5b9bd5;
+    }
+  }
+
+  &.light {
+    background: rgba(25, 118, 210, 0.1);
+    border-left: 3px solid #1976d2;
+    color: #444;
+    strong {
+      color: #1976d2;
+    }
+  }
+}
+
+// ============================================================================
+// 9. STEP 3 - TWO COLUMN LAYOUT (THEME EXHAUSTIVE)
+// ============================================================================
+.step-logic-container {
+  display: flex;
+  flex-direction: column;
+  padding: 32px 48px;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #ffffff !important;
+  }
+
+  .step-description {
+    font-size: 14px;
+    margin: 0 0 16px 0;
+  }
+
+  &.dark .step-description {
+    color: #aaa;
+  }
+  &.light .step-description {
+    color: #555;
+  }
+
+  .logic-two-columns {
+    display: flex;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  // --- SIDEBAR ---
+  .type-list-sidebar {
+    flex: 0 0 240px;
+    border-radius: 8px;
+    border: 1px solid;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+    min-height: 320px;
+
+    .list-header {
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid;
+    }
+
+    .type-list-item {
+      padding: 16px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 1px solid;
+      transition: all 0.2s ease;
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+
+  &.dark .type-list-sidebar {
+    background: #1e1e1e;
+    border-color: #444;
+    .list-header {
+      background: #252525;
+      color: #ccc;
+      border-bottom-color: #444;
+    }
+    .type-list-item {
+      color: #ddd;
+      border-bottom-color: #2e2e2e;
+      &:hover {
+        background: rgba(91, 155, 213, 0.08);
+      }
+      &.selected {
+        background: #5b9bd5 !important;
+        color: white;
+      }
+    }
+  }
+
+  &.light .type-list-sidebar {
+    background: #ffffff !important;
+    border-color: #d0d0d0 !important;
+    .list-header {
+      background: #f8f9fa !important;
+      color: #333;
+      border-bottom-color: #d0d0d0;
+    }
+    .type-list-item {
+      color: #333;
+      border-bottom-color: #eee;
+      &:hover {
+        background: rgba(25, 118, 210, 0.06);
+      }
+      &.selected {
+        background: #1976d2 !important;
+        color: white;
+      }
+    }
+  }
+
+  // --- CONFIG PANEL ---
+  .config-panel-area {
+    flex: 1;
+    border-radius: 8px;
+    border: 1px solid;
+    padding: 24px;
+    overflow-y: auto;
+    min-height: 320px;
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid;
+    }
+  }
+
+  &.dark .config-panel-area {
+    background: #1e1e1e;
+    border-color: #444;
+    .panel-title {
+      color: #eee;
+      border-bottom-color: #444;
+    }
+  }
+
+  &.light .config-panel-area {
+    background: #ffffff !important;
+    border-color: #ccc !important;
+    .panel-title {
+      color: #333;
+      border-bottom-color: #eee;
+    }
+  }
+}
+
+// ============================================================================
+// 10. VALUE MAPPING TABLE (FIXED WIDTHS & THEME AWARE)
+// ============================================================================
+.value-mapping-table {
+  border: 1px solid #444;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1e1e1e;
+  margin-top: 16px;
+  width: 100%;
+
+  // Layout Ratios
+  .col-src {
+    flex: 1;
+    min-width: 0;
+  }
+  .col-tgt {
+    flex: 1;
+    min-width: 0;
+  }
+  .col-act {
+    flex: 0 0 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .mapping-header {
+    background: #252525;
+    color: #aaa;
+    display: flex;
+    padding: 12px 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid #444;
+  }
+
+  .mapping-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    gap: 16px;
+    border-bottom: 1px solid #2e2e2e;
+    transition: background 0.18s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    ::ng-deep {
+      .mat-mdc-form-field {
+        width: 100%;
+        .mat-mdc-text-field-wrapper {
+          height: 40px !important;
+          background-color: transparent !important;
+        }
+        .mat-mdc-form-field-infix {
+          padding-top: 8px !important;
+          padding-bottom: 8px !important;
+        }
+        .mat-mdc-form-field-subscript-wrapper {
+          display: none;
+        }
+      }
+    }
+  }
+
+  // --- UNIVERSAL TRASH BUTTON CENTERING ---
+  button[mat-icon-button] {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: none !important;
+    flex-shrink: 0;
+
+    mat-icon {
+      font-size: 20px !important;
+      width: 20px !important;
+      height: 20px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    ::ng-deep .mat-mdc-button-touch-target {
+      display: none !important;
+    }
+  }
+
+  // --- LIGHT MODE (STRICT FIX) ---
+  &.light,
+  .light & {
+    background: #ffffff !important;
+    border-color: #ccc !important;
+
+    .mapping-header {
+      background: #f8f9fa !important;
+      color: #666 !important;
+      border-bottom-color: #ddd !important;
+    }
+
+    .mapping-row {
+      background: #ffffff !important;
+      border-bottom-color: #eee !important;
+      &:hover {
+        background: #fcfcfc;
+      }
+
+      // IDLE: Muted Gray | HOVER: Red
+      button[mat-icon-button] {
+        color: #999 !important;
+        mat-icon {
+          color: #999 !important;
+        }
+
+        &:hover {
+          color: #d32f2f !important;
+          background: rgba(211, 47, 47, 0.1) !important;
+          mat-icon {
+            color: #d32f2f !important;
+          }
+        }
+      }
+    }
+
+    .mapping-footer {
+      background: #ffffff;
+      border-top: 1px solid #ddd;
+      padding: 16px 20px;
+      button {
+        width: 100%;
+        border: 1px dashed #ccc !important;
+        color: #1976d2 !important;
+        background: transparent !important;
+        &:hover {
+          background: #f0f7ff !important;
+          border-color: #1976d2 !important;
+        }
+      }
+    }
+  }
+
+  // --- DARK MODE (STRICT FIX) ---
+  &.dark,
+  .dark & {
+    button[mat-icon-button] {
+      color: #777 !important;
+      mat-icon {
+        color: #777 !important;
+      }
+
+      &:hover {
+        color: #ff5252 !important;
+        background: rgba(255, 82, 82, 0.15) !important;
+        mat-icon {
+          color: #ff5252 !important;
+        }
+      }
+    }
+
+    .mapping-footer button {
+      width: 100%;
+      border: 1px dashed #666;
+      color: #5b9bd5;
+      background: transparent;
+      &:hover {
+        background: rgba(91, 155, 213, 0.1);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 11. STEP 3 - HELPER TEXTS
+// ============================================================================
+.field-hints {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 12px;
+
+  .field-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    margin: 0 4px 4px 0;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+
+  .hint-text {
+    margin-top: 8px;
+    font-size: 11px;
+  }
+
+  &.dark {
+    background: #252525;
+    color: #999;
+    .field-tag {
+      background: #3a3a3a;
+      color: #5b9bd5;
+    }
+  }
+
+  &.light {
+    background: #f5f5f5;
+    color: #666;
+    .field-tag {
+      background: #e0e0e0;
+      color: #1976d2;
+    }
+  }
+}
+
+.info-notice {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  color: #ffc107;
+  font-size: 13px;
+}
+
+// ============================================================================
+// 12. STEP 4 - REVIEW
+// ============================================================================
+.review-section {
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+
+  .review-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #5b9bd5;
+    }
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  .review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 32px;
+    .full-width {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .review-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    .review-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #888;
+      text-transform: uppercase;
+    }
+    .review-value {
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+
+  .severity-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    &[data-severity='High'] {
+      background: #fee2e2;
+      color: #ef4444;
+    }
+    &[data-severity='Medium'] {
+      background: #fef3c7;
+      color: #f59e0b;
+    }
+    &[data-severity='Low'] {
+      background: #dcfce7;
+      color: #22c55e;
+    }
+  }
+
+  // --- LOGIC BOXES ---
+  .logic-summary-box {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 6px;
+
+    .transformation-type-title {
+      margin: 0 0 12px 0;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #5b9bd5;
+    }
+
+    // Restoring the Visual Pills
+    .mapping-review-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .mapping-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+
+        .old {
+          font-weight: 400;
+          opacity: 0.8;
+        }
+        .new {
+          font-weight: 700;
+        }
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+
+    .formula-code {
+      padding: 12px;
+      border-radius: 4px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 13px;
+      margin-top: 8px;
+      display: block;
+    }
+  }
+
+  // --- THEME ADAPTATION ---
+  &.dark {
+    background: #252525;
+    border-color: #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    .review-header {
+      border-bottom-color: #383838;
+      h3 {
+        color: #fff;
+      }
+    }
+    .review-item .review-value {
+      color: #e0e0e0;
+    }
+
+    .logic-summary-box {
+      background: #1e1e1e;
+      .mapping-pill {
+        background: #2a2a2a;
+        color: #fff;
+        border-color: #444;
+        .new {
+          color: #5b9bd5;
+        }
+      }
+      .formula-code {
+        background: #000;
+        color: #5b9bd5;
+        border: 1px solid #333;
+      }
+      .conversion-display {
+        color: #ccc;
+        strong {
+          color: #5b9bd5;
+        }
+      }
+    }
+  }
+
+  &.light {
+    background: #ffffff;
+    border-color: #e0e0e0;
+    .review-header {
+      border-bottom-color: #eee;
+      h3 {
+        color: #333;
+      }
+    }
+    .review-item .review-value {
+      color: #222;
+    }
+
+    .logic-summary-box {
+      background: #f8fafc;
+      .mapping-pill {
+        background: #fff;
+        color: #334155;
+        border-color: #e2e8f0;
+        .new {
+          color: #1976d2;
+        }
+      }
+      .formula-code {
+        background: #f1f5f9;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+      }
+      .conversion-display {
+        color: #475569;
+        strong {
+          color: #1976d2;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 13. FOOTER ACTIONS & LAYOUT FIX
+// ============================================================================
+
+.step-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 600px; // Ensure fixed height for the modal body
+  position: relative;
+
+  .step-content {
+    flex: 1; // This pushes the footer down
+    overflow-y: auto; // Individual scrollbar for content
+    padding: 32px;
+  }
+}
+
+.step-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0; // Ensures footer never shrinks or moves up
+
+  &.dark {
+    background: #1e1e1e;
+    border-color: #333;
+  }
+
+  &.light {
+    background: #ffffff;
+    border-color: #eee;
+  }
+
+  .back-btn,
+  .next-btn,
+  .create-btn {
+    min-width: 120px !important;
+    height: 44px !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+  }
+
+  // Action Buttons
+  .back-btn,
+  .next-btn {
+    background-color: #1976d2 !important;
+    color: white !important;
+    &:hover:not(:disabled) {
+      background-color: #1565c0 !important;
+    }
+  }
+
+  .create-btn {
+    background-color: #22c55e !important;
+    color: white !important;
+    &:hover:not(:disabled) {
+      background-color: #16a34a !important;
+    }
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &.dark {
+    .back-btn,
+    .next-btn {
+      background-color: #5b9bd5 !important;
+      &:hover:not(:disabled) {
+        background-color: #4a8ac4 !important;
+      }
+    }
+  }
+}
+
+// Global fix for code text within the review
+code {
+  font-family: 'Roboto Mono', monospace;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 90%;
+}
+
+.mapping-pill {
+  .new {
+    color: #22c55e; // Greenish for aliases or mapping targets
+    font-weight: 700;
+  }
+  mat-icon {
+    opacity: 0.5;
+    font-size: 18px;
+  }
+}
+
+// ============================================================================
+// FIXED STEP 3 & MAPPING TABLE (LIGHT MODE FOCUS)
+// ============================================================================
+
+.step-logic-container {
+  display: flex;
+  flex-direction: column;
+  padding: 32px 48px;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+
+  // Base Dark Styles (Default)
+  background: #1a1a1a;
+
+  &.light {
+    background: #ffffff !important;
+  }
+
+  .logic-two-columns {
+    display: flex;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  // 1. SIDEBAR FIX
+  .type-list-sidebar {
+    flex: 0 0 260px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background: #1e1e1e;
+
+    .list-header {
+      background: #252525;
+      color: #ccc;
+      padding: 14px 20px;
+      border-bottom: 1px solid #444;
+    }
+
+    .type-list-item {
+      color: #ddd;
+      border-bottom: 1px solid #2e2e2e;
+      &.selected {
+        background: #5b9bd5 !important;
+      }
+    }
+  }
+
+  // LIGHT SIDEBAR
+  &.light .type-list-sidebar {
+    background: #ffffff !important;
+    border-color: #d0d0d0 !important;
+
+    .list-header {
+      background: #f8f9fa !important;
+      color: #333 !important;
+      border-bottom-color: #d0d0d0 !important;
+    }
+
+    .type-list-item {
+      color: #333 !important;
+      border-bottom-color: #eee !important;
+      &:hover {
+        background: #f0f7ff;
+      }
+      &.selected {
+        background: #1976d2 !important;
+        color: #fff !important;
+      }
+    }
+  }
+
+  // 2. CONFIG PANEL FIX
+  .config-panel-area {
+    flex: 1;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 24px;
+    background: #1e1e1e;
+
+    .panel-title {
+      color: #eee;
+      border-bottom: 1px solid #444;
+      margin-bottom: 20px;
+    }
+  }
+
+  &.light .config-panel-area {
+    background: #ffffff !important;
+    border-color: #ccc !important;
+
+    .panel-title {
+      color: #333 !important;
+      border-bottom-color: #eee !important;
+    }
+  }
+}
+
+// 3. VALUE MAPPING TABLE FIX (THE "BLACK BOX" ISSUE)
+.value-mapping-table {
+  border: 1px solid #444;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1e1e1e; // This was making it black
+
+  .mapping-header {
+    background: #252525;
+    color: #aaa;
+    display: flex;
+    padding: 12px 20px;
+    border-bottom: 1px solid #444;
+  }
+
+  // FORCE LIGHT TABLE
+  &.light,
+  .light & {
+    // Target both cases
+    background: #ffffff !important;
+    border-color: #ccc !important;
+
+    .mapping-header {
+      background: #f8f9fa !important;
+      color: #666 !important;
+      border-bottom-color: #ddd !important;
+    }
+
+    .mapping-row {
+      background: #ffffff !important;
+      border-bottom: 1px solid #eee !important;
+
+      // Fix input field containers in light mode
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        background-color: #fff !important;
+      }
+    }
+
+    .mapping-footer {
+      background: #f9f9f9 !important;
+      border-top: 1px solid #ddd !important;
+    }
+  }
+
+  .mapping-rows {
+    background: inherit;
+  }
+
+  .mapping-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 20px;
+    gap: 16px;
+  }
+
+  // 4. TRASH ICON VISIBILITY FIX
+  button[mat-icon-button] {
+    width: 36px !important; // Standard small button size
+    height: 36px !important;
+    line-height: 36px !important;
+    padding: 0 !important;
+    display: flex !important; // Crucial for centering
+    align-items: center !important; // Vertical center
+    justify-content: center !important; // Horizontal center
+    border-radius: 50% !important;
+    border: none !important;
+    background: transparent !important;
+    flex-shrink: 0; // Prevent squeezing in tight rows
+
+    mat-icon {
+      font-size: 20px !important;
+      width: 20px !important;
+      height: 20px !important;
+      line-height: 20px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 !important; // Remove any Material default margins
+    }
+
+    // Centering fix for Angular Material's internal span
+    ::ng-deep .mat-mdc-button-touch-target {
+      display: none !important; // Removes invisible padding that shifts icons
+    }
+  }
+
+  // 4. TRASH ICON THEMING (Must Match must_be)
+  // Default State (Light Mode)
+  &.light,
+  .light & {
+    button[mat-icon-button] {
+      color: #999 !important; // Muted gray as in must_be
+
+      &:hover {
+        color: #d32f2f !important; // Strong red on hover
+        background: rgba(211, 47, 47, 0.1) !important; // Subtle red circle
+      }
+    }
+  }
+
+  // Default State (Dark Mode)
+  &.dark,
+  .dark & {
+    button[mat-icon-button] {
+      color: #777 !important;
+
+      &:hover {
+        color: #ff5252 !important;
+        background: rgba(255, 82, 82, 0.15) !important;
+      }
+    }
+  }
+  // Light mode specific trash button
+  &.light button[mat-icon-button],
+  .light & button[mat-icon-button] {
+    color: #d32f2f !important; // Strong red for light mode
+    background: transparent !important;
+
+    &:hover {
+      background: rgba(211, 47, 47, 0.1) !important;
+    }
+
+    mat-icon {
+      color: #d32f2f !important; // Force red color on the delete icon
+    }
+  }
+}
+
+// 5. BUTTON STYLING (ADD MAPPING)
+.mapping-footer button {
+  width: 100%;
+  border: 1px dashed #666;
+  color: #5b9bd5;
+
+  .light & {
+    border-color: #ccc !important;
+    color: #1976d2 !important;
+    &:hover {
+      background: #f0f7ff !important;
+    }
+  }
+}
+
+// ============================================================================
+// INFO BANNER FIX (Restoring original colors)
+// ============================================================================
+.info-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-top: 20px;
+  font-size: 13px;
+  background: #f0f7ff; // Light blue background
+  border: 1px solid #d0e3ff;
+  color: #0056b3; // Blue text
+
+  mat-icon {
+    color: #1976d2 !important; // Restore Blue Icon
+    font-size: 20px;
+  }
+}

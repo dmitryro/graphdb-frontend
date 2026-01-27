@@ -1,6 +1,12 @@
 import { Action } from '@modules/events/interfaces/action.interface';
 
 export enum EventActionTypes {
+  OpenNewNormalizationRuleModal = '[Event] Open New Normalization Rule Modal',
+  CloseNewNormalizationRuleModal = '[Event] Close New Normalization Rule Modal',
+  OpenNewRuleModal = '[Event] Open New Rule Modal',
+  CloseNewRuleModal = '[Event] Close New RuleModal',
+  OpenNewValueSetModal = '[Event] Open New Value Set Modal',
+  CloseNewValueSetModal = '[Event] Close New Value Set Modal',
   ConfirmationDeleteConfirmed = '[Event] Confirmation Delete Confirmed',
   ConfirmationSaveConfirmed = '[Event] Confirmation Save Confirmed',
   ConfirmationConfirmConfirmed = '[Event] Confirmation Confirm Confirmed',
@@ -14,6 +20,8 @@ export enum EventActionTypes {
   CloseEditMapping = '[Event] Close Edit Mapping',
   OpenEditModel = '[Event] Open Edit Model',
   CloseEditModel = '[Event] Close Edit Model',
+  OpenNewModelModal = '[Event] Open New Model Modal',
+  CloseNewModelModal = '[Event] Close New Model Modal',
   OpenNewMappingModal = '[Event] Open New Mapping Modal',
   CloseNewMappingModal = '[Event] Close New Mapping Modal',
   ThemeChange = '[Event] Theme Change',
@@ -80,6 +88,36 @@ export enum EventActionTypes {
   UpdateBreadcrumb = '[Event] Update Breadcrumb',
   BreadcrumbNavigate = '[Event] Breadcrumb Navigate',
   ViewRelatedModel = '[Event] View Related Model',
+}
+
+export class OpenNewNormalizationRuleModal implements Action {
+  readonly type = EventActionTypes.OpenNewNormalizationRuleModal;
+  constructor(public payload: any) {}
+}
+
+export class CloseNewNormalizationRuleModal implements Action {
+  readonly type = EventActionTypes.CloseNewNormalizationRuleModal;
+  constructor(public payload: any) {}
+}
+
+export class OpenNewRuleModal implements Action {
+  readonly type = EventActionTypes.OpenNewRuleModal;
+  constructor(public payload: any) {}
+}
+
+export class CloseNewRuleModal implements Action {
+  readonly type = EventActionTypes.CloseNewRuleModal;
+  constructor(public payload: any) {}
+}
+
+export class OpenNewValueSetModal implements Action {
+  readonly type = EventActionTypes.OpenNewValueSetModal;
+  constructor(public payload: any) {}
+}
+
+export class CloseNewValueSetModal implements Action {
+  readonly type = EventActionTypes.CloseNewValueSetModal;
+  constructor(public payload: any) {}
 }
 
 export class ConfirmationDeleteConfirmed implements Action {
@@ -149,6 +187,16 @@ export class OpenNewMappingModal implements Action {
 
 export class CloseNewMappingModal implements Action {
   readonly type = EventActionTypes.CloseNewMappingModal;
+  constructor(public payload: any) {}
+}
+
+export class OpenNewModelModal implements Action {
+  readonly type = EventActionTypes.OpenNewModelModal;
+  constructor(public payload: any) {}
+}
+
+export class CloseNewModelModal implements Action {
+  readonly type = EventActionTypes.CloseNewModelModal;
   constructor(public payload: any) {}
 }
 
@@ -542,6 +590,10 @@ export type EventActions =
   | EditRule
   | InspectSource
   | SyncSource
+  | OpenNewRuleModal
+  | CloseNewRuleModal
+  | OpenNewValueSetModal
+  | CloseNewValueSetModal
   | OpenUsageImpactDrawer
   | ViewRelatedModel
   | CloseUsageImpactDrawer
@@ -549,5 +601,9 @@ export type EventActions =
   | DownloadSchema
   | CloseNewMappingModal
   | OpenNewMappingModal
+  | CloseNewNormalizationRuleModal
+  | OpenNewNormalizationRuleModal
+  | CloseNewModelModal
+  | OpenNewModelModal
   | OpenConfirmationModal
   | ClearSourceCache;

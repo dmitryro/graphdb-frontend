@@ -731,8 +731,10 @@
           </div>
         </div>
       }
+      <!-- CORRECTED CODES TAB SECTION - Replace existing Codes tab in normalization.component.html -->
       @if (activeTabIndex === 4) {
         <div class="tab-content codes-tab-wrapper">
+          <!-- Search and filters section -->
           <div class="search-section">
             <div class="search-bar-container">
               <div class="search-box">
@@ -740,7 +742,7 @@
                 <input
                   type="text"
                   class="search-input"
-                  placeholder="Search codes by name, value, or description..."
+                  placeholder="Search codes, systems, or mappings..."
                   [(ngModel)]="codeSearch"
                   (input)="applyCodeFilter()" />
                 @if (codeSearch) {
@@ -750,35 +752,39 @@
                 }
               </div>
               <button mat-flat-button class="add-source-btn" (click)="addNewValueSet()">
-                <mat-icon>add</mat-icon> New Value Set
+                <mat-icon>add</mat-icon> New Code Set
               </button>
             </div>
           </div>
 
           <div class="filter-actions">
-            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeCategoryMenu">
-              <mat-icon>sort</mat-icon>
-              Category: <strong>{{ selectedCodeCategory }}</strong>
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeSystemMenu">
+              <mat-icon>hub</mat-icon>
+              Code System: <strong>{{ selectedCodeSource }}</strong>
               <mat-icon class="chevron">expand_more</mat-icon>
             </button>
+            <mat-menu #codeSystemMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setCodeSource('All')">All</button>
+              <button mat-menu-item (click)="setCodeSource('ICD-10')">ICD-10</button>
+              <button mat-menu-item (click)="setCodeSource('SNOMED CT')">SNOMED CT</button>
+              <button mat-menu-item (click)="setCodeSource('LOINC')">LOINC</button>
+              <button mat-menu-item (click)="setCodeSource('ICD-9')">ICD-9</button>
+              <button mat-menu-item (click)="setCodeSource('RxNorm')">RxNorm</button>
+              <button mat-menu-item (click)="setCodeSource('CPT')">CPT</button>
+            </mat-menu>
 
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeStatusMenu">
-              <mat-icon>assignment_turned_in</mat-icon>
+              <mat-icon>list</mat-icon>
               Status: <strong>{{ selectedCodeStatus }}</strong>
               <mat-icon class="chevron">expand_more</mat-icon>
             </button>
-
-            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeSourceMenu">
-              <mat-icon>hub</mat-icon>
-              Source: <strong>{{ selectedCodeSource }}</strong>
-              <mat-icon class="chevron">expand_more</mat-icon>
-            </button>
-
-            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeUsageMenu">
-              <mat-icon>data_usage</mat-icon>
-              Usage: <strong>{{ selectedCodeUsage }}</strong>
-              <mat-icon class="chevron">expand_more</mat-icon>
-            </button>
+            <mat-menu #codeStatusMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setCodeStatus('All')">All Statuses</button>
+              <button mat-menu-item (click)="setCodeStatus('Active')">Active</button>
+              <button mat-menu-item (click)="setCodeStatus('Superseded')">Superseded</button>
+              <button mat-menu-item (click)="setCodeStatus('Deprecated')">Deprecated</button>
+              <button mat-menu-item (click)="setCodeStatus('Invalid')">Invalid</button>
+            </mat-menu>
 
             <div class="filter-date-range">
               <mat-form-field appearance="outline" class="custom-pill-date">
@@ -798,95 +804,284 @@
             </div>
           </div>
 
-          <table
-            mat-table
-            [dataSource]="codeDataSource"
-            matSort
-            #codeSort="matSort"
-            class="full-width-table">
-            <ng-container matColumnDef="valueSetName">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Value Set Name</th>
-              <td mat-cell *matCellDef="let element" class="primary-text link-style">
-                <mat-icon class="row-icon">link</mat-icon> {{ element.valueSetName }}
-              </td>
-            </ng-container>
+          <!-- SPLIT VIEW CONTAINER - Table and Detail Panel Side by Side -->
+          <div class="codes-split-view" [class.detail-open]="showCodeDetail">
+            <!-- LEFT SIDE: Table -->
+            <div class="codes-table-section">
+              <div class="table-wrapper">
+                <table
+                  mat-table
+                  [dataSource]="codeDataSource"
+                  matSort
+                  #codeSort="matSort"
+                  class="full-width-table codes-table">
+                  <!-- Code / Set Name Column -->
+                  <ng-container matColumnDef="codeSetName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Code / Set Name</th>
+                    <td mat-cell *matCellDef="let element" class="primary-text">
+                      {{ element.codeSetName }}
+                    </td>
+                  </ng-container>
 
-            <ng-container matColumnDef="category">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
-              <td mat-cell *matCellDef="let element">{{ element.category }}</td>
-            </ng-container>
+                  <!-- System Column -->
+                  <ng-container matColumnDef="system">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>System</th>
+                    <td mat-cell *matCellDef="let element">
+                      {{ element.system }}
+                    </td>
+                  </ng-container>
 
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-              <td mat-cell *matCellDef="let element">
-                <div class="status-pill" [ngClass]="element.status?.toLowerCase()">
-                  {{ element.status }}
+                  <!-- Meaning Column -->
+                  <ng-container matColumnDef="meaning">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Meaning</th>
+                    <td mat-cell *matCellDef="let element" class="meaning-cell">
+                      {{ element.meaning }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Version Column -->
+                  <ng-container matColumnDef="version">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Version</th>
+                    <td mat-cell *matCellDef="let element" class="version-cell">
+                      {{ element.version }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Status Column -->
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                    <td mat-cell *matCellDef="let element">
+                      <div class="status-pill" [ngClass]="element.status?.toLowerCase()">
+                        {{ element.status }}
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <!-- Mapped To Column -->
+                  <ng-container matColumnDef="mappedTo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapped To</th>
+                    <td mat-cell *matCellDef="let element" class="mapped-to-cell">
+                      {{ element.mappedTo }}
+                    </td>
+                  </ng-container>
+
+                  <!-- Actions Column -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let element">
+                      <button
+                        mat-icon-button
+                        [matMenuTriggerFor]="codesGlobalMenu"
+                        [matMenuTriggerData]="{ item: element }"
+                        (click)="$event.stopPropagation()">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="codeColumns; sticky: true"></tr>
+                  <tr
+                    mat-row
+                    *matRowDef="let row; columns: codeColumns"
+                    class="clickable-row"
+                    [class.selected-row]="selectedCodeData?.id === row.id"
+                    (click)="onCodeRowClick(row)"></tr>
+                </table>
+
+                <mat-paginator
+                  #codePaginator
+                  [pageSize]="10"
+                  [pageSizeOptions]="[5, 10, 20, 50]"
+                  showFirstLastButtons>
+                </mat-paginator>
+              </div>
+            </div>
+
+            <!-- RIGHT SIDE: Detail Panel (slides in) -->
+            @if (showCodeDetail && selectedCodeData) {
+              <div class="code-detail-panel">
+                <div class="detail-panel-header">
+                  <div class="header-content">
+                    <h3>{{ selectedCodeData.codeSetName }} - {{ selectedCodeData.system }}</h3>
+                    <div class="header-actions">
+                      <button mat-flat-button color="primary" class="edit-btn">
+                        <mat-icon>edit</mat-icon> Edit
+                      </button>
+                      <button mat-icon-button (click)="onCloseCodeDetail()" class="close-btn">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </td>
-            </ng-container>
 
-            <ng-container matColumnDef="codeCount">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Code Count</th>
-              <td mat-cell *matCellDef="let element">{{ element.codeCount | number }}</td>
-            </ng-container>
+                <div class="detail-panel-content">
+                  <!-- Code Title and Badges -->
+                  <div class="code-title-section">
+                    <h2>{{ selectedCodeData.meaning }}</h2>
+                    <div class="badge-row">
+                      <div class="status-pill" [ngClass]="selectedCodeData.status?.toLowerCase()">
+                        {{ selectedCodeData.status }}
+                      </div>
+                      <span class="info-badge">Version: {{ selectedCodeData.version }}</span>
+                      <span class="info-badge">{{ selectedCodeData.codeType || 'Standard' }}</span>
+                    </div>
+                  </div>
 
-            <ng-container matColumnDef="references">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>References</th>
-              <td mat-cell *matCellDef="let element">{{ element.references || 0 }}</td>
-            </ng-container>
+                  <!-- Overview Section -->
+                  <div class="detail-section">
+                    <h4 class="section-title">OVERVIEW</h4>
 
-            <ng-container matColumnDef="lastModified">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
-              <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
-            </ng-container>
+                    <div class="detail-row-layout">
+                      <!-- Left Column -->
+                      <div class="detail-column">
+                        <div class="detail-item">
+                          <label>Canonical ID:</label>
+                          <div class="detail-value">
+                            {{ selectedCodeData.canonicalId || selectedCodeData.codeSetName }}
+                            <mat-icon
+                              class="validated-icon"
+                              [matTooltip]="selectedCodeData.validatedMessage || 'No issues found'">
+                              check_circle
+                            </mat-icon>
+                            <span class="validated-text">Validated - <em>No issues found</em></span>
+                          </div>
+                        </div>
 
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let element">
-                <button
-                  mat-icon-button
-                  [matMenuTriggerFor]="codesGlobalMenu"
-                  [matMenuTriggerData]="{ item: element }">
-                  <mat-icon>more_vert</mat-icon>
-                </button>
-              </td>
-            </ng-container>
+                        <div class="detail-item">
+                          <label>System:</label>
+                          <div class="detail-value">{{ selectedCodeData.system }}</div>
+                        </div>
 
-            <tr
-              mat-header-row
-              *matHeaderRowDef="[
-                'valueSetName',
-                'category',
-                'status',
-                'codeCount',
-                'references',
-                'lastModified',
-                'actions',
-              ]"></tr>
-            <tr
-              mat-row
-              *matRowDef="
-                let row;
-                columns: [
-                  'valueSetName',
-                  'category',
-                  'status',
-                  'codeCount',
-                  'references',
-                  'lastModified',
-                  'actions',
-                ]
-              "></tr>
-          </table>
+                        <div class="detail-item">
+                          <label>Code Type:</label>
+                          <div class="detail-value">
+                            {{ selectedCodeData.codeType || 'Standard' }}
+                          </div>
+                        </div>
 
-          <mat-paginator
-            #codePaginator
-            [pageSize]="10"
-            [pageSizeOptions]="[5, 10, 20, 50]"
-            showFirstLastButtons>
-          </mat-paginator>
+                        <div class="detail-item">
+                          <label>Created by:</label>
+                          <div class="detail-value">
+                            {{ selectedCodeData.createdBy || 'System Mapping' }}
+                          </div>
+                        </div>
+
+                        <div class="detail-item">
+                          <label>Last modified:</label>
+                          <div class="detail-value">{{ selectedCodeData.lastModified }}</div>
+                        </div>
+                      </div>
+
+                      <!-- Right Column - Referenced In -->
+                      <div class="detail-column">
+                        <h5 class="subsection-title">Referenced in:</h5>
+                        <div class="reference-list">
+                          <div class="reference-item">
+                            <mat-icon>chevron_right</mat-icon>
+                            <span>Mappings:</span>
+                            <strong>{{ selectedCodeData.mappings?.length || 3 }}</strong>
+                          </div>
+                          <div class="reference-item">
+                            <mat-icon>chevron_right</mat-icon>
+                            <span>Rules:</span>
+                            <strong>2</strong>
+                          </div>
+                          <div class="reference-item">
+                            <mat-icon>chevron_right</mat-icon>
+                            <span>Pipelines:</span>
+                            <strong>1</strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Mappings and Crosswalks Section -->
+                  <div class="two-column-section">
+                    <!-- Mappings -->
+                    <div class="detail-section half-width">
+                      <h4 class="section-title">MAPPINGS</h4>
+                      <div class="mapping-list">
+                        @for (mapping of selectedCodeData.mappings; track mapping.name) {
+                          <div class="mapping-item">
+                            <span class="mapping-name">{{ mapping.name }}</span>
+                            <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+                            <span class="mapping-target">{{ mapping.target }}</span>
+                          </div>
+                        }
+                      </div>
+                      <button mat-button class="view-all-link">
+                        View all mappings <mat-icon>arrow_forward</mat-icon>
+                      </button>
+                    </div>
+
+                    <!-- Crosswalks -->
+                    <div class="detail-section half-width">
+                      <h4 class="section-title">CROSSWALKS</h4>
+                      <div class="crosswalk-list">
+                        @for (crosswalk of selectedCodeData.crosswalks; track crosswalk.from) {
+                          <div class="crosswalk-item">
+                            <div class="crosswalk-header">
+                              {{ crosswalk.from }} <mat-icon>arrow_forward</mat-icon>
+                              {{ crosswalk.to }}
+                            </div>
+                            <div class="crosswalk-codes">
+                              {{ crosswalk.code }} <mat-icon>arrow_forward</mat-icon>
+                              {{ crosswalk.target }}
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Attributions Section -->
+                  <div class="detail-section">
+                    <h4 class="section-title">ATTRIBUTIONS</h4>
+                    <div class="attribution-grid">
+                      <div class="attribution-item">
+                        <label>Mapped by:</label>
+                        <span>Jane Smith - Sep 8, 2020</span>
+                      </div>
+                      <div class="attribution-item">
+                        <label>Last modified by:</label>
+                        <span>Alex Chen - {{ selectedCodeData.lastModified }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
         </div>
       }
+
+      <!-- Context Menu -->
+      <mat-menu #codesGlobalMenu="matMenu" class="governance-menu">
+        <ng-template matMenuContent let-item="item">
+          <button mat-menu-item (click)="onCodeRowClick(item)">
+            <mat-icon>visibility</mat-icon>
+            <span>View Details</span>
+          </button>
+          <button mat-menu-item (click)="editValueSet(item)">
+            <mat-icon>edit</mat-icon>
+            <span>Edit Code Set</span>
+          </button>
+          <button mat-menu-item (click)="viewReferences(item)">
+            <mat-icon>link</mat-icon>
+            <span>View References</span>
+          </button>
+          <button mat-menu-item (click)="exportValueSet(item)">
+            <mat-icon>download</mat-icon>
+            <span>Export Data</span>
+          </button>
+          <div class="menu-divider"></div>
+          <button mat-menu-item class="warn-item" (click)="deleteValueSet(item)">
+            <mat-icon color="warn">delete</mat-icon>
+            <span class="text-warn">Delete Code Set</span>
+          </button>
+        </ng-template>
+      </mat-menu>
     </div>
 
     <mat-menu #codeCategoryMenu="matMenu" class="governance-menu">

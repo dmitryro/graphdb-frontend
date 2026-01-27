@@ -43,7 +43,7 @@ export class NewMappingModalComponent implements OnInit, OnDestroy {
     'Fallback: Null / Ignore',
   ];
 
-  // NEW: Dropdown options for Scope Step
+  // Dropdown options for Scope Step
   sourceOptions = [
     { value: 'epic', label: 'Epic (E-HR System)' },
     { value: 'cerner', label: 'Cerner Health' },
@@ -58,7 +58,7 @@ export class NewMappingModalComponent implements OnInit, OnDestroy {
     { value: 'warehouse_v3', label: 'Data Warehouse v3' },
   ];
 
-  // UPDATED: Directions with descriptive sub-labels
+  // Directions with descriptive sub-labels
   directions = [
     {
       value: 'one-way',
@@ -80,20 +80,34 @@ export class NewMappingModalComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initForms();
+    this.subscribeToEvents();
+  }
 
+  private subscribeToEvents() {
     // Subscribe to Store to catch theme and visibility signals
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       if (state?.items) {
         const itemEvent = state.items.event;
         const payload = state.items.payload;
 
-        // UPDATED: Capture theme from payload when opening
+        // Capture theme from payload when opening
         if (
           itemEvent === 'open_new_mapping_modal' ||
           payload?.action === 'open_new_mapping_modal'
         ) {
           this.theme = payload?.theme || this.getActiveTheme();
           this.isOpen = true;
+        }
+
+        // Logic to handle the confirmation from the shared ConfirmationModalComponent
+        // Listens for the 'save' command confirmation
+        if (
+          itemEvent === 'confirmation_save_confirmed' ||
+          payload?.action === 'confirmation_save_confirmed'
+        ) {
+          if (payload?.confirmed) {
+            this.executeFinalSave();
+          }
         }
 
         // Listen for external close signals
@@ -109,7 +123,6 @@ export class NewMappingModalComponent implements OnInit, OnDestroy {
 
   /**
    * Calculates the active theme based on CSS classes or system preferences.
-   * Matches the pattern used in the edit-mapping component.
    */
   private getActiveTheme(): 'light' | 'dark' {
     const isDark =
@@ -122,7 +135,6 @@ export class NewMappingModalComponent implements OnInit, OnDestroy {
   // --- Modal Signal Logic ---
 
   public close() {
-    // Notify the system that we are closing, including the current theme context
     this.eventService.publish('nf', 'close_new_mapping_modal', {
       action: 'close_new_mapping_modal',
       theme: this.theme,
@@ -133,14 +145,43 @@ export class NewMappingModalComponent implements OnInit, OnDestroy {
     this.handleInternalClose();
   }
 
+  /**
+   * Triggers the shared confirmation modal
+   */
   public confirmAction() {
+    if (this.basicsForm.invalid || this.scopeForm.invalid || this.logicForm.invalid) {
+      this.basicsForm.markAllAsTouched();
+      this.scopeForm.markAllAsTouched();
+      this.logicForm.markAllAsTouched();
+      return;
+    }
+
+    // Trigger the shared confirmation modal via NgRx/EventService
+    this.eventService.publish('nf', 'open_confirmation_modal', {
+      action: 'open_confirmation_modal',
+      title: 'Confirm New Mapping',
+      message: `Are you sure you want to save the mapping "${this.basicsForm.get('name')?.value}"?`,
+      command: 'save',
+      itemName: this.basicsForm.get('name')?.value,
+      theme: this.theme,
+    });
+  }
+
+  /**
+   * Actual save logic called after confirmation
+   */
+  private executeFinalSave() {
     const payload = {
       basics: this.basicsForm.value,
       scope: this.scopeForm.value,
       logic: this.logicForm.value,
       conditions: this.conditionsForm.value,
       tags: this.tags,
-      theme: this.theme, // Include theme in the final object
+      theme: this.theme,
+      attribution: {
+        createdBy: 'Current User',
+        timestamp: new Date().toISOString(),
+      },
     };
 
     // Signal the creation is complete

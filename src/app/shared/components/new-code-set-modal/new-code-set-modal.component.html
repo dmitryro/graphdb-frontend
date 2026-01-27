@@ -1,0 +1,218 @@
+@if (isOpen()) {
+  <div class="modal-overlay" (click)="close()">
+    <div
+      class="modal-container"
+      [class.dark]="theme() === 'dark'"
+      [class.light]="theme() === 'light'"
+      (click)="$event.stopPropagation()">
+      <header
+        class="modal-header"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <div class="header-title">
+          <mat-icon>settings_input_component</mat-icon>
+          <div>
+            <h2>Create New Value Set</h2>
+            <span class="subtitle">Normalization Engine Configuration</span>
+          </div>
+        </div>
+        <button mat-icon-button (click)="close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <div class="modal-body" [class.dark]="theme() === 'dark'" [class.light]="theme() === 'light'">
+        <mat-stepper
+          [linear]="true"
+          #stepper
+          [class.dark-stepper]="theme() === 'dark'"
+          [class.light-stepper]="theme() === 'light'">
+          <!-- STEP 1: METADATA -->
+          <mat-step [stepControl]="basicsForm">
+            <ng-template matStepLabel>Metadata</ng-template>
+
+            <form
+              [formGroup]="basicsForm"
+              class="step-content"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="form-row">
+                <mat-form-field
+                  appearance="outline"
+                  class="flex-2"
+                  [class.dark-field]="theme() === 'dark'"
+                  [class.light-field]="theme() === 'light'">
+                  <mat-label>Meaning / Display Name</mat-label>
+                  <input
+                    matInput
+                    formControlName="name"
+                    placeholder="e.g. Diabetes Mellitus"
+                    required />
+                </mat-form-field>
+
+                <mat-form-field
+                  appearance="outline"
+                  class="flex-1"
+                  [class.dark-field]="theme() === 'dark'"
+                  [class.light-field]="theme() === 'light'">
+                  <mat-label>Status</mat-label>
+                  <mat-select formControlName="status" required>
+                    @for (st of statuses(); track st) {
+                      <mat-option [value]="st">{{ st }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field
+                  appearance="outline"
+                  class="flex-1"
+                  [class.dark-field]="theme() === 'dark'"
+                  [class.light-field]="theme() === 'light'">
+                  <mat-label>System</mat-label>
+                  <mat-select formControlName="system" required>
+                    @for (sys of systems(); track sys) {
+                      <mat-option [value]="sys">{{ sys }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field
+                  appearance="outline"
+                  class="flex-1"
+                  [class.dark-field]="theme() === 'dark'"
+                  [class.light-field]="theme() === 'light'">
+                  <mat-label>Canonical ID</mat-label>
+                  <input matInput formControlName="oid" placeholder="E11.9" required />
+                </mat-form-field>
+
+                <mat-form-field
+                  appearance="outline"
+                  class="flex-1"
+                  [class.dark-field]="theme() === 'dark'"
+                  [class.light-field]="theme() === 'light'">
+                  <mat-label>Version</mat-label>
+                  <input matInput formControlName="version" placeholder="2026" required />
+                </mat-form-field>
+              </div>
+
+              <div class="step-footer-actions" [class.dark]="theme() === 'dark'">
+                <div></div>
+                <button
+                  mat-flat-button
+                  class="next-btn"
+                  matStepperNext
+                  [disabled]="basicsForm.invalid">
+                  Continue
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- STEP 2: VALUES -->
+          <mat-step [stepControl]="valuesForm">
+            <ng-template matStepLabel>Values</ng-template>
+
+            <div
+              class="step-content-wrapper"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="mapping-card" [class.dark]="theme() === 'dark'">
+                <div class="table-header" [class.dark]="theme() === 'dark'">
+                  <div class="col-code">CODE</div>
+                  <div class="col-display">DISPLAY</div>
+                  <div class="col-actions"></div>
+                </div>
+
+                <form [formGroup]="valuesForm">
+                  <div formArrayName="values" class="table-body">
+                    @for (row of valueRows.controls; track row; let i = $index) {
+                      <div [formGroupName]="i" class="table-row" [class.dark]="theme() === 'dark'">
+                        <div class="col-code">
+                          <mat-form-field
+                            appearance="outline"
+                            [class.dark-field]="theme() === 'dark'"
+                            [class.light-field]="theme() === 'light'">
+                            <input matInput formControlName="code" placeholder="Code" />
+                          </mat-form-field>
+                        </div>
+                        <div class="col-display">
+                          <mat-form-field
+                            appearance="outline"
+                            [class.dark-field]="theme() === 'dark'"
+                            [class.light-field]="theme() === 'light'">
+                            <input matInput formControlName="display" placeholder="Display Name" />
+                          </mat-form-field>
+                        </div>
+                        <div class="col-actions">
+                          <button
+                            mat-icon-button
+                            class="trash-btn"
+                            (click)="removeValueRow(i)"
+                            type="button">
+                            <mat-icon>delete_outline</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </form>
+
+                <div class="table-footer" [class.dark]="theme() === 'dark'">
+                  <button
+                    mat-button
+                    class="add-row-btn"
+                    [class.dark]="theme() === 'dark'"
+                    (click)="addRow()"
+                    type="button">
+                    <mat-icon>add</mat-icon> Add Value Entry
+                  </button>
+                </div>
+              </div>
+
+              <div class="step-footer-actions" [class.dark]="theme() === 'dark'">
+                <button mat-flat-button class="back-btn" matStepperPrevious>Back</button>
+                <button
+                  mat-flat-button
+                  class="next-btn"
+                  matStepperNext
+                  [disabled]="valueRows.length < 1">
+                  Review
+                </button>
+              </div>
+            </div>
+          </mat-step>
+
+          <!-- STEP 3: CONFIRM -->
+          <mat-step>
+            <ng-template matStepLabel>Confirm</ng-template>
+
+            <div class="step-content" [class.dark]="theme() === 'dark'">
+              <div
+                class="final-summary"
+                [class.dark-summary]="theme() === 'dark'"
+                [class.light-summary]="theme() === 'light'">
+                <h3>Review New Code Set</h3>
+                <p>
+                  Name: <strong>{{ basicsForm.get('name')?.value }}</strong>
+                </p>
+                <p>
+                  System: <strong>{{ basicsForm.get('system')?.value }}</strong>
+                </p>
+                <p>Total Items: {{ valueRows.length }}</p>
+              </div>
+
+              <div class="step-footer-actions" [class.dark]="theme() === 'dark'">
+                <button mat-flat-button class="back-btn" matStepperPrevious>Back</button>
+                <button mat-flat-button class="create-btn" (click)="confirmAction()">
+                  Create Value Set
+                </button>
+              </div>
+            </div>
+          </mat-step>
+        </mat-stepper>
+      </div>
+    </div>
+  </div>
+}

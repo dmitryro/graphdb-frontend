@@ -16,6 +16,12 @@ export class EventService {
     m.set('confirmation_save_confirmed', EventActionTypes.ConfirmationSaveConfirmed);
     m.set('confirmation_confirm_confirmed', EventActionTypes.ConfirmationConfirmConfirmed);
     m.set('confirmation_reset_confirmed', EventActionTypes.ConfirmationResetConfirmed);
+    m.set('open_new_value_set_modal', EventActionTypes.OpenNewValueSetModal);
+    m.set('close_new_value_set_modal', EventActionTypes.CloseNewValueSetModal);
+    m.set('close_new_normalization_rule_modal', EventActionTypes.CloseNewNormalizationRuleModal);
+    m.set('open_new_normalization_rule_modal', EventActionTypes.OpenNewNormalizationRuleModal);
+    m.set('open_new_rule_modal', EventActionTypes.OpenNewRuleModal);
+    m.set('close_new_rule_modal', EventActionTypes.CloseNewRuleModal);
     m.set('open_confirmation_modal', EventActionTypes.OpenConfirmationModal);
     m.set('theme_change', EventActionTypes.ThemeChange);
     m.set('update_breadcrumb', EventActionTypes.UpdateBreadcrumb);
@@ -28,6 +34,8 @@ export class EventService {
     m.set('view_related_model', EventActionTypes.ViewRelatedModel);
     m.set('open_new_mapping_modal', EventActionTypes.OpenNewMappingModal);
     m.set('close_new_mapping_modal', EventActionTypes.CloseNewMappingModal);
+    m.set('open_new_model_modal', EventActionTypes.OpenNewModelModal);
+    m.set('close_new_model_modal', EventActionTypes.CloseNewModelModal);
     m.set('breadcrumb_navigate', EventActionTypes.BreadcrumbNavigate);
     m.set('close_modal', EventActionTypes.CloseModal);
     m.set('open_user_menu', EventActionTypes.OpenUserMenu);

@@ -1,0 +1,505 @@
+@if (isOpen) {
+  <div class="modal-overlay">
+    <div
+      #modalContainer
+      class="modal-container"
+      [class.dark]="theme === 'dark'"
+      [class.light]="theme === 'light'">
+      <header
+        class="modal-header"
+        [class.dark]="theme === 'dark'"
+        [class.light]="theme === 'light'">
+        <div class="header-title">
+          <h2>Create New Model</h2>
+        </div>
+        <button mat-icon-button (click)="close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <div class="modal-body" [class.dark]="theme === 'dark'" [class.light]="theme === 'light'">
+        <mat-stepper
+          #stepper
+          linear
+          [class.dark-stepper]="theme === 'dark'"
+          [class.light-stepper]="theme === 'light'">
+          <mat-step [completed]="isStep1Valid()">
+            <form
+              [formGroup]="normalizationForm"
+              class="step-content"
+              [class.dark]="theme === 'dark'"
+              [class.light]="theme === 'light'">
+              <ng-template matStepLabel>Basics</ng-template>
+
+              <p class="step-description">
+                Give this model a clear name, description, and classification so it's easy to
+                understand what it represents and how it should be used later.
+              </p>
+
+              <mat-form-field
+                appearance="outline"
+                class="full-width-field"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Model Name</mat-label>
+                <input
+                  matInput
+                  formControlName="name"
+                  placeholder="e.g. ERP System Normalization" />
+                @if (normalizationForm.get('name')?.hasError('required')) {
+                  <mat-error>Model name is required</mat-error>
+                }
+                @if (normalizationForm.get('name')?.hasError('pattern')) {
+                  <mat-error>Only letters, numbers, underscores, and spaces allowed</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                class="full-width-field"
+                [class.dark-field]="theme === 'dark'"
+                [class.light-field]="theme === 'light'">
+                <mat-label>Description</mat-label>
+                <textarea
+                  matInput
+                  formControlName="description"
+                  placeholder="Enter details about this model's purpose..."
+                  rows="3"></textarea>
+              </mat-form-field>
+
+              <div class="tags-section">
+                <mat-form-field
+                  appearance="outline"
+                  class="full-width-field"
+                  [class.dark-field]="theme === 'dark'"
+                  [class.light-field]="theme === 'light'">
+                  <mat-label>Add Tags</mat-label>
+                  <mat-chip-grid #chipGrid aria-label="Tag selection">
+                    @for (tag of normalizationForm.get('tags')?.value; track tag) {
+                      <mat-chip-row (removed)="removeTag(tag)">
+                        {{ tag }}
+                        <button matChipRemove aria-label="'remove ' + tag">
+                          <mat-icon>cancel</mat-icon>
+                        </button>
+                      </mat-chip-row>
+                    }
+                    <input
+                      placeholder="New tag..."
+                      [matChipInputFor]="chipGrid"
+                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                      (matChipInputTokenEnd)="addTagFromChipInput($event)" />
+                  </mat-chip-grid>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field
+                  appearance="outline"
+                  class="flex-1"
+                  [class.dark-field]="theme === 'dark'"
+                  [class.light-field]="theme === 'light'">
+                  <mat-label>Type</mat-label>
+                  <mat-select formControlName="type">
+                    @for (type of modelTypes; track type) {
+                      <mat-option [value]="type">{{ type }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field
+                  appearance="outline"
+                  class="flex-1"
+                  [class.dark-field]="theme === 'dark'"
+                  [class.light-field]="theme === 'light'">
+                  <mat-label>Status</mat-label>
+                  <mat-select formControlName="status">
+                    @for (status of modelStatuses; track status) {
+                      <mat-option [value]="status">{{ status }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div class="step-actions" [class.light]="theme === 'light'">
+                <div style="flex: 1 1 auto"></div>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  class="next-btn"
+                  [class.dark]="theme === 'dark'"
+                  matStepperNext
+                  [disabled]="!isStep1Valid()">
+                  Next
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- STEP 2: STRUCTURE -->
+          <mat-step [completed]="isStep2Valid()">
+            <div class="step-content" [formGroup]="normalizationForm">
+              <ng-template matStepLabel>Structure</ng-template>
+
+              <p class="step-description">
+                Define the structure of this model by adding the fields it should contain.
+              </p>
+
+              <div class="fields-table-header">
+                <div class="col-field-name">
+                  Field Name <span class="required-asterisk">*</span>
+                </div>
+                <div class="col-type">Type <span class="required-asterisk">*</span></div>
+                <div class="col-required">Required <span class="required-asterisk">*</span></div>
+                <div class="col-description">Description</div>
+                <div class="col-constraints">Constraints</div>
+                <div class="col-actions"></div>
+              </div>
+
+              <div class="fields-list-container" formArrayName="fields">
+                @for (field of fields.controls; track field; let i = $index) {
+                  <div [formGroupName]="i" class="field-row">
+                    <mat-form-field
+                      appearance="outline"
+                      class="col-field-name"
+                      [class.dark-field]="theme === 'dark'"
+                      [class.light-field]="theme === 'light'">
+                      <input matInput formControlName="fieldName" placeholder="field_name" />
+                      @if (field.get('fieldName')?.hasError('required')) {
+                        <mat-error>Required</mat-error>
+                      }
+                      @if (field.get('fieldName')?.hasError('pattern')) {
+                        <mat-error>Only letters, numbers, and underscores</mat-error>
+                      }
+                    </mat-form-field>
+
+                    <mat-form-field
+                      appearance="outline"
+                      class="col-type"
+                      [class.dark-field]="theme === 'dark'"
+                      [class.light-field]="theme === 'light'">
+                      <mat-select formControlName="dataType">
+                        @for (type of dataTypes; track type) {
+                          <mat-option [value]="type">{{ type }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+
+                    <div class="col-required">
+                      <mat-checkbox formControlName="required"></mat-checkbox>
+                    </div>
+
+                    <mat-form-field
+                      appearance="outline"
+                      class="col-description"
+                      [class.dark-field]="theme === 'dark'"
+                      [class.light-field]="theme === 'light'">
+                      <input
+                        matInput
+                        formControlName="description"
+                        placeholder="Enter description" />
+                    </mat-form-field>
+
+                    <mat-form-field
+                      appearance="outline"
+                      class="col-constraints"
+                      [class.dark-field]="theme === 'dark'"
+                      [class.light-field]="theme === 'light'">
+                      <mat-select formControlName="constraint">
+                        @for (
+                          constraint of getAvailableConstraints(field.get('dataType')?.value);
+                          track constraint
+                        ) {
+                          <mat-option [value]="constraint">{{ constraint }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+
+                    <!-- CRITICAL FIX: Always show actions column to maintain grid alignment -->
+                    <div class="col-actions">
+                      @if (fields.length > 1) {
+                        <button mat-icon-button class="trash-btn" (click)="removeField(i)">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <button mat-stroked-button type="button" class="add-btn" (click)="addField()">
+                <mat-icon>add</mat-icon> Add Field
+              </button>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious>Back</button>
+                <button mat-flat-button color="primary" matStepperNext [disabled]="!isStep2Valid()">
+                  Next
+                </button>
+              </div>
+            </div>
+          </mat-step>
+
+          <!-- STEP 3: DEPENDENCIES -->
+          <mat-step>
+            <div class="step-content" [formGroup]="normalizationForm">
+              <ng-template matStepLabel>Dependencies</ng-template>
+
+              <h3 class="step-title">Step 3: Dependencies</h3>
+
+              <p class="step-description">
+                Review how this model will interact with other parts of the system once it's in use.
+                Dependencies will appear once this model is referenced by mappings or rules.
+              </p>
+
+              <div class="dependencies-section">
+                <div class="add-dependency-controls" formArrayName="dependencies">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    class="add-btn"
+                    (click)="addDependency()">
+                    <mat-icon>add</mat-icon> Add Dependency
+                  </button>
+
+                  @for (dep of dependencies.controls; track dep; let i = $index) {
+                    <div [formGroupName]="i" class="dependency-row">
+                      <mat-form-field
+                        appearance="outline"
+                        class="flex-2"
+                        [class.dark-field]="theme === 'dark'"
+                        [class.light-field]="theme === 'light'">
+                        <mat-label>Related Model</mat-label>
+                        <mat-select formControlName="modelId">
+                          @for (model of existingModels; track model.id) {
+                            <mat-option [value]="model.id">{{ model.name }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field
+                        appearance="outline"
+                        class="flex-2"
+                        [class.dark-field]="theme === 'dark'"
+                        [class.light-field]="theme === 'light'">
+                        <mat-label>Relationship Type</mat-label>
+                        <input
+                          matInput
+                          formControlName="relationship"
+                          placeholder="e.g., references, depends on" />
+                      </mat-form-field>
+
+                      <button mat-icon-button class="trash-btn" (click)="removeDependency(i)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                @if (dependencies.length === 0) {
+                  <div
+                    class="dependencies-table"
+                    [class.dark]="theme === 'dark'"
+                    [class.light]="theme === 'light'">
+                    <div class="table-header">
+                      <div class="col-type">Type</div>
+                      <div class="col-name">Name</div>
+                      <div class="col-referenced">Referenced In</div>
+                    </div>
+                    <div class="empty-state">
+                      <mat-icon>folder_open</mat-icon>
+                      <p class="empty-message">No dependencies yet</p>
+                      <p class="empty-description">
+                        When this model is in use, its dependencies—such as rules, mappings, or
+                        pipelines—will be displayed here.
+                      </p>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious>Back</button>
+                <button mat-flat-button color="primary" matStepperNext>Next</button>
+              </div>
+            </div>
+          </mat-step>
+
+          <!-- STEP 4: REVIEW & CREATE -->
+          <mat-step>
+            <div class="step-content">
+              <ng-template matStepLabel>Review</ng-template>
+
+              <h3 class="step-title">Step 4: Review & Create</h3>
+
+              <p class="step-description">
+                Review the model definition below to confirm it is complete and accurate before
+                creating the model.
+              </p>
+
+              <!-- Basics Section -->
+              <div
+                class="review-section"
+                [class.dark]="theme === 'dark'"
+                [class.light]="theme === 'light'">
+                <div class="review-section-header" (click)="basicsExpanded = !basicsExpanded">
+                  <mat-icon>{{ basicsExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+                  <h4>Basics</h4>
+                </div>
+                @if (basicsExpanded !== false) {
+                  <div class="review-section-content">
+                    <div class="review-row">
+                      <span class="review-label">Model Name:</span>
+                      <span class="review-value">{{ normalizationForm.get('name')?.value }}</span>
+                    </div>
+                    @if (normalizationForm.get('description')?.value) {
+                      <div class="review-row">
+                        <span class="review-label">Description:</span>
+                        <span class="review-value">{{
+                          normalizationForm.get('description')?.value
+                        }}</span>
+                      </div>
+                    }
+                    @if (normalizationForm.get('description')?.value === '') {
+                      <div class="review-row">
+                        <span class="review-label">Description:</span>
+                        <span class="review-value optional-text">(Optional)</span>
+                      </div>
+                    }
+                    @if (normalizationForm.get('tags')?.value?.length > 0) {
+                      <div class="review-row">
+                        <span class="review-label">Tags:</span>
+                        <span class="review-value">{{
+                          normalizationForm.get('tags')?.value.join(', ')
+                        }}</span>
+                      </div>
+                    }
+                    @if (normalizationForm.get('tags')?.value?.length === 0) {
+                      <div class="review-row">
+                        <span class="review-label">Tags:</span>
+                        <span class="review-value optional-text">(Optional)</span>
+                      </div>
+                    }
+                    <div class="review-row">
+                      <span class="review-label">Type:</span>
+                      <span class="review-value">{{ normalizationForm.get('type')?.value }}</span>
+                    </div>
+                    <div class="review-row">
+                      <span class="review-label">Status:</span>
+                      <span class="review-value">
+                        <span
+                          class="status-badge"
+                          [class.status-draft]="normalizationForm.get('status')?.value === 'Draft'">
+                          {{ normalizationForm.get('status')?.value }}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Structure Section -->
+              <div
+                class="review-section"
+                [class.dark]="theme === 'dark'"
+                [class.light]="theme === 'light'">
+                <div class="review-section-header" (click)="structureExpanded = !structureExpanded">
+                  <mat-icon>{{ structureExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+                  <h4>Structure</h4>
+                </div>
+                @if (structureExpanded !== false) {
+                  <div class="review-section-content">
+                    <div class="review-table-container">
+                      <table class="review-table">
+                        <thead>
+                          <tr>
+                            <th>Field Name</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Constraints</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (field of fields.controls; track field) {
+                            <tr>
+                              <td>{{ field.get('fieldName')?.value }}</td>
+                              <td>
+                                <span class="type-badge">{{ field.get('dataType')?.value }}</span>
+                              </td>
+                              <td>{{ field.get('required')?.value ? 'Yes' : 'No' }}</td>
+                              <td>
+                                @if (
+                                  field.get('constraint')?.value === 'None' ||
+                                  !field.get('constraint')?.value
+                                ) {
+                                  <span>None</span>
+                                }
+                                @if (
+                                  field.get('constraint')?.value &&
+                                  field.get('constraint')?.value !== 'None'
+                                ) {
+                                  <span>
+                                    {{ field.get('constraint')?.value }}:
+                                    {{ field.get('constraintDetails')?.value }}
+                                  </span>
+                                }
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Dependencies Section -->
+              <div
+                class="review-section"
+                [class.dark]="theme === 'dark'"
+                [class.light]="theme === 'light'">
+                <div
+                  class="review-section-header"
+                  (click)="dependenciesExpanded = !dependenciesExpanded">
+                  <mat-icon>{{ dependenciesExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+                  <h4>Dependencies</h4>
+                </div>
+                @if (dependenciesExpanded !== false) {
+                  <div class="review-section-content">
+                    @if (dependencies.length === 0) {
+                      <p class="no-dependencies">(No dependencies yet)</p>
+                    }
+                    @if (dependencies.length > 0) {
+                      <div>
+                        @for (dep of dependencies.controls; track dep) {
+                          <div class="dependency-item">
+                            <span class="dependency-model">
+                              {{ getModelNameById(dep.get('modelId')?.value) }}
+                            </span>
+                            <span class="dependency-relationship">{{
+                              dep.get('relationship')?.value
+                            }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious>Back</button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  (click)="confirmAction()"
+                  [disabled]="normalizationForm.invalid">
+                  Create Model
+                </button>
+              </div>
+            </div>
+          </mat-step>
+        </mat-stepper>
+      </div>
+    </div>
+  </div>
+}

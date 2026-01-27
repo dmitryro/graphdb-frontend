@@ -1,0 +1,1094 @@
+@if (isOpen()) {
+  <div class="modal-overlay" (click)="close()">
+    <div
+      class="modal-container"
+      [class.dark]="theme() === 'dark'"
+      [class.light]="theme() === 'light'"
+      (click)="$event.stopPropagation()">
+      <header
+        class="modal-header"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <div class="header-title">
+          <mat-icon>rule</mat-icon>
+          <div>
+            <div class="subtitle">Normalization Engine</div>
+            <h2>Create New Normalization Rule</h2>
+          </div>
+        </div>
+        <button mat-icon-button (click)="close()"><mat-icon>close</mat-icon></button>
+      </header>
+
+      <div
+        class="stepper-nav"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        @for (
+          stepLabel of ['Basics', 'Scope', 'Logic', 'Review'];
+          track stepLabel;
+          let i = $index
+        ) {
+          <div
+            class="step-item"
+            style="cursor: pointer"
+            [class.active]="activeStep() === i"
+            [class.completed]="activeStep() > i"
+            (click)="activeStep.set(i)">
+            <div class="step-circle">
+              @if (activeStep() > i) {
+                <mat-icon>check</mat-icon>
+              } @else {
+                {{ i + 1 }}
+              }
+            </div>
+            <span class="step-label">{{ stepLabel }}</span>
+          </div>
+        }
+      </div>
+
+      <div
+        class="step-content-wrapper"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        @if (activeStep() === 0) {
+          <div
+            class="step-content"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <p class="step-description">
+              Select the target model and give this normalization rule a clear name and description
+              so it's easy to understand what it applies to and what it does.
+            </p>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme() === 'dark'"
+              [class.light-field]="theme() === 'light'">
+              <mat-label>Select Model <span class="required">*</span></mat-label>
+              <mat-select [formControl]="basicsForm.get('model')!">
+                @for (model of availableModels(); track model) {
+                  <mat-option [value]="model">{{ model }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme() === 'dark'"
+              [class.light-field]="theme() === 'light'">
+              <mat-label>Rule Name <span class="required">*</span></mat-label>
+              <input
+                matInput
+                [formControl]="basicsForm.get('name')!"
+                placeholder="e.g. Normalize height units to cm" />
+            </mat-form-field>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme() === 'dark'"
+              [class.light-field]="theme() === 'light'">
+              <mat-label>Description</mat-label>
+              <textarea matInput [formControl]="basicsForm.get('description')!" rows="3"></textarea>
+            </mat-form-field>
+
+            <div
+              class="severity-section"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <label class="severity-label">Severity <span class="required">*</span></label>
+              <mat-radio-group
+                [formControl]="basicsForm.get('severity')!"
+                [class.dark-radio]="theme() === 'dark'"
+                [class.light-radio]="theme() === 'light'">
+                <div class="severity-grid">
+                  @for (sev of severities(); track sev) {
+                    <div class="severity-option">
+                      <mat-radio-button [value]="sev" color="primary">
+                        <span class="severity-title">{{ sev }}</span>
+                      </mat-radio-button>
+                      <span class="severity-desc">{{ severityDescriptions[sev] }}</span>
+                    </div>
+                  }
+                </div>
+              </mat-radio-group>
+            </div>
+          </div>
+        }
+
+        @if (activeStep() === 1) {
+          <div
+            class="step-content"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <p class="step-description">
+              Define the scope and trigger for this normalization rule to determine where it applies
+              and when it runs during normalization.
+            </p>
+
+            <div class="info-callout" [class.dark]="theme() === 'dark'">
+              <strong>Target Model:</strong> {{ basicsForm.get('model')?.value || 'Not selected' }}
+            </div>
+
+            <div class="form-row">
+              <mat-form-field
+                appearance="outline"
+                class="flex-1"
+                [class.dark-field]="theme() === 'dark'"
+                [class.light-field]="theme() === 'light'">
+                <mat-label>Scope <span class="required">*</span></mat-label>
+                <mat-select [formControl]="scopeForm.get('scope')!">
+                  @for (s of scopes(); track s) {
+                    <mat-option [value]="s">{{ s }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              @if (scopeForm.get('scope')?.value === 'Field-level') {
+                <mat-form-field
+                  appearance="outline"
+                  class="flex-1"
+                  [class.dark-field]="theme() === 'dark'"
+                  [class.light-field]="theme() === 'light'">
+                  <mat-label>Target Field <span class="required">*</span></mat-label>
+                  <mat-select [formControl]="scopeForm.get('targetField')!">
+                    @for (f of availableFields(); track f) {
+                      <mat-option [value]="f">{{ f }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+            </div>
+
+            <mat-form-field
+              appearance="outline"
+              [class.dark-field]="theme() === 'dark'"
+              [class.light-field]="theme() === 'light'">
+              <mat-label>Trigger <span class="required">*</span></mat-label>
+              <mat-select [formControl]="scopeForm.get('trigger')!">
+                @for (t of triggers(); track t) {
+                  <mat-option [value]="t">{{ t }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+        }
+
+        @if (activeStep() === 2) {
+          <div
+            class="step-logic-container"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <p class="step-description">
+              Define the deterministic logic applied during normalization.
+            </p>
+
+            <div class="logic-two-columns">
+              <div
+                class="type-list-sidebar"
+                [class.dark]="theme() === 'dark'"
+                [class.light]="theme() === 'light'">
+                <div class="list-header">Rule Type <span class="required">*</span></div>
+                @for (type of logicTypes(); track type) {
+                  <div
+                    class="type-list-item"
+                    [class.selected]="logicForm.get('logicType')?.value === type"
+                    (click)="selectLogicType(type)">
+                    {{ type }}
+                  </div>
+                }
+              </div>
+
+              <div
+                class="config-panel-area"
+                [class.dark]="theme() === 'dark'"
+                [class.light]="theme() === 'light'">
+                @switch (logicForm.get('logicType')?.value) {
+                  @case ('Value Mapping') {
+                    <h3 class="panel-title">Value Mapping</h3>
+
+                    <div
+                      class="value-mapping-table"
+                      [class.dark]="theme() === 'dark'"
+                      [class.light]="theme() === 'light'">
+                      <div class="mapping-header">
+                        <div class="col-src">Source Value</div>
+                        <div class="col-tgt">Target Value</div>
+                        <div class="col-act"></div>
+                      </div>
+
+                      <div class="mapping-rows">
+                        @for (row of mappingRows.controls; track row; let i = $index) {
+                          <div class="mapping-row" [formGroup]="row">
+                            <div class="col-src">
+                              <mat-form-field
+                                appearance="outline"
+                                [class.dark-field]="theme() === 'dark'"
+                                [class.light-field]="theme() === 'light'">
+                                <input matInput formControlName="sourceValue" placeholder="New" />
+                              </mat-form-field>
+                            </div>
+                            <div class="col-tgt">
+                              <mat-form-field
+                                appearance="outline"
+                                [class.dark-field]="theme() === 'dark'"
+                                [class.light-field]="theme() === 'light'">
+                                <input
+                                  matInput
+                                  formControlName="targetValue"
+                                  placeholder="Initial" />
+                              </mat-form-field>
+                            </div>
+                            <div
+                              class="col-act"
+                              style="display: flex; justify-content: center; align-items: center">
+                              <button mat-icon-button (click)="removeRow(i)">
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </div>
+
+                      <div class="mapping-footer">
+                        <button mat-button (click)="addRow()">+ Add Mapping</button>
+                      </div>
+                    </div>
+                  }
+
+                  @case ('Unit Conversion') {
+                    <h3 class="panel-title">Unit Conversion</h3>
+
+                    <div
+                      class="logic-input-row"
+                      style="
+                        display: flex;
+                        gap: 8px;
+                        align-items: flex-start;
+                        margin-bottom: 16px;
+                        flex-wrap: nowrap;
+                      ">
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1.5; min-width: 0"
+                        [class.dark-field]="theme() === 'dark'">
+                        <mat-label>Source Field</mat-label>
+                        <mat-select [formControl]="logicForm.get('sourceField')!">
+                          @for (f of availableFields(); track f) {
+                            <mat-option [value]="f">{{ f }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1.25; min-width: 0"
+                        [class.dark-field]="theme() === 'dark'">
+                        <mat-label>From</mat-label>
+                        <mat-select [formControl]="logicForm.get('fromUnit')!">
+                          @for (u of getUnitOptions(logicForm.get('sourceField')?.value); track u) {
+                            <mat-option [value]="u">{{ u }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1.25; min-width: 0"
+                        [class.dark-field]="theme() === 'dark'">
+                        <mat-label>To</mat-label>
+                        <mat-select [formControl]="logicForm.get('toUnit')!">
+                          @for (u of getUnitOptions(logicForm.get('sourceField')?.value); track u) {
+                            <mat-option [value]="u">{{ u }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        style="height: 48px; flex: 0 0 auto; padding: 0 16px"
+                        (click)="addConversionEntry()"
+                        [disabled]="
+                          !logicForm.get('fromUnit')?.value || !logicForm.get('toUnit')?.value
+                        ">
+                        Add
+                      </button>
+                    </div>
+
+                    <div class="value-mapping-table" [class.dark]="theme() === 'dark'">
+                      <div class="mapping-header">
+                        <div class="col-src">Field</div>
+                        <div class="col-tgt" style="flex: 1.5">Rule</div>
+                        <div class="col-act"></div>
+                      </div>
+                      <div class="mapping-rows">
+                        @for (row of conversionRows.controls; track row; let i = $index) {
+                          <div class="mapping-row" [formGroup]="$any(row)">
+                            <div class="col-src">
+                              <code>{{ row.get('sourceField')?.value }}</code>
+                            </div>
+                            <div class="col-tgt" style="flex: 1.5; font-size: 13px">
+                              {{ row.get('fromUnit')?.value }}
+                              <mat-icon style="font-size: 14px; vertical-align: middle"
+                                >trending_flat</mat-icon
+                              >
+                              {{ row.get('toUnit')?.value }}
+                            </div>
+                            <div class="col-act">
+                              <button mat-icon-button (click)="removeConversionRow(i)">
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @case ('Rename / Alias') {
+                    <h3 class="panel-title">Rename / Alias</h3>
+
+                    <div
+                      class="alias-input-row"
+                      style="
+                        display: flex;
+                        gap: 16px;
+                        align-items: flex-start;
+                        margin-bottom: 24px;
+                      ">
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1"
+                        [class.dark-field]="theme() === 'dark'"
+                        [class.light-field]="theme() === 'light'">
+                        <mat-label>Source Field</mat-label>
+                        <mat-select [formControl]="logicForm.get('sourceField')!">
+                          @for (f of availableFields(); track f) {
+                            <mat-option [value]="f">{{ f }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1"
+                        [class.dark-field]="theme() === 'dark'"
+                        [class.light-field]="theme() === 'light'">
+                        <mat-label>New Name / Alias</mat-label>
+                        <input
+                          matInput
+                          [formControl]="logicForm.get('newName')!"
+                          placeholder="e.g. height_cm"
+                          (keyup.enter)="addAliasEntry()" />
+                      </mat-form-field>
+
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        style="margin-top: 4px; height: 48px"
+                        (click)="addAliasEntry()"
+                        [disabled]="
+                          !logicForm.get('sourceField')?.value || !logicForm.get('newName')?.value
+                        ">
+                        Add
+                      </button>
+                    </div>
+
+                    <div
+                      class="value-mapping-table"
+                      [class.dark]="theme() === 'dark'"
+                      [class.light]="theme() === 'light'">
+                      <div class="mapping-header">
+                        <div class="col-src">Source Field</div>
+                        <div class="col-tgt">Alias Name</div>
+                        <div class="col-act"></div>
+                      </div>
+
+                      <div class="mapping-rows">
+                        @for (row of aliasRows.controls; track row; let i = $index) {
+                          <div class="mapping-row" [formGroup]="$any(row)">
+                            <div class="col-src">
+                              <mat-form-field
+                                appearance="outline"
+                                [class.dark-field]="theme() === 'dark'"
+                                [class.light-field]="theme() === 'light'">
+                                <input matInput formControlName="sourceField" readonly />
+                              </mat-form-field>
+                            </div>
+                            <div class="col-tgt">
+                              <mat-form-field
+                                appearance="outline"
+                                [class.dark-field]="theme() === 'dark'"
+                                [class.light-field]="theme() === 'light'">
+                                <input matInput formControlName="aliasName" />
+                              </mat-form-field>
+                            </div>
+                            <div
+                              class="col-act"
+                              style="display: flex; justify-content: center; align-items: center">
+                              <button
+                                mat-icon-button
+                                (click)="removeAliasRow(i)"
+                                class="delete-btn">
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        }
+                        @if (aliasRows.length === 0) {
+                          <div
+                            class="empty-state-text"
+                            style="
+                              padding: 20px;
+                              text-align: center;
+                              opacity: 0.6;
+                              font-size: 13px;
+                            ">
+                            No aliases added yet. Select a field and enter a name above.
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @case ('Derived Value') {
+                    <h3 class="panel-title">Derived Value</h3>
+
+                    <div
+                      class="logic-input-row"
+                      style="
+                        display: flex;
+                        gap: 8px;
+                        align-items: flex-start;
+                        margin-bottom: 12px;
+                        flex-wrap: nowrap;
+                      ">
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1.5; min-width: 0"
+                        [class.dark-field]="theme() === 'dark'">
+                        <mat-label>Target Field Name</mat-label>
+                        <input
+                          matInput
+                          [formControl]="logicForm.get('newName')!"
+                          placeholder="e.g. total_price" />
+                      </mat-form-field>
+
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1; min-width: 0"
+                        [class.dark-field]="theme() === 'dark'">
+                        <mat-label>Result Type</mat-label>
+                        <mat-select [formControl]="logicForm.get('resultType')!">
+                          <mat-option value="Integer">Integer</mat-option>
+                          <mat-option value="Decimal">Decimal</mat-option>
+                          <mat-option value="String">String</mat-option>
+                          <mat-option value="Boolean">Boolean</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        style="height: 48px; flex: 0 0 auto"
+                        (click)="addFormulaEntry()"
+                        [disabled]="
+                          !logicForm.get('newName')?.value || !logicForm.get('formula')?.value
+                        ">
+                        Add
+                      </button>
+                    </div>
+
+                    <mat-form-field
+                      appearance="outline"
+                      style="width: 100%; margin-bottom: 16px"
+                      [class.dark-field]="theme() === 'dark'">
+                      <mat-label>Execution Formula</mat-label>
+                      <textarea
+                        matInput
+                        [formControl]="logicForm.get('formula')!"
+                        placeholder="e.g. field_a * field_b"
+                        rows="2"></textarea>
+                    </mat-form-field>
+
+                    <div class="value-mapping-table" [class.dark]="theme() === 'dark'">
+                      <div class="mapping-header">
+                        <div class="col-src">Target Field</div>
+                        <div class="col-tgt" style="flex: 2">Formula / Logic</div>
+                        <div class="col-act"></div>
+                      </div>
+                      <div class="mapping-rows">
+                        @for (row of formulaRows.controls; track row; let i = $index) {
+                          <div class="mapping-row" [formGroup]="$any(row)">
+                            <div class="col-src">
+                              <code>{{ row.get('targetField')?.value }}</code>
+                            </div>
+                            <div class="col-tgt" style="flex: 2">
+                              <span class="formula-text">{{ row.get('formula')?.value }}</span>
+                              <span
+                                class="severity-badge"
+                                style="margin-left: 8px; font-size: 10px"
+                                >{{ row.get('resultType')?.value }}</span
+                              >
+                            </div>
+                            <div class="col-act">
+                              <button mat-icon-button (click)="removeFormulaRow(i)">
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @case ('Default Value') {
+                    <h3 class="panel-title">Default Value</h3>
+
+                    <div
+                      class="logic-input-row"
+                      style="
+                        display: flex;
+                        gap: 8px;
+                        align-items: flex-start;
+                        margin-bottom: 16px;
+                        flex-wrap: nowrap;
+                      ">
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1.5; min-width: 0"
+                        [class.dark-field]="theme() === 'dark'">
+                        <mat-label>Source Field</mat-label>
+                        <mat-select [formControl]="logicForm.get('sourceField')!">
+                          @for (f of availableFields(); track f) {
+                            <mat-option [value]="f">{{ f }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 1.5; min-width: 0"
+                        [class.dark-field]="theme() === 'dark'">
+                        <mat-label>Default Value</mat-label>
+                        <input
+                          matInput
+                          [formControl]="logicForm.get('defaultValue')!"
+                          placeholder="Value to assign if null" />
+                      </mat-form-field>
+
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        style="height: 48px; flex: 0 0 auto"
+                        (click)="addDefaultEntry()"
+                        [disabled]="
+                          !logicForm.get('sourceField')?.value ||
+                          !logicForm.get('defaultValue')?.value
+                        ">
+                        Add
+                      </button>
+                    </div>
+
+                    <div class="value-mapping-table" [class.dark]="theme() === 'dark'">
+                      <div class="mapping-header">
+                        <div class="col-src">Target Field</div>
+                        <div class="col-tgt">Assigned Default</div>
+                        <div class="col-act"></div>
+                      </div>
+                      <div class="mapping-rows">
+                        @for (row of defaultRows.controls; track row; let i = $index) {
+                          <div class="mapping-row" [formGroup]="$any(row)">
+                            <div class="col-src">
+                              <code>{{ row.get('sourceField')?.value }}</code>
+                            </div>
+                            <div class="col-tgt">
+                              <strong>"{{ row.get('defaultValue')?.value }}"</strong>
+                            </div>
+                            <div class="col-act">
+                              <button mat-icon-button (click)="removeDefaultRow(i)">
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @case ('Null / Ignore') {
+                    <h3 class="panel-title">Null / Ignore</h3>
+                    <p class="step-description" style="margin-bottom: 16px">
+                      Select fields that should be excluded or set to null during processing.
+                    </p>
+
+                    <div
+                      class="logic-input-row"
+                      style="
+                        display: flex;
+                        gap: 8px;
+                        align-items: flex-start;
+                        margin-bottom: 16px;
+                        flex-wrap: nowrap;
+                      ">
+                      <mat-form-field
+                        appearance="outline"
+                        style="flex: 3; min-width: 0"
+                        [class.dark-field]="theme() === 'dark'">
+                        <mat-label>Field to Ignore</mat-label>
+                        <mat-select [formControl]="logicForm.get('sourceField')!">
+                          @for (f of availableFields(); track f) {
+                            <mat-option [value]="f">{{ f }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <button
+                        mat-flat-button
+                        color="warn"
+                        style="height: 48px; flex: 0 0 auto"
+                        (click)="addNullifyEntry()"
+                        [disabled]="!logicForm.get('sourceField')?.value">
+                        Add to List
+                      </button>
+                    </div>
+
+                    <div class="value-mapping-table" [class.dark]="theme() === 'dark'">
+                      <div class="mapping-header">
+                        <div class="col-src">Field Name</div>
+                        <div class="col-tgt">Action</div>
+                        <div class="col-act"></div>
+                      </div>
+                      <div class="mapping-rows">
+                        @for (row of nullifyRows.controls; track row; let i = $index) {
+                          <div class="mapping-row" [formGroup]="$any(row)">
+                            <div class="col-src">
+                              <code>{{ row.get('sourceField')?.value }}</code>
+                            </div>
+                            <div class="col-tgt">
+                              <span style="color: #f44336; font-weight: 600; font-size: 12px"
+                                >NULLIFY / IGNORE</span
+                              >
+                            </div>
+                            <div class="col-act">
+                              <button mat-icon-button (click)="removeNullifyRow(i)">
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @default {
+                    <div class="empty-panel">
+                      <mat-icon>arrow_back</mat-icon>
+                      <p>Select a rule type from the list</p>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+
+            <div
+              class="info-banner"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <mat-icon>info</mat-icon>
+              <span
+                >Deterministic logic only. Conditional branching, scripting, and compute-logic are
+                not supported in this version.</span
+              >
+            </div>
+          </div>
+        }
+
+        @if (activeStep() === 3 && reviewSnapshot()) {
+          <div
+            class="step-content"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <p class="step-description">
+              Please verify all configuration details. This normalization rule will be applied based
+              on the trigger and scope defined below.
+            </p>
+
+            <div
+              class="review-section"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="review-header">
+                <mat-icon>assignment</mat-icon>
+                <h3>Identity & Model</h3>
+              </div>
+              <div class="review-grid">
+                <div class="review-item">
+                  <span class="review-label">Name:</span>
+                  <span class="review-value">{{ reviewSnapshot().basics.name }}</span>
+                </div>
+                <div class="review-item">
+                  <span class="review-label">Target Model:</span>
+                  <span class="review-value">{{ reviewSnapshot().basics.model }}</span>
+                </div>
+                <div class="review-item">
+                  <span class="review-label">Severity:</span>
+                  <span class="review-value">
+                    <span
+                      class="severity-badge"
+                      [attr.data-severity]="reviewSnapshot().basics.severity">
+                      {{ reviewSnapshot().basics.severity }}
+                    </span>
+                  </span>
+                </div>
+                @if (reviewSnapshot().basics.description) {
+                  <div class="review-item full-width">
+                    <span class="review-label">Description:</span>
+                    <span class="review-value">{{ reviewSnapshot().basics.description }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div
+              class="review-section"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="review-header">
+                <mat-icon>reorder</mat-icon>
+                <h3>Application Scope</h3>
+              </div>
+              <div class="review-grid">
+                <div class="review-item">
+                  <span class="review-label">Scope Level:</span>
+                  <span class="review-value">{{ reviewSnapshot().scope.scope }}</span>
+                </div>
+                @if (reviewSnapshot().scope.scope === 'Field-level') {
+                  <div class="review-item">
+                    <span class="review-label">Target Field:</span>
+                    <span class="review-value"
+                      ><code>{{ reviewSnapshot().scope.targetField }}</code></span
+                    >
+                  </div>
+                }
+                <div class="review-item">
+                  <span class="review-label">Trigger Event:</span>
+                  <span class="review-value">{{ reviewSnapshot().scope.trigger }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="review-section"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="review-header">
+                <mat-icon>settings_suggest</mat-icon>
+                <h3>Logic Configuration</h3>
+              </div>
+
+              @if (
+                reviewSnapshot().allTransformations &&
+                reviewSnapshot().allTransformations.length > 0
+              ) {
+                @for (config of reviewSnapshot().allTransformations; track $index) {
+                  <div class="logic-summary-box" style="margin-bottom: 20px">
+                    <h4
+                      class="transformation-type-title"
+                      style="
+                        color: #3f51b5;
+                        font-size: 11px;
+                        font-weight: 700;
+                        text-transform: uppercase;
+                        margin-bottom: 12px;
+                        letter-spacing: 0.5px;
+                      ">
+                      {{ config.logicType }}
+                    </h4>
+
+                    @switch (config.logicType) {
+                      @case ('Value Mapping') {
+                        <div
+                          class="mapping-review-list"
+                          style="display: flex; flex-wrap: wrap; gap: 8px">
+                          @for (row of config.mappings; track $index) {
+                            <div
+                              class="mapping-pill"
+                              style="
+                                display: flex;
+                                align-items: center;
+                                background: rgba(0, 0, 0, 0.04);
+                                padding: 4px 12px;
+                                border-radius: 20px;
+                                font-size: 13px;
+                                border: 1px solid rgba(0, 0, 0, 0.1);
+                              ">
+                              <span class="old">{{ row.sourceValue || '(Empty)' }}</span>
+                              <mat-icon
+                                style="font-size: 16px; width: 16px; height: 16px; margin: 0 4px"
+                                >arrow_right_alt</mat-icon
+                              >
+                              <span class="new" style="font-weight: 600">{{
+                                row.targetValue || '(Empty)'
+                              }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      @case ('Unit Conversion') {
+                        <div
+                          class="mapping-review-list"
+                          style="display: flex; flex-wrap: wrap; gap: 8px">
+                          @if (config.conversions && config.conversions.length > 0) {
+                            @for (conv of config.conversions; track $index) {
+                              <div
+                                class="mapping-pill"
+                                style="
+                                  display: flex;
+                                  align-items: center;
+                                  background: rgba(0, 0, 0, 0.04);
+                                  padding: 6px 12px;
+                                  border-radius: 4px;
+                                  font-size: 13px;
+                                  border-left: 3px solid #2196f3;
+                                ">
+                                <span
+                                  >Converting <code>{{ conv.sourceField }}</code> from
+                                  <strong>{{ conv.fromUnit }}</strong> to
+                                  <strong>{{ conv.toUnit }}</strong></span
+                                >
+                              </div>
+                            }
+                          } @else {
+                            <div class="no-config-message">No conversions defined.</div>
+                          }
+                        </div>
+                      }
+
+                      @case ('Derived Value') {
+                        <div
+                          class="derived-grid"
+                          style="
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                            gap: 12px;
+                          ">
+                          @if (config.derivedValues && config.derivedValues.length > 0) {
+                            @for (item of config.derivedValues; track $index) {
+                              <div
+                                class="derived-card"
+                                style="
+                                  border-left: 4px solid #673ab7;
+                                  background: rgba(0, 0, 0, 0.02);
+                                  padding: 12px;
+                                  border-radius: 4px;
+                                  border: 1px solid rgba(0, 0, 0, 0.05);
+                                  border-left-width: 4px;
+                                ">
+                                <div
+                                  style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    align-items: center;
+                                    margin-bottom: 8px;
+                                  ">
+                                  <span style="font-size: 13px"
+                                    ><strong>Target:</strong>
+                                    <code>{{ item.targetField }}</code></span
+                                  >
+                                  <span
+                                    class="severity-badge"
+                                    style="font-size: 10px; padding: 2px 6px"
+                                    >{{ item.resultType }}</span
+                                  >
+                                </div>
+                                <div
+                                  style="
+                                    background: rgba(0, 0, 0, 0.05);
+                                    padding: 8px;
+                                    border-radius: 4px;
+                                    font-family: monospace;
+                                    font-size: 12px;
+                                    overflow-x: auto;
+                                  ">
+                                  {{ item.formula }}
+                                </div>
+                              </div>
+                            }
+                          } @else {
+                            <div class="no-config-message">No formulas defined.</div>
+                          }
+                        </div>
+                      }
+
+                      @case ('Rename / Alias') {
+                        <div
+                          class="mapping-review-list"
+                          style="display: flex; flex-wrap: wrap; gap: 8px">
+                          @if (config.aliases && config.aliases.length > 0) {
+                            @for (alias of config.aliases; track $index) {
+                              <div
+                                class="mapping-pill"
+                                style="
+                                  display: flex;
+                                  align-items: center;
+                                  background: rgba(0, 0, 0, 0.04);
+                                  padding: 4px 12px;
+                                  border-radius: 20px;
+                                  font-size: 13px;
+                                  border: 1px solid rgba(0, 0, 0, 0.1);
+                                ">
+                                <span class="old" style="font-family: monospace">{{
+                                  alias.sourceField
+                                }}</span>
+                                <mat-icon
+                                  style="
+                                    font-size: 16px;
+                                    width: 16px;
+                                    height: 16px;
+                                    margin: 0 4px;
+                                    color: #666;
+                                  "
+                                  >label_important</mat-icon
+                                >
+                                <span
+                                  class="new"
+                                  style="font-weight: 600; font-family: monospace"
+                                  >{{ alias.aliasName }}</span
+                                >
+                              </div>
+                            }
+                          } @else {
+                            <div class="no-config-message">No aliases defined.</div>
+                          }
+                        </div>
+                      }
+
+                      @case ('Default Value') {
+                        <div
+                          class="mapping-review-list"
+                          style="display: flex; flex-wrap: wrap; gap: 8px">
+                          @if (config.defaultList && config.defaultList.length > 0) {
+                            @for (def of config.defaultList; track $index) {
+                              <div
+                                class="mapping-pill"
+                                style="
+                                  display: flex;
+                                  align-items: center;
+                                  background: rgba(0, 0, 0, 0.04);
+                                  padding: 4px 12px;
+                                  border-radius: 20px;
+                                  font-size: 13px;
+                                  border: 1px solid rgba(0, 0, 0, 0.1);
+                                ">
+                                <span class="old" style="font-family: monospace">{{
+                                  def.sourceField
+                                }}</span>
+                                <mat-icon
+                                  style="
+                                    font-size: 16px;
+                                    width: 16px;
+                                    height: 16px;
+                                    margin: 0 4px;
+                                    color: #ff9800;
+                                  "
+                                  >assignment_turned_in</mat-icon
+                                >
+                                <span class="new" style="font-weight: 600"
+                                  >"{{ def.defaultValue }}"</span
+                                >
+                              </div>
+                            }
+                          } @else {
+                            <div class="no-config-message">No default values defined.</div>
+                          }
+                        </div>
+                      }
+
+                      @case ('Null / Ignore') {
+                        <div
+                          class="mapping-review-list"
+                          style="display: flex; flex-wrap: wrap; gap: 8px">
+                          @if (config.ignoreList && config.ignoreList.length > 0) {
+                            @for (item of config.ignoreList; track $index) {
+                              <div
+                                class="mapping-pill"
+                                style="
+                                  display: flex;
+                                  align-items: center;
+                                  background: rgba(244, 67, 54, 0.05);
+                                  padding: 4px 12px;
+                                  border-radius: 20px;
+                                  font-size: 13px;
+                                  border: 1px solid rgba(244, 67, 54, 0.2);
+                                ">
+                                <span class="old" style="font-family: monospace; color: #d32f2f">{{
+                                  item.sourceField
+                                }}</span>
+                                <mat-icon
+                                  style="
+                                    font-size: 16px;
+                                    width: 16px;
+                                    height: 16px;
+                                    margin-left: 8px;
+                                    color: #f44336;
+                                  "
+                                  >block</mat-icon
+                                >
+                              </div>
+                            }
+                          } @else {
+                            <div class="no-config-message">No fields marked for ignore.</div>
+                          }
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              } @else {
+                <div class="logic-summary-box">
+                  <p class="no-config-message">No rule logic configured.</p>
+                </div>
+              }
+            </div>
+
+            <p
+              class="final-confirmation-text"
+              style="
+                margin-top: 24px;
+                font-size: 13px;
+                color: #666;
+                font-style: italic;
+                text-align: center;
+              ">
+              Please ensure the logic above matches your deterministic requirements.
+            </p>
+          </div>
+        }
+
+        <footer
+          class="step-footer-actions"
+          [class.dark]="theme() === 'dark'"
+          [class.light]="theme() === 'light'">
+          @if (activeStep() > 0) {
+            <button mat-flat-button class="back-btn" (click)="prevStep()">Back</button>
+          }
+          <div style="flex: 1"></div>
+
+          @if (activeStep() < 3) {
+            <button
+              mat-flat-button
+              class="next-btn"
+              (click)="nextStep()"
+              [disabled]="!isStepValid(activeStep())">
+              Next
+            </button>
+          } @else {
+            <button mat-flat-button class="create-btn" (click)="confirmAction()">Create</button>
+          }
+        </footer>
+      </div>
+    </div>
+  </div>
+}

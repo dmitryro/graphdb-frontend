@@ -27,6 +27,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 // Import the Module for the NgModule, and the Class for the Component types
 import { MatMenu, MatMenuModule } from '@angular/material/menu';
 
@@ -81,6 +82,7 @@ import { UsersModule } from '@modules/users/users-module';
     MatFormFieldModule,
     MatMenuModule,
     MatTabsModule,
+    MatTooltipModule,
     MatSelectModule,
     MatDatepickerModule,
     MatNativeDateModule,
@@ -116,6 +118,17 @@ import { UsersModule } from '@modules/users/users-module';
 export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy {
   eventSubs?: Subscription;
 
+  // Define these as class properties or constants
+  private readonly CODE_SYSTEMS = [
+    'ICD-10',
+    'SNOMED CT',
+    'LOINC',
+    'ICD-9',
+    'RxNorm',
+    'CPT',
+    'Custom',
+  ];
+  private readonly CODE_STATUSES = ['Active', 'Superseded', 'Deprecated', 'Invalid'];
   // UI State
   activeTabIndex = 0;
   activeTabLabel = 'Models';
@@ -203,14 +216,20 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     'lastModified',
     'actions',
   ];
+
+  // NEW: Code detail panel state
+  showCodeDetail = false;
+  selectedCodeData: any = null;
+
   public versionColumns: string[] = ['versionTag', 'releasedBy', 'status', 'timestamp', 'actions'];
+  // UPDATED: Column structure
   public codeColumns: string[] = [
-    'valueSetName',
-    'category',
+    'codeSetName',
+    'system',
+    'meaning',
+    'version',
     'status',
-    'codeCount',
-    'references',
-    'lastModified',
+    'mappedTo',
     'actions',
   ];
   // DataSources
@@ -524,6 +543,14 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
+    // NEW: Handle code view navigation
+    if (target === 'VIEW_CODE') {
+      this.showCodeDetail = true;
+      this.updateBreadcrumbPath('View Code');
+      this.cdr.detectChanges();
+      return;
+    }
+
     // 3. Handle Root or Tab Navigation (Reset detail views)
     if (target === 'ROOT' || target.startsWith('TAB_')) {
       // Clear detail/edit states
@@ -531,7 +558,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       this.showModelDetail = false;
       this.selectedMappingData = null;
       this.selectedModelData = null;
-
+      this.showCodeDetail = false; // NEW: Reset code detail
+      this.selectedCodeData = null; // NEW: Reset selected code
       let targetIndex = this.activeTabIndex;
 
       // FIX: Ensure these indices match your template [Models(0), Mappings(1), etc.]
@@ -685,6 +713,20 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         container.classList.add('slide-out');
       }
     }, 0);
+  }
+
+  // NEW: Handle code row click
+  onCodeRowClick(code: any): void {
+    this.selectedCodeData = { ...code };
+    this.showCodeDetail = true;
+  }
+
+  // NEW: Close code detail panel
+  // Simple close - NO animation classes
+  onCloseCodeDetail(): void {
+    this.showCodeDetail = false;
+    this.selectedCodeData = null;
+    // CSS handles the transition automatically
   }
 
   // Add this method to handle closing the mapping detail view:
@@ -2213,23 +2255,72 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   // --- Actions ---
   addNewModel(): void {
-    this.eventService.publish('nf', 'add_normalization_model', {
+    // Signal the view component to toggle isOpen = true
+    this.eventService.publish('nf', 'open_new_model_modal', {
+      action: 'open_new_model_modal',
       theme: this.getActiveTheme(),
       mode: 'create',
     });
   }
 
   addNewMapping(): void {
-    this.eventService.publish('nf', 'add_normalization_mapping', {
+    // Signal the view component to toggle isOpen = true
+    this.eventService.publish('nf', 'open_new_mapping_modal', {
+      action: 'open_new_mapping_modal',
       theme: this.getActiveTheme(),
       mode: 'create',
     });
   }
 
   addNewRule(): void {
-    this.eventService.publish('nf', 'add_normalization_rule', {
-      theme: this.getActiveTheme(),
+    // Define the dynamic options based on your application state or constants
+    const metadataOptions = {
+      severities: ['Low', 'Medium', 'High', 'Critical'],
+      scopes: ['Field-level', 'Model-level', 'Source-level', 'System-level'],
+      triggers: ['On Ingestion', 'On Update', 'Manual', 'Immediate', 'Aggregate', 'Scheduled'],
+      logicTypes: [
+        'Value Mapping',
+        'Unit Conversion',
+        'Rename / Alias',
+        'Derived Value',
+        'Default Value',
+        'Null / Ignore',
+      ],
+      availableFields: [
+        'patient_id',
+        'first_name',
+        'last_name',
+        'dob',
+        'gender',
+        'postal_code',
+        'insurance_provider',
+        'height_in',
+        'weight_lb',
+        'temperature_f',
+        'blood_pressure',
+        'heart_rate',
+      ],
+      availableModels: [
+        'Clinical Observation v2',
+        'Patient Demographics v3',
+        'Lab Results v1',
+        'Vital Signs v2',
+        'Insurance Claims v1',
+      ],
+    };
+
+    this.eventService.publish('nf', 'open_new_normalization_rule_modal', {
+      action: 'open_new_normalization_rule_modal',
+      theme: this.getActiveTheme(), // 'dark' or 'light'
       mode: 'create',
+      targetModel: 'Clinical Observation v2', // The context for the modal
+      metadataOptions: metadataOptions,
+      defaults: {
+        name: '',
+        severity: 'Medium',
+        description:
+          'Describe what this transformation does, any assumptions, or when it should be used.',
+      },
     });
   }
 
@@ -2248,13 +2339,25 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   public addNewValueSet(): void {
     console.log('[Normalization] Opening dialog to add new Value Set');
 
-    // Example implementation:
-    // const dialogRef = this.dialog.open(ValueSetDialogComponent);
-    // dialogRef.afterClosed().subscribe(result => {
-    //   if (result) {
-    //     this.saveNewValueSet(result);
-    //   }
-    // });
+    // Package all metadata options and defaults into the payload
+    this.eventService.publish('nf', 'open_new_value_set_modal', {
+      theme: this.getActiveTheme(),
+      mode: 'create',
+      action: 'open_new_value_set_modal',
+
+      // Dynamic lists sent to the modal
+      metadataOptions: {
+        systems: this.CODE_SYSTEMS,
+        statuses: this.CODE_STATUSES,
+      },
+
+      // Default values to pre-populate Step 1
+      defaults: {
+        system: 'ICD-10',
+        status: 'Active',
+        version: new Date().getFullYear().toString(),
+      },
+    });
   }
 
   /**
@@ -2779,8 +2882,18 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     // 5. Code Systems Data
     this.originalCodeData = Array.from({ length: 35 }, (_, index) => {
-      const systems = ['SNOMED CT', 'LOINC', 'ICD-10-CM', 'RxNorm', 'CPT'];
-      const categories = ['Diagnosis', 'Lab Test', 'Demographics', 'Medication', 'Procedure'];
+      const systems = ['ICD-10', 'SNOMED CT', 'LOINC', 'ICD-9', 'RxNorm', 'CPT'];
+      const meanings = [
+        'Type 2 diabetes mellitus without complications',
+        'Diabetes mellitus type 2',
+        'Hemoglobin A1c / Mmol per Molar in Blood',
+        'Hemoglobin A1c % in Blood',
+        '32 code criteria',
+        'Long-term (current) use of insulin',
+      ];
+      const statusOptions = ['Active', 'Superseded', 'Deprecated', 'Invalid'];
+
+      // ADD THIS: Generate dateString like in other data generation
       const day = Math.max(1, 15 - (index % 14))
         .toString()
         .padStart(2, '0');
@@ -2788,15 +2901,40 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
       return {
         id: `code-${index}`,
-        valueSetName: `${systems[index % 5]} - ${index % 2 === 0 ? 'Core Set' : 'Extended'}`,
-        category: categories[index % 5],
-        status: index % 8 === 0 ? 'Draft' : 'Active',
-        codeCount: 150 + index * 12,
-        references: (index % 5) + 2,
+        codeSetName:
+          index % 6 === 0
+            ? 'E11.9'
+            : index % 6 === 1
+              ? 'SNOMED: 44054006'
+              : index % 6 === 2
+                ? '1975-2'
+                : index % 6 === 3
+                  ? '718-7'
+                  : index % 6 === 4
+                    ? 'Custom Risk Stratification'
+                    : `VS8.67`,
+        system: systems[index % 6],
+        meaning: meanings[index % 6],
+        version: index % 3 === 0 ? '4' : index % 3 === 1 ? '2' : '1.7',
+        status: statusOptions[index % 4],
+        mappedTo: index % 2 === 0 ? `ICD-10  E11.9` : index % 3 === 0 ? 'ICD-9  VS8.67' : '---',
         lastModified: dateString,
-        oid: `2.16.840.1.113883.6.${100 + index}`,
-        usage: usageTypes[index % 5],
-        source: systems[index % 5],
+
+        // Additional fields for detail view
+        canonicalId: index % 6 === 0 ? 'E11.9' : `CODE-${index}`,
+        codeType: 'Standard',
+        createdBy: 'System Mapping',
+        mappings: [
+          { name: 'Dx to Billing Map', target: 'A18.3' },
+          { name: 'Encounter Mapping', target: 'E11.65' },
+          { name: 'Lab Results Mapping', target: '250.00' },
+        ],
+        crosswalks: [
+          { from: 'ICD-9', to: 'ICD-10', code: '250.00', target: 'E11.9' },
+          { from: 'SNOMED', to: 'ICD-10', code: '44054006', target: 'E11.9' },
+        ],
+        validatedStatus: 'Validated',
+        validatedMessage: 'No issues found',
       };
     });
 

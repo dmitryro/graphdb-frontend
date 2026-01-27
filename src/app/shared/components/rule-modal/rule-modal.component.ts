@@ -65,8 +65,8 @@ export class RuleModalComponent implements OnInit, OnDestroy {
         const itemAction = payload?.action;
         // Unified check for the three primary rule signals
         const isRuleSignal =
-          ['add_rule', 'edit_rule', 'delete_rule'].includes(itemEvent) ||
-          ['add_rule', 'edit_rule', 'delete_rule'].includes(itemAction);
+          ['open_new_rule_modal', 'add_rule', 'edit_rule', 'delete_rule'].includes(itemEvent) ||
+          ['open_new_rule_modal', 'add_rule', 'edit_rule', 'delete_rule'].includes(itemAction);
 
         if (isRuleSignal) {
           this.theme = payload?.theme || 'dark';

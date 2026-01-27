@@ -281,6 +281,18 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.OpenNewModelModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseNewModelModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     case EventActionTypes.ViewRelatedModel: {
       return {
         ...state,
@@ -312,6 +324,42 @@ export function eventReducer(
       };
     }
     case EventActionTypes.ConfirmationResetConfirmed: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenNewValueSetModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseNewValueSetModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenNewRuleModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseNewRuleModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenNewNormalizationRuleModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseNewNormalizationRuleModal: {
       return {
         ...state,
         items: (action as any).payload,

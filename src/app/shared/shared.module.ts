@@ -43,6 +43,27 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     MatButtonToggleModule,
     MatRadioModule,
   ],
-  exports: [...fromComponents.components, StepHeaderDirective],
+  exports: [
+    ...fromComponents.components,
+    StepHeaderDirective,
+    // --- ADD THESE EXPORTS ---
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCardModule,
+    MatStepperModule,
+    MatButtonModule,
+    MatListModule,
+    MatCheckboxModule,
+    MatIconModule,
+    MatChipsModule,
+    MatProgressSpinnerModule,
+    MatSlideToggleModule,
+    MatButtonToggleModule,
+    MatRadioModule,
+  ],
 })
 export class SharedModule {}

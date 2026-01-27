@@ -1,0 +1,1222 @@
+// ============================================================================
+// 1. OVERLAY & CONTAINER
+// ============================================================================
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  width: 1100px;
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  overflow: visible; // Required for dropdowns to pop out
+  animation: modalIn 0.25s ease-out;
+  border: 1px solid #333;
+  position: relative;
+
+  &.dark {
+    background: #1e1e1e;
+    color: #e0e0e0;
+  }
+
+  &.light {
+    background: #fff;
+    color: #333;
+    border-color: #ddd;
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================================================
+// 2. HEADER
+// ============================================================================
+.modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  position: relative;
+  border-radius: 12px 12px 0 0;
+
+  .header-title {
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+  }
+
+  &.dark {
+    background: #252525;
+    .header-title h2 {
+      color: #e0e0e0;
+    }
+    button {
+      color: #e0e0e0;
+    }
+  }
+
+  &.light {
+    background: #f5f5f5;
+    border-color: #ddd;
+    .header-title h2 {
+      color: #333;
+    }
+    button {
+      color: #333;
+    }
+  }
+}
+
+// ============================================================================
+// 3. BODY & STEPPER
+// ============================================================================
+.modal-body {
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  position: relative;
+
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #fff;
+  }
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &.dark::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+  }
+  &.light::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+  }
+}
+
+.dark-stepper {
+  background: transparent !important;
+  ::ng-deep .mat-horizontal-stepper-header-container {
+    background: #252525 !important;
+    border-bottom: 1px solid #333;
+    padding: 8px 16px;
+    position: relative;
+    z-index: 5;
+  }
+  ::ng-deep .mat-step-header {
+    .mat-step-icon {
+      background-color: #3a3a3a !important;
+      color: #e0e0e0 !important;
+    }
+    .mat-step-icon-selected,
+    .mat-step-icon-state-edit {
+      background-color: #5b9bd5 !important;
+      color: #fff !important;
+    }
+    .mat-step-label {
+      color: #999 !important;
+    }
+    .mat-step-label-selected {
+      color: #e0e0e0 !important;
+    }
+    &:hover:not([aria-disabled='true']) {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+  }
+  ::ng-deep .mat-stepper-horizontal-line {
+    border-top-color: #333 !important;
+  }
+  ::ng-deep .mat-horizontal-content-container {
+    padding: 0 !important;
+    background: #1a1a1a;
+    overflow: visible !important;
+  }
+}
+
+.light-stepper {
+  ::ng-deep .mat-horizontal-stepper-header-container {
+    background: #f5f5f5 !important;
+    border-bottom: 1px solid #ddd;
+    padding: 8px 16px;
+    position: relative;
+    z-index: 5;
+  }
+  ::ng-deep .mat-step-header {
+    .mat-step-icon {
+      background-color: #e0e0e0 !important;
+      color: #333 !important;
+    }
+    .mat-step-icon-selected,
+    .mat-step-icon-state-edit {
+      background-color: #1976d2 !important;
+      color: #fff !important;
+    }
+    .mat-step-label {
+      color: #666 !important;
+    }
+    .mat-step-label-selected {
+      color: #333 !important;
+    }
+    &:hover:not([aria-disabled='true']) {
+      background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+  }
+  ::ng-deep .mat-stepper-horizontal-line {
+    border-top-color: #ddd !important;
+  }
+  ::ng-deep .mat-horizontal-content-container {
+    padding: 0 !important;
+    background: #fff;
+    overflow: visible !important;
+  }
+}
+
+// ============================================================================
+// 4. FORM CONTENT & FIELDS
+// ============================================================================
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 36px 48px 24px 48px;
+  min-height: 400px;
+  overflow: visible;
+}
+
+.step-description {
+  color: #999;
+  font-size: 14px;
+  margin: -8px 0 8px 0;
+  line-height: 1.5;
+}
+
+.step-title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.required-asterisk {
+  color: #f44336;
+}
+
+%field-label-fix {
+  ::ng-deep {
+    .mat-mdc-form-field {
+      overflow: visible !important;
+    }
+    .mat-mdc-text-field-wrapper {
+      height: 56px !important;
+      overflow: visible !important;
+    }
+    .mat-mdc-form-field-flex {
+      align-items: center !important;
+    }
+    .mdc-floating-label {
+      transform: translateY(-50%) !important;
+      top: 50% !important;
+      font-size: 15px !important;
+    }
+    .mdc-floating-label--float-above {
+      top: 28px !important;
+      transform: translateY(-40px) scale(0.8) !important;
+    }
+    .mat-mdc-form-field-infix {
+      padding: 0 !important;
+      min-height: 56px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+    input.mat-mdc-input-element {
+      margin-top: 8px !important;
+    }
+  }
+}
+
+// ──────────────────────────────────────────────
+// PLACEHOLDER OVERLAP & ANIMATION FIX
+// ──────────────────────────────────────────────
+.dark-field,
+.dark,
+.modal-container.dark,
+.dark-stepper,
+.step-content.dark {
+  ::ng-deep {
+    input,
+    textarea,
+    .mat-mdc-chip-input input,
+    .mat-mdc-form-field-infix input,
+    .mat-mdc-form-field-infix textarea {
+      color: #e0e0e0 !important;
+    }
+
+    input::placeholder,
+    textarea::placeholder,
+    .mdc-text-field__input::placeholder,
+    .mat-mdc-chip-input input::placeholder,
+    .mat-mdc-select-placeholder {
+      color: #a0a0a0 !important;
+      opacity: 0 !important; // Start hidden
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .mat-mdc-form-field.mat-form-field-should-float ::placeholder,
+    .mat-mdc-form-field.mat-focused ::placeholder,
+    .mdc-text-field--focused ::placeholder,
+    .mdc-text-field--filled.has-value ::placeholder {
+      opacity: 1 !important;
+    }
+
+    .mat-mdc-form-field-infix {
+      padding-left: 18px !important;
+      padding-right: 18px !important;
+    }
+
+    textarea.mat-mdc-input-element {
+      padding-top: 16px !important;
+      padding-left: 18px !important;
+    }
+
+    .mat-mdc-select-value,
+    .mat-mdc-select-value-text,
+    .mat-mdc-select-trigger {
+      color: #e8e8e8 !important;
+    }
+
+    .mat-mdc-select-arrow {
+      color: #999 !important;
+    }
+
+    .mat-mdc-form-field-label,
+    .mat-mdc-floating-label,
+    .mdc-floating-label,
+    .mat-mdc-form-field-hint,
+    mat-label {
+      color: #bbbbbb !important;
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #555 !important;
+    }
+    .mdc-text-field--focused .mdc-notched-outline__leading,
+    .mdc-text-field--focused .mdc-notched-outline__notch,
+    .mdc-text-field--focused .mdc-notched-outline__trailing {
+      border-color: #5b9bd5 !important;
+    }
+
+    // ──────────────────────────────────────────────
+    // CHECKBOX FIX - Dark Mode (BLUE, NOT RED)
+    // ──────────────────────────────────────────────
+    .mat-mdc-checkbox {
+      .mdc-checkbox__background {
+        border-color: #666 !important;
+      }
+      &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+        background-color: #5b9bd5 !important;
+        border-color: #5b9bd5 !important;
+      }
+      .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+        background-color: #5b9bd5 !important;
+        border-color: #5b9bd5 !important;
+      }
+      .mdc-checkbox__checkmark {
+        color: #fff !important;
+      }
+    }
+
+    // ──────────────────────────────────────────────
+    // RADIO BUTTON FIX - Dark Mode
+    // ──────────────────────────────────────────────
+    .mat-mdc-radio-button {
+      &.mat-mdc-radio-checked {
+        .mdc-radio__outer-circle {
+          border-color: #5b9bd5 !important;
+        }
+        .mdc-radio__inner-circle {
+          background-color: #5b9bd5 !important;
+        }
+      }
+      .mdc-radio__outer-circle {
+        border-color: #666 !important;
+      }
+    }
+  }
+}
+
+.dark-field {
+  @extend %field-label-fix;
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      background-color: transparent;
+    }
+    .mdc-text-field--filled {
+      background-color: #252525 !important;
+    }
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #444 !important;
+    }
+    label,
+    .mat-mdc-floating-label {
+      color: #999 !important;
+    }
+    input,
+    textarea {
+      color: #e0e0e0 !important;
+      caret-color: #5b9bd5 !important;
+    }
+    .mat-mdc-select-value {
+      color: #e0e0e0 !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #999 !important;
+    }
+    .mat-mdc-form-field-error {
+      color: #f44336 !important;
+    }
+  }
+}
+
+.light-field {
+  @extend %field-label-fix;
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      background-color: transparent;
+    }
+    .mdc-text-field--filled {
+      background-color: #fafafa !important;
+    }
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #ccc !important;
+    }
+    label,
+    .mat-mdc-floating-label {
+      color: #666 !important;
+    }
+    input,
+    textarea {
+      color: #333 !important;
+      caret-color: #1976d2 !important;
+    }
+    .mat-mdc-select-value {
+      color: #333 !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #666 !important;
+    }
+    .mat-mdc-form-field-error {
+      color: #d32f2f !important;
+    }
+
+    // CHECKBOX FIX - Light Mode (BLUE, NOT RED)
+    .mat-mdc-checkbox {
+      .mdc-checkbox__background {
+        border-color: #ccc !important;
+      }
+      &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+        background-color: #1976d2 !important;
+        border-color: #1976d2 !important;
+      }
+      .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+        background-color: #1976d2 !important;
+        border-color: #1976d2 !important;
+      }
+      .mdc-checkbox__checkmark {
+        color: #fff !important;
+      }
+    }
+
+    // RADIO BUTTON FIX - Light Mode
+    .mat-mdc-radio-button {
+      &.mat-mdc-radio-checked {
+        .mdc-radio__outer-circle {
+          border-color: #1976d2 !important;
+        }
+        .mdc-radio__inner-circle {
+          background-color: #1976d2 !important;
+        }
+      }
+      .mdc-radio__outer-circle {
+        border-color: #ccc !important;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// 5. TAGS SECTION WITH CHIP GRID
+// ============================================================================
+.tags-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+  label {
+    font-size: 14px;
+    color: #999;
+    font-weight: 500;
+  }
+  .tags-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tags-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.dark-field ::ng-deep .mat-mdc-chip-grid,
+.dark ::ng-deep .mat-mdc-chip-grid {
+  .mat-mdc-chip,
+  .mat-mdc-chip-row {
+    background-color: #333 !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444 !important;
+    span,
+    .mdc-evolution-chip__text-label {
+      color: #e0e0e0 !important;
+    }
+    .mat-icon,
+    .mat-mdc-chip-trailing-icon,
+    .mat-mdc-chip-remove {
+      color: #bbbbbb !important;
+      fill: #bbbbbb !important;
+      opacity: 1 !important;
+    }
+  }
+  input {
+    color: #e0e0e0 !important;
+  }
+  input::placeholder {
+    color: #a0a0a0 !important;
+  }
+}
+
+.light-field ::ng-deep .mat-mdc-chip-grid {
+  .mat-mdc-chip {
+    background-color: #e0e0e0 !important;
+    color: #333 !important;
+    border: 1px solid #ccc;
+    .mat-icon {
+      color: #666 !important;
+    }
+  }
+  input {
+    color: #333 !important;
+  }
+}
+
+// ============================================================================
+// 6. FIELDS TABLE (STEP 2) - FULL WIDTH BALANCED GRID
+// ============================================================================
+
+// COMPREHENSIVE CHECKBOX OVERRIDE - FORCE BLUE IN BOTH MODES
+.modal-container ::ng-deep {
+  .mat-mdc-checkbox {
+    // Unchecked state
+    .mdc-checkbox__background {
+      border-color: #666 !important;
+    }
+
+    // Checked state - BLUE (dark mode)
+    &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+      background-color: #5b9bd5 !important;
+      border-color: #5b9bd5 !important;
+    }
+
+    .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: #5b9bd5 !important;
+      border-color: #5b9bd5 !important;
+    }
+
+    // Checkmark color
+    .mdc-checkbox__checkmark {
+      color: #fff !important;
+    }
+
+    // Ripple/focus color
+    .mat-mdc-checkbox-ripple .mat-ripple-element {
+      background-color: #5b9bd5 !important;
+    }
+  }
+
+  // Light mode specific
+  &.light .mat-mdc-checkbox {
+    .mdc-checkbox__background {
+      border-color: #ccc !important;
+    }
+
+    &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+      background-color: #1976d2 !important;
+      border-color: #1976d2 !important;
+    }
+
+    .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: #1976d2 !important;
+      border-color: #1976d2 !important;
+    }
+
+    .mat-mdc-checkbox-ripple .mat-ripple-element {
+      background-color: #1976d2 !important;
+    }
+  }
+}
+
+.fields-table-header {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 0.6fr 2.5fr 1.5fr 48px;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #252525;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fields-list-container {
+  display: flex;
+  flex-direction: column;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: visible;
+  padding: 0 4px;
+  margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 0.6fr 2.5fr 1.5fr 48px;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+  overflow: visible !important;
+  width: 100%;
+  box-sizing: border-box;
+
+  .col-field-name,
+  .col-type,
+  .col-description,
+  .col-constraints {
+    mat-form-field {
+      width: 100%;
+    }
+    overflow: visible !important;
+  }
+
+  .col-type ::ng-deep {
+    .mat-mdc-select-trigger {
+      display: flex !important;
+      align-items: center !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .mat-mdc-select-value {
+      flex: 1 !important;
+      max-width: calc(100% - 24px) !important;
+    }
+  }
+
+  .col-required {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+  }
+
+  // CRITICAL FIX: Always show col-actions to maintain grid alignment
+  .col-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    min-width: 48px;
+
+    // TRASH ICON STYLING (MATCHING MAPPING MODAL - GREY/BLUE HOVER, NOT RED)
+    button.mat-mdc-icon-button,
+    .trash-btn {
+      color: #888 !important;
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      padding: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: rgba(91, 155, 213, 0.1) !important;
+        color: #5b9bd5 !important;
+      }
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+}
+
+// Light mode trash button hover
+.light .field-row .col-actions {
+  button.mat-mdc-icon-button:hover,
+  .trash-btn:hover {
+    background-color: rgba(25, 118, 210, 0.1) !important;
+    color: #1976d2 !important;
+  }
+}
+
+// ============================================================================
+// 7. DEPENDENCIES SECTION
+// ============================================================================
+.dependencies-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.add-dependency-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dependency-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  .flex-2 {
+    flex: 2;
+  }
+
+  // Trash button styling in dependency rows
+  button.mat-mdc-icon-button,
+  .trash-btn {
+    margin-bottom: 22px;
+    color: #888 !important;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: rgba(91, 155, 213, 0.1) !important;
+      color: #5b9bd5 !important;
+    }
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+// Light mode dependency trash button
+.light .dependency-row {
+  button.mat-mdc-icon-button:hover,
+  .trash-btn:hover {
+    background-color: rgba(25, 118, 210, 0.1) !important;
+    color: #1976d2 !important;
+  }
+}
+
+.dependencies-table {
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+  min-height: 200px;
+
+  &.dark {
+    border-color: #333;
+  }
+
+  &.light {
+    border-color: #ddd;
+  }
+
+  .table-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr;
+    gap: 16px;
+    padding: 12px 16px;
+    background: #252525;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #999;
+    border-bottom: 1px solid #333;
+  }
+
+  &.dark .table-header {
+    background: #252525;
+    color: #999;
+    border-bottom-color: #333;
+  }
+
+  &.light .table-header {
+    background: #f5f5f5;
+    color: #666;
+    border-bottom-color: #ddd;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+
+    .empty-message {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e0e0e0;
+      margin: 0 0 8px 0;
+    }
+
+    .empty-description {
+      font-size: 14px;
+      color: #999;
+      margin: 0;
+      max-width: 500px;
+      line-height: 1.5;
+    }
+  }
+
+  &.dark .empty-state {
+    background: #1a1a1a;
+
+    mat-icon {
+      color: #666;
+    }
+
+    .empty-message {
+      color: #e0e0e0;
+    }
+
+    .empty-description {
+      color: #999;
+    }
+  }
+
+  &.light .empty-state {
+    background: #fff;
+
+    mat-icon {
+      color: #999;
+    }
+
+    .empty-message {
+      color: #333;
+    }
+
+    .empty-description {
+      color: #666;
+    }
+  }
+}
+
+// ============================================================================
+// 8. REVIEW SECTIONS (STEP 4)
+// ============================================================================
+.review-section {
+  border: 1px solid #333;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  overflow: hidden;
+
+  &.dark {
+    border-color: #333;
+  }
+
+  &.light {
+    border-color: #ddd;
+  }
+
+  .review-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #252525;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #2a2a2a;
+    }
+
+    mat-icon {
+      color: #5b9bd5;
+    }
+
+    h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+  }
+
+  &.dark .review-section-header {
+    background: #252525;
+
+    &:hover {
+      background: #2a2a2a;
+    }
+
+    mat-icon {
+      color: #5b9bd5;
+    }
+
+    h4 {
+      color: #e0e0e0;
+    }
+  }
+
+  &.light .review-section-header {
+    background: #f5f5f5;
+
+    &:hover {
+      background: #eeeeee;
+    }
+
+    mat-icon {
+      color: #1976d2;
+    }
+
+    h4 {
+      color: #333;
+    }
+  }
+
+  .review-section-content {
+    padding: 16px;
+    background: #1a1a1a;
+  }
+
+  &.dark .review-section-content {
+    background: #1a1a1a;
+  }
+
+  &.light .review-section-content {
+    background: #fff;
+  }
+
+  .review-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    align-items: baseline;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .review-label {
+      min-width: 140px;
+      font-weight: 600;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .review-value {
+      color: #e0e0e0;
+      font-size: 14px;
+      flex: 1;
+
+      &.optional-text {
+        color: #666;
+        font-style: italic;
+      }
+    }
+  }
+
+  &.dark .review-row {
+    .review-label {
+      color: #999;
+    }
+
+    .review-value {
+      color: #e0e0e0;
+
+      &.optional-text {
+        color: #666;
+      }
+    }
+  }
+
+  &.light .review-row {
+    .review-label {
+      color: #666;
+    }
+
+    .review-value {
+      color: #333;
+
+      &.optional-text {
+        color: #999;
+      }
+    }
+  }
+}
+
+.review-table-container {
+  overflow-x: auto;
+
+  .review-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead {
+      tr {
+        background: #252525;
+        border-bottom: 1px solid #333;
+      }
+
+      th {
+        padding: 12px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #999;
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid #333;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background: #252525;
+        }
+      }
+
+      td {
+        padding: 12px;
+        color: #e0e0e0;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// Light mode review table
+.light {
+  .review-table-container .review-table {
+    thead {
+      tr {
+        background: #f5f5f5;
+        border-bottom-color: #ddd;
+      }
+
+      th {
+        color: #666;
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom-color: #eee;
+
+        &:hover {
+          background: #fafafa;
+        }
+      }
+
+      td {
+        color: #333;
+      }
+    }
+  }
+}
+
+.type-badge {
+  background: rgba(91, 155, 213, 0.15);
+  color: #5b9bd5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.light .type-badge {
+  background: rgba(25, 118, 210, 0.15);
+  color: #1976d2;
+}
+
+// ============================================================================
+// 9. UTILITY ROWS
+// ============================================================================
+.form-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  overflow: visible;
+  .flex-1 {
+    flex: 1;
+  }
+  .flex-2 {
+    flex: 2;
+  }
+}
+
+// ============================================================================
+// 10. BUTTONS
+// ============================================================================
+.add-btn {
+  width: fit-content;
+  margin-bottom: 8px;
+  border-style: dashed !important;
+  color: #5b9bd5 !important;
+  border-color: #5b9bd5 !important;
+  mat-icon {
+    margin-right: 4px;
+  }
+}
+
+// ============================================================================
+// 11. ACTIONS - FIXED LAYOUT
+// ============================================================================
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding: 16px 24px;
+  border-top: 1px solid #333;
+  background: inherit;
+  z-index: 10;
+  position: relative;
+  &.light {
+    border-top-color: #ddd;
+  }
+}
+
+// BUTTON STYLING - BLUE FOR ALL
+.modal-container.dark ::ng-deep {
+  button[mat-flat-button][color='primary'],
+  button[mat-flat-button][matStepperNext],
+  button[mat-flat-button][matStepperPrevious],
+  .step-actions button[mat-flat-button],
+  button[mat-flat-button].next-btn,
+  button[mat-flat-button].back-btn,
+  button[mat-button][matStepperPrevious],
+  button[mat-button][matStepperNext] {
+    background-color: #5b9bd5 !important;
+    color: #fff !important;
+  }
+  button[mat-button] {
+    color: #e0e0e0 !important;
+  }
+}
+
+.modal-container.light ::ng-deep {
+  button[mat-flat-button][color='primary'],
+  button[mat-flat-button][matStepperNext],
+  button[mat-flat-button][matStepperPrevious],
+  .step-actions button[mat-flat-button],
+  button[mat-flat-button].next-btn,
+  button[mat-flat-button].back-btn,
+  button[mat-button][matStepperPrevious],
+  button[mat-button][matStepperNext] {
+    background-color: #1976d2 !important;
+    color: #fff !important;
+  }
+  button[mat-button] {
+    color: #333 !important;
+  }
+  .add-btn {
+    color: #1976d2 !important;
+    border-color: #1976d2 !important;
+  }
+  .fields-table-header {
+    background: #f5f5f5;
+    color: #666;
+  }
+  .review-section {
+    border-color: #ddd;
+    .review-section-header {
+      background: #f5f5f5;
+      h4 {
+        color: #333;
+      }
+    }
+    .review-section-content {
+      background: #fff;
+    }
+  }
+}
