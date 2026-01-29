@@ -48,6 +48,7 @@ import { ViewMappingComponent } from './view-mapping/view-mapping.component';
 import { EditMappingComponent } from './edit-mapping/edit-mapping.component';
 import { UsageImpactDrawerComponent } from './usage-impact-drawer/usage-impact-drawer.component';
 // Add these imports at the top with the other component imports:
+import { EditCodeComponent } from './edit-code/edit-code.component';
 import { EditModelComponent } from './edit-model/edit-model.component';
 import { ViewModelComponent } from './view-model/view-model.component';
 // Core Date Imports
@@ -87,6 +88,7 @@ import { UsersModule } from '@modules/users/users-module';
     MatDatepickerModule,
     MatNativeDateModule,
     UsersModule,
+    EditCodeComponent,
     ViewMappingComponent,
     EditMappingComponent,
     ViewModelComponent,
@@ -220,6 +222,10 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   // NEW: Code detail panel state
   showCodeDetail = false;
   selectedCodeData: any = null;
+
+  // Edit Code state
+  showEditCode = false;
+  isEditingCode = false;
 
   public versionColumns: string[] = ['versionTag', 'releasedBy', 'status', 'timestamp', 'actions'];
   // UPDATED: Column structure
@@ -439,7 +445,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnInit(): void {
     this.loadAllData();
-    this.subscribeEvents();
+    this.subscribeToEvents();
 
     this.modelDateRange.valueChanges.subscribe(() => {
       this.applyModelFilter();
@@ -524,6 +530,17 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
+    // ADD THIS BLOCK:
+    if (target === 'VIEW_CODE') {
+      this.showCodeDetail = true;
+      this.eventService.publish('nf', 'close_edit_code', {
+        codeId: this.selectedCodeData?.id,
+      });
+      this.updateBreadcrumbPath('View Code');
+      this.cdr.detectChanges();
+      return;
+    }
+
     // 2. Handle "View" views (Back navigation from Edit)
     if (target === 'VIEW_MAPPING') {
       this.showMappingDetail = true;
@@ -543,14 +560,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
-    // NEW: Handle code view navigation
-    if (target === 'VIEW_CODE') {
-      this.showCodeDetail = true;
-      this.updateBreadcrumbPath('View Code');
-      this.cdr.detectChanges();
-      return;
-    }
-
     // 3. Handle Root or Tab Navigation (Reset detail views)
     if (target === 'ROOT' || target.startsWith('TAB_')) {
       // Clear detail/edit states
@@ -560,6 +569,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       this.selectedModelData = null;
       this.showCodeDetail = false; // NEW: Reset code detail
       this.selectedCodeData = null; // NEW: Reset selected code
+      this.showEditCode = false;
+      this.isEditingCode = false;
       let targetIndex = this.activeTabIndex;
 
       // FIX: Ensure these indices match your template [Models(0), Mappings(1), etc.]
@@ -726,7 +737,44 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   onCloseCodeDetail(): void {
     this.showCodeDetail = false;
     this.selectedCodeData = null;
-    // CSS handles the transition automatically
+  }
+
+  /**
+   * Opens Edit Code component with proper animation and state management
+   */
+  onEditCodeClick(codeRow: any): void {
+    this.isEditingCode = true;
+    this.showEditCode = true;
+    this.selectedCodeData = { ...codeRow };
+
+    // Breadcrumb: Normalization > Codes > Edit Code: {name}
+    const breadcrumbPath = [
+      { label: 'Normalization', target: 'ROOT' },
+      { label: 'Codes', target: 'TAB_CODES' },
+      { label: `Edit Code: ${this.selectedCodeData?.codeSetName}`, active: true },
+    ];
+    this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
+
+    this.eventService.publish('nf', 'open_edit_code', {
+      action: 'open_edit_code',
+      codeId: this.selectedCodeData?.id,
+      fullData: this.selectedCodeData,
+    });
+  }
+
+  onCloseEditCode(): void {
+    this.isEditingCode = false;
+    this.showEditCode = false;
+    // showCodeDetail stays true - panel remains visible
+
+    // Breadcrumb: back to just Codes
+    const breadcrumbPath = [
+      { label: 'Normalization', target: 'ROOT' },
+      { label: 'Codes', active: true },
+    ];
+    this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
+
+    this.cdr.detectChanges();
   }
 
   // Add this method to handle closing the mapping detail view:
@@ -801,7 +849,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
    * Listen for events from the NgRx Store via EventService.
    * Updated to correctly extract payload data from the EventService's nested structure.
    */
-  subscribeEvents(): void {
+  subscribeToEvents(): void {
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       const lastAction = state?.lastAction;
       const eventName = state?.items?.event;
@@ -828,7 +876,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       }
 
       // Handle navigation to a related model
-      // Inside subscribeEvents() in normalization.component.ts
+      // Inside subscribeToEvents() in normalization.component.ts
       if (eventName === 'view_related_model' && eventData) {
         // Pass the whole payload { modelName, modelId }
         this.handleRelatedModelNavigation({
@@ -860,6 +908,19 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         this.isExiting = true;
       }
 
+      // Handle code edit events
+      if (eventName === 'open_edit_code') {
+        this.isEditingCode = true;
+        this.showEditCode = true;
+        this.isExiting = false;
+      }
+
+      if (eventName === 'close_edit_code') {
+        this.isEditingCode = false;
+        this.showEditCode = false;
+        this.isExiting = true;
+      }
+
       // 2. Handle Theme Change Events
       if (eventName === 'theme_change' || lastAction === 'theme_updated') {
         console.log('[NormalizationComponent] Theme change detected, reapplying layout fixes...');
@@ -876,7 +937,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
       // 3. Handle Breadcrumb Navigation Signals
       // This allows the breadcrumb click to trigger handleNavigation()
-      // Inside subscribeEvents() around line 721
+      // Inside subscribeToEvents() around line 721
       if (eventName === 'breadcrumb_navigate' && eventData) {
         // FIX: Change handleNavigation to handleBreadcrumbNavigation
         this.handleBreadcrumbNavigation(eventData.target);
@@ -2365,9 +2426,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
    * Transactions are logged to the graph of events per MPI requirements.
    */
   public editValueSet(item: any): void {
-    console.log('[Normalization] Editing Value Set:', item.valueSetName);
-    // Implementation logic for opening edit modal
-    // Ensure that on save, execute_merge_query_with_context is called
+    console.log('[Normalization] Editing Code:', item);
+    this.onEditCodeClick(item);
   }
 
   /**

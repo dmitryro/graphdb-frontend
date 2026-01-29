@@ -1,0 +1,131 @@
+@if (isOpen()) {
+  <div class="modal-overlay" (click)="close()">
+    <div
+      class="modal-container"
+      [class.dark]="theme() === 'dark'"
+      [class.light]="theme() === 'light'"
+      (click)="$event.stopPropagation()">
+      <header
+        class="modal-header"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <h2>Add New Code</h2>
+        <button mat-icon-button (click)="close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <div
+        class="modal-subheader"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <p>
+          Add a new code to this Code Set. All codes must follow the structure and constraints
+          defined for this set.
+        </p>
+      </div>
+
+      <div class="modal-body" [class.dark]="theme() === 'dark'" [class.light]="theme() === 'light'">
+        <div
+          class="context-display"
+          [class.dark]="theme() === 'dark'"
+          [class.light]="theme() === 'light'">
+          <mat-icon>info_outline</mat-icon>
+          <div class="context-content">
+            <div class="context-row">
+              <span class="context-label">Code Set Name:</span>
+              <span class="context-value">{{ codeSetName() }}</span>
+            </div>
+            <div class="context-row">
+              <span class="context-label">Code Value Type:</span>
+              <span class="context-value">{{ codeValueType() }}</span>
+            </div>
+            <div class="context-row">
+              <span class="context-label">Uniqueness Scope:</span>
+              <span class="context-value">{{
+                uniquenessScope() === 'local' ? 'Unique within this Code Set' : 'Globally unique'
+              }}</span>
+            </div>
+            <div class="context-row">
+              <span class="context-label">Required Attributes:</span>
+              <span class="context-value">{{ requiredAttributes }}</span>
+            </div>
+          </div>
+        </div>
+
+        <form [formGroup]="codeForm" class="code-form">
+          <mat-form-field
+            appearance="outline"
+            class="full-width"
+            [class.dark-field]="theme() === 'dark'"
+            [class.light-field]="theme() === 'light'">
+            <mat-label>Code Value</mat-label>
+            <input
+              matInput
+              formControlName="codeValue"
+              [placeholder]="getCodeValuePlaceholder()"
+              required />
+            <mat-hint>{{ getCodeValueHint() }}</mat-hint>
+            @if (codeForm.get('codeValue')?.touched && getCodeValueError()) {
+              <mat-error>{{ getCodeValueError() }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field
+            appearance="outline"
+            class="full-width"
+            [class.dark-field]="theme() === 'dark'"
+            [class.light-field]="theme() === 'light'">
+            <mat-label>Label</mat-label>
+            <input
+              matInput
+              formControlName="label"
+              placeholder="Enter human-readable label..."
+              required />
+            <mat-hint>Human-readable display name for this code.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field
+            appearance="outline"
+            class="full-width"
+            [class.dark-field]="theme() === 'dark'"
+            [class.light-field]="theme() === 'light'">
+            <mat-label>Description (optional)</mat-label>
+            <textarea
+              matInput
+              formControlName="description"
+              rows="3"
+              placeholder="Enter optional description..."></textarea>
+          </mat-form-field>
+
+          <mat-form-field
+            appearance="outline"
+            class="full-width"
+            [class.dark-field]="theme() === 'dark'"
+            [class.light-field]="theme() === 'light'">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status" required>
+              @for (status of availableStatuses; track status) {
+                <mat-option [value]="status">{{ status }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint
+              >Deprecated codes remain valid historically but should not be used for new
+              mappings.</mat-hint
+            >
+          </mat-form-field>
+        </form>
+      </div>
+
+      <div
+        class="modal-footer"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <button mat-flat-button class="cancel-btn" (click)="close()">Cancel</button>
+        <button mat-flat-button class="add-btn" (click)="addCode()" [disabled]="codeForm.invalid">
+          Add Code
+        </button>
+      </div>
+    </div>
+  </div>
+}

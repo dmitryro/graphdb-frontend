@@ -185,6 +185,18 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.OpenEditCode: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseEditCode: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     case EventActionTypes.OpenEditModel: {
       return {
         ...state,
@@ -305,6 +317,12 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.ConfirmationDiscardConfirmed: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     case EventActionTypes.ConfirmationDeleteConfirmed: {
       return {
         ...state,
@@ -360,6 +378,24 @@ export function eventReducer(
       };
     }
     case EventActionTypes.CloseNewNormalizationRuleModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenAddNewCodeModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseAddNewCodeModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CodeAddedToSet: {
       return {
         ...state,
         items: (action as any).payload,

@@ -1,5 +1,7 @@
 // ============================================================================
-// 1. OVERLAY, CONTAINER & ANIMATIONS
+// COMPLETE SCSS WITH STEP-CONTENT-WRAPPER FIX - BUTTONS ALWAYS VISIBLE
+// ============================================================================
+// 1. OVERLAY & CONTAINER
 // ============================================================================
 .modal-overlay {
   position: fixed;
@@ -14,32 +16,28 @@
   justify-content: center;
   z-index: 1000;
 }
-
 .modal-container {
-  width: 900px;
+  width: 1100px;
   max-width: 95vw;
   max-height: 90vh;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
-  position: relative;
+  overflow: hidden; // CRITICAL: Must be hidden for wrapper to work
   animation: modalIn 0.25s ease-out;
-
+  border: 1px solid #333;
+  position: relative;
   &.dark {
     background: #1e1e1e;
     color: #e0e0e0;
-    border: 1px solid #333;
   }
-
   &.light {
     background: #fff;
     color: #333;
-    border: 1px solid #ddd;
+    border-color: #ddd;
   }
 }
-
 @keyframes modalIn {
   from {
     opacity: 0;
@@ -50,515 +48,1049 @@
     transform: translateY(0);
   }
 }
-
 // ============================================================================
 // 2. HEADER
 // ============================================================================
 .modal-header {
   padding: 16px 24px;
+  border-bottom: 1px solid #333;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0; // Never shrink
   z-index: 10;
-
-  .header-title {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-
-    mat-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-    }
-
+  position: relative;
+  border-radius: 12px 12px 0 0;
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  &.dark {
+    background: #252525;
+    border-bottom-color: #333;
     h2 {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 600;
+      color: #e0e0e0;
     }
-
-    .subtitle {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    button {
+      color: #e0e0e0;
     }
   }
-
+  &.light {
+    background: #f5f5f5;
+    border-bottom-color: #ddd;
+    h2 {
+      color: #333;
+    }
+    button {
+      color: #333;
+    }
+  }
+}
+// ============================================================================
+// 3. STEPPER
+// ============================================================================
+.stepper-nav {
+  display: flex;
+  padding: 16px 24px;
+  gap: 32px;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0; // Never shrink
   &.dark {
     background: #252525;
     border-bottom: 1px solid #333;
-    .header-title {
-      mat-icon {
-        color: #5b9bd5;
-      }
-      .subtitle {
-        color: #999;
-      }
-    }
   }
-
   &.light {
     background: #f5f5f5;
     border-bottom: 1px solid #ddd;
-    .header-title {
+  }
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .step-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
       mat-icon {
-        color: #1976d2;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
       }
-      .subtitle {
+    }
+    .step-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    &:not(.active):not(.completed) {
+      .step-circle {
+        background: #3a3a3a;
+        color: #999;
+      }
+      .step-label {
+        color: #999;
+      }
+    }
+    &.active {
+      .step-circle {
+        background: #5b9bd5 !important;
+        color: #fff;
+      }
+      .step-label {
+        color: #e0e0e0;
+      }
+    }
+    &.completed {
+      .step-circle {
+        background: #5b9bd5 !important;
+        color: #fff;
+      }
+      .step-label {
+        color: #e0e0e0;
+      }
+    }
+  }
+  &.light .step-item {
+    &:not(.active):not(.completed) {
+      .step-circle {
+        background: #e0e0e0;
+        color: #666;
+      }
+      .step-label {
         color: #666;
       }
     }
-  }
-}
-
-// ============================================================================
-// 3. STEPPER CUSTOMIZATION
-// ============================================================================
-.dark-stepper,
-.light-stepper {
-  background: transparent !important;
-
-  ::ng-deep {
-    .mat-horizontal-stepper-header-container {
-      padding: 8px 16px;
+    &.active {
+      .step-circle {
+        background: #1976d2 !important;
+      }
+      .step-label {
+        color: #333;
+      }
     }
-    .mat-horizontal-content-container {
-      padding: 0 !important;
-      overflow: visible !important;
-    }
-    .mat-step-header {
-      border-radius: 4px;
+    &.completed {
+      .step-circle {
+        background: #1976d2 !important;
+      }
+      .step-label {
+        color: #333;
+      }
     }
   }
 }
-
-.dark-stepper ::ng-deep {
-  .mat-horizontal-stepper-header-container {
-    background: #252525 !important;
-    border-bottom: 1px solid #333;
-  }
-  .mat-step-icon {
-    background-color: #3a3a3a !important;
-    color: #e0e0e0 !important;
-  }
-  .mat-step-icon-selected,
-  .mat-step-icon-state-edit {
-    background-color: #5b9bd5 !important;
-  }
-  .mat-step-label {
-    color: #999 !important;
-  }
-  .mat-step-label-selected {
-    color: #e0e0e0 !important;
-  }
-}
-
-.light-stepper ::ng-deep {
-  .mat-horizontal-stepper-header-container {
-    background: #f5f5f5 !important;
-    border-bottom: 1px solid #ddd;
-  }
-  .mat-step-icon-selected,
-  .mat-step-icon-state-edit {
-    background-color: #1976d2 !important;
-  }
-}
-
 // ============================================================================
-// 4. FORM FIELDS & PLACEHOLDER FIXES
+// 4. STEP CONTENT WRAPPER - CRITICAL FIX FOR BUTTONS
+// ============================================================================
+.step-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1; // Takes remaining space
+  min-height: 0; // Critical for flex
+  overflow: hidden; // Contains scrolling
+
+  &.dark {
+    background: #1a1a1a;
+  }
+  &.light {
+    background: #fff;
+  }
+}
+// ============================================================================
+// 5. STEP CONTENT (SCROLLABLE)
+// ============================================================================
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px 48px;
+  flex: 1; // Takes remaining space
+  overflow-y: auto; // Scrolls if content is too long
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+  }
+  &.light::-webkit-scrollbar-thumb,
+  .light &::-webkit-scrollbar-thumb {
+    background: #ccc;
+  }
+
+  .step-description {
+    color: #999;
+    font-size: 14px;
+    margin: 0 0 16px 0;
+    line-height: 1.6;
+  }
+  &.dark .step-description {
+    color: #999;
+  }
+  &.light .step-description {
+    color: #666;
+  }
+}
+.required-asterisk {
+  color: #f44336;
+}
+// ============================================================================
+// 6. FORM FIELDS
 // ============================================================================
 %field-label-fix {
   ::ng-deep {
     .mat-mdc-form-field {
       overflow: visible !important;
+      width: 100%;
+      margin-bottom: 20px !important;
     }
     .mat-mdc-text-field-wrapper {
       height: 56px !important;
+      overflow: visible !important;
+    }
+    .mat-mdc-form-field-flex {
+      align-items: center !important;
     }
     .mdc-floating-label {
-      top: 50% !important;
       transform: translateY(-50%) !important;
+      top: 50% !important;
+      font-size: 15px !important;
+      transition: all 0.2s ease !important;
     }
     .mdc-floating-label--float-above {
       top: 28px !important;
       transform: translateY(-40px) scale(0.8) !important;
     }
+    .mat-mdc-form-field-infix {
+      padding: 0 !important;
+      min-height: 56px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+    input.mat-mdc-input-element {
+      margin-top: 8px !important;
+    }
+    .mat-mdc-form-field-subscript-wrapper {
+      position: absolute !important;
+      bottom: -16px !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: auto !important;
+      pointer-events: none !important;
+      padding: 0 16px !important;
+    }
+    .mat-mdc-form-field-hint {
+      font-size: 12px !important;
+      line-height: 1.4 !important;
+      white-space: normal !important;
+      margin: 0 !important;
+    }
   }
 }
-
+// DARK MODE FIELDS
 .dark-field,
-.dark {
+.dark,
+.modal-container.dark,
+.step-content.dark {
   @extend %field-label-fix;
-
   ::ng-deep {
-    // Input text color
     input,
-    textarea {
-      color: #ffffff !important;
+    textarea,
+    .mat-mdc-chip-input input,
+    .mat-mdc-form-field-infix input,
+    .mat-mdc-form-field-infix textarea {
+      color: #e0e0e0 !important;
       caret-color: #5b9bd5 !important;
     }
-
-    // Placeholder logic: Only show when label floats to avoid overlap
-    .mat-mdc-input-element::placeholder {
-      color: rgba(255, 255, 255, 0.4) !important;
+    input::placeholder,
+    textarea::placeholder,
+    .mdc-text-field__input::placeholder,
+    .mat-mdc-chip-input input::placeholder,
+    .mat-mdc-select-placeholder {
+      color: #a0a0a0 !important;
       opacity: 0 !important;
-      transition: opacity 0.2s;
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
-
-    .mat-form-field-should-float .mat-mdc-input-element::placeholder {
+    .mat-mdc-form-field.mat-form-field-should-float ::placeholder,
+    .mat-mdc-form-field.mat-focused ::placeholder,
+    .mdc-text-field--focused ::placeholder,
+    .mdc-text-field--filled.has-value ::placeholder {
       opacity: 1 !important;
     }
-
-    // Outline borders
+    .mat-mdc-form-field-infix {
+      padding-left: 18px !important;
+      padding-right: 18px !important;
+    }
+    textarea.mat-mdc-input-element {
+      padding-top: 16px !important;
+      padding-left: 18px !important;
+    }
+    .mat-mdc-select-value,
+    .mat-mdc-select-value-text,
+    .mat-mdc-select-trigger {
+      color: #e8e8e8 !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #999 !important;
+    }
+    .mat-mdc-form-field-label,
+    .mat-mdc-floating-label,
+    .mdc-floating-label,
+    .mat-mdc-form-field-hint,
+    mat-label {
+      color: #bbbbbb !important;
+    }
     .mdc-notched-outline__leading,
     .mdc-notched-outline__notch,
     .mdc-notched-outline__trailing {
-      border-color: #444 !important;
+      border-color: #555 !important;
     }
-
-    .mdc-text-field--focused {
-      .mdc-notched-outline__leading,
-      .mdc-notched-outline__notch,
-      .mdc-notched-outline__trailing {
+    .mdc-text-field--focused .mdc-notched-outline__leading,
+    .mdc-text-field--focused .mdc-notched-outline__notch,
+    .mdc-text-field--focused .mdc-notched-outline__trailing {
+      border-color: #5b9bd5 !important;
+    }
+    .mat-mdc-form-field-error {
+      color: #f44336 !important;
+    }
+  }
+}
+// LIGHT MODE FIELDS
+.light-field,
+.light,
+.modal-container.light,
+.step-content.light {
+  @extend %field-label-fix;
+  ::ng-deep {
+    input,
+    textarea {
+      color: #333 !important;
+      caret-color: #1976d2 !important;
+    }
+    input::placeholder,
+    textarea::placeholder,
+    .mdc-text-field__input::placeholder {
+      color: #999 !important;
+      opacity: 0 !important;
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .mat-mdc-form-field.mat-form-field-should-float ::placeholder,
+    .mat-mdc-form-field.mat-focused ::placeholder,
+    .mdc-text-field--focused ::placeholder,
+    .mdc-text-field--filled.has-value ::placeholder {
+      opacity: 1 !important;
+    }
+    .mat-mdc-select-value {
+      color: #333 !important;
+    }
+    .mat-mdc-select-arrow {
+      color: #666 !important;
+    }
+    .mat-mdc-form-field-label,
+    .mat-mdc-floating-label,
+    mat-label {
+      color: #666 !important;
+    }
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #ccc !important;
+    }
+    .mdc-text-field--focused .mdc-notched-outline__leading,
+    .mdc-text-field--focused .mdc-notched-outline__notch,
+    .mdc-text-field--focused .mdc-notched-outline__trailing {
+      border-color: #1976d2 !important;
+    }
+  }
+}
+// ============================================================================
+// 7. RADIO BUTTONS & CHECKBOXES
+// ============================================================================
+.form-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+  .group-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .group-hint {
+    font-size: 12px;
+    opacity: 0.6;
+    margin-top: 8px;
+  }
+  .radio-group-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    ::ng-deep .mat-mdc-radio-button {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 12px 16px;
+      border: 1px solid;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      .mdc-radio {
+        margin-bottom: 8px;
+      }
+      .mdc-label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
+      }
+      .radio-label {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .radio-hint {
+        font-size: 12px;
+        opacity: 0.7;
+      }
+    }
+    &.dark ::ng-deep .mat-mdc-radio-button {
+      border-color: #333;
+      background: #252525;
+      &:hover {
+        border-color: #5b9bd5;
+      }
+      &.mat-mdc-radio-checked {
+        border-color: #5b9bd5;
+        background: rgba(91, 155, 213, 0.1);
+      }
+    }
+    &.light ::ng-deep .mat-mdc-radio-button {
+      border-color: #ddd;
+      background: #fff;
+      &:hover {
+        border-color: #1976d2;
+      }
+      &.mat-mdc-radio-checked {
+        border-color: #1976d2;
+        background: rgba(25, 118, 210, 0.05);
+      }
+    }
+  }
+}
+.modal-container.dark ::ng-deep {
+  .mat-mdc-radio-button {
+    .mdc-radio__outer-circle {
+      border-color: #666 !important;
+    }
+    &.mat-mdc-radio-checked {
+      .mdc-radio__outer-circle {
+        border-color: #5b9bd5 !important;
+      }
+      .mdc-radio__inner-circle {
+        background-color: #5b9bd5 !important;
         border-color: #5b9bd5 !important;
       }
     }
-
-    // Labels
-    .mat-mdc-floating-label,
-    mat-label {
-      color: #999 !important;
+    .mdc-label {
+      color: #e0e0e0 !important;
     }
-
-    // Select styling
-    .mat-mdc-select-value {
-      color: #ffffff !important;
+  }
+  .mat-mdc-checkbox {
+    .mdc-checkbox__background {
+      border-color: #666 !important;
     }
-
-    .mat-mdc-select-arrow svg {
-      fill: rgba(255, 255, 255, 0.7) !important;
+    &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+      background-color: #5b9bd5 !important;
+      border-color: #5b9bd5 !important;
+    }
+    .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: #5b9bd5 !important;
+      border-color: #5b9bd5 !important;
+    }
+    .mdc-checkbox__checkmark {
+      color: #fff !important;
+    }
+    .mdc-label {
+      color: #e0e0e0 !important;
     }
   }
 }
-
-.light-field {
-  @extend %field-label-fix;
-
-  ::ng-deep {
-    .mdc-text-field--focused {
-      .mdc-notched-outline__leading,
-      .mdc-notched-outline__notch,
-      .mdc-notched-outline__trailing {
+.modal-container.light ::ng-deep {
+  .mat-mdc-radio-button {
+    .mdc-radio__outer-circle {
+      border-color: #ccc !important;
+    }
+    &.mat-mdc-radio-checked {
+      .mdc-radio__outer-circle {
+        border-color: #1976d2 !important;
+      }
+      .mdc-radio__inner-circle {
+        background-color: #1976d2 !important;
         border-color: #1976d2 !important;
       }
     }
+    .mdc-label {
+      color: #333 !important;
+    }
+  }
+  .mat-mdc-checkbox {
+    .mdc-checkbox__background {
+      border-color: #ccc !important;
+    }
+    &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+      background-color: #1976d2 !important;
+      border-color: #1976d2 !important;
+    }
+    .mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+      background-color: #1976d2 !important;
+      border-color: #1976d2 !important;
+    }
+    .mdc-checkbox__checkmark {
+      color: #fff !important;
+    }
+    .mdc-label {
+      color: #333 !important;
+    }
   }
 }
-
 // ============================================================================
-// 5. FORM LAYOUT
+// 8. TOGGLE CONTAINER
 // ============================================================================
-.step-content {
+.toggle-container {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 32px 40px;
-  min-height: 400px;
-
-  &.dark {
-    background: #1a1a1a;
-  }
-
-  &.light {
-    background: #fff;
-  }
-}
-
-.form-row {
-  display: flex;
-  gap: 16px;
-  width: 100%;
-
-  .flex-1 {
+  gap: 8px;
+  margin: 16px 0;
+  .toggle-button {
     flex: 1;
-  }
-
-  .flex-2 {
-    flex: 2;
-  }
-}
-
-// ============================================================================
-// 6. VALUES STEP - TABLE LAYOUT
-// ============================================================================
-$col-code-width: 35%;
-$col-display-width: 55%;
-$col-actions-width: 10%;
-
-.step-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 32px 40px;
-  min-height: 420px;
-
-  &.dark {
-    background: #1a1a1a;
-  }
-
-  &.light {
-    background: #fff;
+    padding: 12px 16px;
+    border: 2px solid #555;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #e0e0e0;
+    &:hover {
+      border-color: #5b9bd5;
+      background: rgba(91, 155, 213, 0.1);
+    }
+    &.active {
+      border-color: #5b9bd5;
+      background: rgba(91, 155, 213, 0.15);
+      color: #5b9bd5;
+      font-weight: 600;
+    }
   }
 }
-
-.mapping-card {
-  border: 1px solid #ddd;
+.modal-container.light .toggle-container,
+.toggle-container.light {
+  .toggle-button {
+    border-color: #ddd;
+    color: #333;
+    &:hover {
+      border-color: #1976d2;
+      background: rgba(25, 118, 210, 0.05);
+    }
+    &.active {
+      border-color: #1976d2;
+      background: rgba(25, 118, 210, 0.1);
+      color: #1976d2;
+    }
+  }
+}
+// ============================================================================
+// 9. CODES TABLE
+// ============================================================================
+.codes-table {
+  border: 1px solid #333;
   border-radius: 8px;
   overflow: hidden;
-
-  &.dark {
-    border-color: #333;
-    background: #1e1e1e;
-  }
-
+  margin-top: 16px;
   .table-header {
     display: flex;
     padding: 12px 16px;
-    gap: 12px;
-    align-items: center;
+    background: #252525;
     font-weight: 600;
     font-size: 12px;
     text-transform: uppercase;
-    background: #f8f9fa;
-    color: #666;
-    border-bottom: 1px solid #e0e0e0;
-
-    &.dark {
-      background: #252525;
-      color: #999;
-      border-bottom: 1px solid #333;
+    color: #999;
+    border-bottom: 1px solid #333;
+    .col-value {
+      flex: 0 0 20%;
     }
-
-    .col-code {
-      flex: 0 0 $col-code-width;
+    .col-label {
+      flex: 0 0 25%;
     }
-
-    .col-display {
-      flex: 0 0 $col-display-width;
+    .col-desc {
+      flex: 0 0 35%;
     }
-
+    .col-status {
+      flex: 0 0 15%;
+    }
     .col-actions {
-      flex: 0 0 $col-actions-width;
-      text-align: center;
+      flex: 0 0 5%;
     }
   }
-
   .table-body {
-    min-height: 120px;
+    max-height: 250px;
+    overflow-y: auto;
   }
-
   .table-row {
     display: flex;
-    padding: 10px 16px;
-    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #2a2a2a;
     align-items: center;
-    border-bottom: 1px solid #f0f0f0;
-
-    &.dark {
-      border-bottom-color: #2a2a2a;
-    }
-
+    font-size: 13px;
     &:last-child {
       border-bottom: none;
     }
-
-    .col-code,
-    .col-display {
-      ::ng-deep {
-        .mat-mdc-form-field {
-          width: 100%;
-        }
-
-        .mat-mdc-text-field-wrapper {
-          height: 40px !important;
-        }
-
-        .mat-mdc-form-field-infix {
-          padding: 0 8px !important;
-          min-height: 40px !important;
-          display: flex !important;
-          align-items: center !important;
-        }
-
-        .mat-mdc-form-field-subscript-wrapper {
-          display: none;
-        }
-      }
+    .col-value {
+      flex: 0 0 20%;
+      font-weight: 600;
+      font-family: 'Roboto Mono', monospace;
+      color: #5b9bd5;
     }
-
-    .col-code {
-      flex: 0 0 $col-code-width;
+    .col-label {
+      flex: 0 0 25%;
+      font-weight: 500;
+      color: #e0e0e0;
     }
-
-    .col-display {
-      flex: 0 0 $col-display-width;
+    .col-desc {
+      flex: 0 0 35%;
+      color: #e0e0e0;
+      opacity: 0.7;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-
+    .col-status {
+      flex: 0 0 15%;
+    }
     .col-actions {
-      flex: 0 0 $col-actions-width;
+      flex: 0 0 5%;
       display: flex;
       justify-content: center;
-      align-items: center;
-    }
-
-    .trash-btn {
-      color: #888;
-      width: 36px;
-      height: 36px;
-      padding: 0;
-
-      &:hover {
-        color: #f44336;
-        background: rgba(244, 67, 54, 0.12);
-      }
-
-      mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
+      .trash-btn {
+        color: #888 !important;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        transition: all 0.2s ease;
+        &:hover {
+          background-color: rgba(91, 155, 213, 0.1) !important;
+          color: #5b9bd5 !important;
+        }
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
       }
     }
   }
-
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: 0.3;
+    }
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
   .table-footer {
     padding: 16px;
-    border-top: 1px solid #e0e0e0;
-
-    &.dark {
-      border-top-color: #333;
-    }
-
-    .add-row-btn {
+    border-top: 1px solid #333;
+    .add-code-btn {
       width: 100%;
-      border: 1px dashed #ccc;
-      color: #1976d2;
+      border: 2px dashed #555;
+      color: #5b9bd5;
       height: 44px;
       font-weight: 500;
-
-      &:hover {
-        border-color: #1976d2;
-        background: rgba(25, 118, 210, 0.06);
+      border-radius: 8px;
+      &:hover:not([disabled]) {
+        border-color: #5b9bd5;
+        background: rgba(91, 155, 213, 0.1);
       }
-
-      &.dark {
-        border-color: #555;
-        color: #5b9bd5;
-
-        &:hover {
-          border-color: #5b9bd5;
-          background: rgba(91, 155, 213, 0.12);
-        }
+      &[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      mat-icon {
+        margin-right: 8px;
       }
     }
   }
 }
-
-// ============================================================================
-// 7. SUMMARY SECTION
-// ============================================================================
-.final-summary {
-  padding: 16px;
-  border-radius: 4px;
-  margin-bottom: 12px;
-  border-left: 4px solid #ff9800;
-
-  h3,
-  p {
-    margin: 0 0 8px 0;
+.modal-container.light .codes-table,
+.codes-table.light {
+  border-color: #ddd;
+  .table-header {
+    background: #f5f5f5;
+    color: #666;
+    border-bottom-color: #ddd;
   }
-
-  &.dark-summary {
-    background: rgba(255, 152, 0, 0.15);
-
-    h3,
-    p {
+  .table-row {
+    border-bottom-color: #f0f0f0;
+    .col-value {
+      color: #1976d2;
+    }
+    .col-label,
+    .col-desc {
+      color: #333;
+    }
+    .col-actions .trash-btn:hover {
+      background-color: rgba(25, 118, 210, 0.1) !important;
+      color: #1976d2 !important;
+    }
+  }
+  .table-footer {
+    border-top-color: #e0e0e0;
+    .add-code-btn {
+      border-color: #ccc;
+      color: #1976d2;
+      &:hover:not([disabled]) {
+        border-color: #1976d2;
+        background: rgba(25, 118, 210, 0.05);
+      }
+    }
+  }
+}
+.code-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #333;
+  color: #999;
+  &.active {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+  }
+}
+.modal-container.light .code-status.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+// ============================================================================
+// 10. SEVERITY SECTION (STEP 1 GRID)
+// ============================================================================
+.severity-section {
+  .severity-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  &.dark .severity-label {
+    color: #e0e0e0;
+  }
+  &.light .severity-label {
+    color: #333;
+  }
+  .severity-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .severity-option {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    .severity-title {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .severity-desc {
+      display: block;
+      font-size: 12px;
+      line-height: 1.4;
+      margin-left: 32px;
+    }
+  }
+  &.dark .severity-option {
+    border-color: #333;
+    background: #252525;
+    &:hover {
+      border-color: #5b9bd5;
+      background: rgba(91, 155, 213, 0.05);
+    }
+    &:has(.mat-mdc-radio-checked) {
+      border-color: #5b9bd5;
+      background: rgba(91, 155, 213, 0.1);
+    }
+    .severity-desc {
+      color: #999;
+    }
+  }
+  &.light .severity-option {
+    border-color: #ddd;
+    background: #fff;
+    &:hover {
+      border-color: #1976d2;
+      background: rgba(25, 118, 210, 0.03);
+    }
+    &:has(.mat-mdc-radio-checked) {
+      border-color: #1976d2;
+      background: rgba(25, 118, 210, 0.05);
+    }
+    .severity-desc {
+      color: #666;
+    }
+  }
+}
+// ============================================================================
+// 11. INFO CALLOUT
+// ============================================================================
+.info-callout {
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  p {
+    margin: 8px 0 0 32px;
+    font-size: 12px;
+    opacity: 0.8;
+    line-height: 1.4;
+  }
+  &.dark {
+    background: rgba(91, 155, 213, 0.1);
+    border-left: 3px solid #5b9bd5;
+  }
+  &.light {
+    background: rgba(25, 118, 210, 0.1);
+    border-left: 3px solid #1976d2;
+  }
+}
+// ============================================================================
+// 12. REVIEW SECTIONS
+// ============================================================================
+.review-section {
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  .review-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #383838;
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #5b9bd5;
+    }
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+  }
+  .review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 32px;
+    .full-width {
+      grid-column: 1 / -1;
+    }
+  }
+  .review-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    .review-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #888;
+      text-transform: uppercase;
+    }
+    .review-value {
+      font-size: 14px;
+      font-weight: 500;
       color: #e0e0e0;
     }
   }
-
-  &.light-summary {
-    background: rgba(255, 152, 0, 0.1);
-
-    h3,
-    p {
-      color: #333;
+  .logic-summary-box {
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 6px;
+    background: #1e1e1e;
+    .transformation-type-title {
+      margin: 0 0 12px 0;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #5b9bd5;
+    }
+    .mapping-review-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      .mapping-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        border: 1px solid #444;
+        background: #2a2a2a;
+        color: #fff;
+        .old {
+          font-weight: 400;
+          opacity: 0.8;
+        }
+        .new {
+          font-weight: 700;
+          color: #5b9bd5;
+        }
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
     }
   }
 }
-
+.modal-container.light .review-section {
+  background: #ffffff;
+  border-color: #e0e0e0;
+  .review-header {
+    border-bottom-color: #eee;
+    mat-icon {
+      color: #1976d2;
+    }
+    h3 {
+      color: #333;
+    }
+  }
+  .review-item {
+    .review-label {
+      color: #666;
+    }
+    .review-value {
+      color: #222;
+    }
+  }
+  .logic-summary-box {
+    background: #f8fafc;
+    .transformation-type-title {
+      color: #1976d2;
+    }
+    .mapping-pill {
+      background: #fff;
+      color: #334155;
+      border-color: #e2e8f0;
+      .new {
+        color: #1976d2;
+      }
+    }
+  }
+}
 // ============================================================================
-// 8. FOOTER ACTIONS & BUTTONS
+// 13. FOOTER ACTIONS (FIXED AT BOTTOM)
 // ============================================================================
 .step-footer-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  padding-top: 24px;
-  border-top: 1px solid #e0e0e0;
-
-  &.dark {
-    border-top-color: #333;
-  }
-
+  padding: 20px 48px;
+  border-top: 1px solid #333;
+  flex-shrink: 0; // CRITICAL: Never shrink
+  min-height: 84px;
   button[mat-flat-button] {
     padding: 0 32px;
-    height: 40px;
-    font-weight: 500;
-    border-radius: 4px;
+    height: 44px;
+    font-weight: 600;
+    border-radius: 8px;
     min-width: 120px;
+    font-size: 14px;
+    text-transform: none;
   }
-
+  .back-btn,
+  .next-btn,
+  .create-btn {
+    background-color: #5b9bd5 !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(91, 155, 213, 0.3);
+    border: none !important;
+    &:hover:not([disabled]) {
+      background-color: #4a8bc5 !important;
+      box-shadow: 0 4px 12px rgba(91, 155, 213, 0.4);
+    }
+  }
+  button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none !important;
+  }
+}
+.modal-container.light .step-footer-actions,
+.step-footer-actions.light {
+  border-top-color: #ddd;
   .back-btn,
   .next-btn,
   .create-btn {
     background-color: #1976d2 !important;
     color: #fff !important;
-  }
-
-  .dark & {
-    .back-btn,
-    .next-btn,
-    .create-btn {
-      background-color: #5b9bd5 !important;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+    &:hover:not([disabled]) {
+      background-color: #1565c0 !important;
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
     }
   }
-
-  button[disabled] {
-    opacity: 0.5;
-    background-color: #999 !important;
+}
+// ============================================================================
+// 14. UTILITY CLASSES
+// ============================================================================
+.full-width {
+  width: 100%;
+}
+.form-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  .flex-1 {
+    flex: 1;
+  }
+  .flex-2 {
+    flex: 2;
   }
 }
-
-// ============================================================================
-// 9. SCROLLBARS
-// ============================================================================
-.modal-body,
-.step-content-wrapper {
-  overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &.dark::-webkit-scrollbar-thumb {
-    background: #444;
-    border-radius: 10px;
-  }
-
-  &.light::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
-  }
+.group-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
 }

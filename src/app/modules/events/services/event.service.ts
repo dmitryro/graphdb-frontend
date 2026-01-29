@@ -12,10 +12,13 @@ export class EventService {
   publish(id: string, event: string, payload: any): void {
     const m = new Map();
     m.set('open_modal', EventActionTypes.OpenModal);
+    m.set('confirmation_discard_confirmed', EventActionTypes.ConfirmationDiscardConfirmed);
     m.set('confirmation_delete_confirmed', EventActionTypes.ConfirmationDeleteConfirmed);
     m.set('confirmation_save_confirmed', EventActionTypes.ConfirmationSaveConfirmed);
     m.set('confirmation_confirm_confirmed', EventActionTypes.ConfirmationConfirmConfirmed);
     m.set('confirmation_reset_confirmed', EventActionTypes.ConfirmationResetConfirmed);
+    m.set('open_add_new_code_modal', EventActionTypes.OpenAddNewCodeModal);
+    m.set('close_add_new_code_modal', EventActionTypes.CloseAddNewCodeModal);
     m.set('open_new_value_set_modal', EventActionTypes.OpenNewValueSetModal);
     m.set('close_new_value_set_modal', EventActionTypes.CloseNewValueSetModal);
     m.set('close_new_normalization_rule_modal', EventActionTypes.CloseNewNormalizationRuleModal);
@@ -23,10 +26,13 @@ export class EventService {
     m.set('open_new_rule_modal', EventActionTypes.OpenNewRuleModal);
     m.set('close_new_rule_modal', EventActionTypes.CloseNewRuleModal);
     m.set('open_confirmation_modal', EventActionTypes.OpenConfirmationModal);
+    m.set('code_added_to_set', EventActionTypes.CodeAddedToSet);
     m.set('theme_change', EventActionTypes.ThemeChange);
     m.set('update_breadcrumb', EventActionTypes.UpdateBreadcrumb);
     m.set('open_usage_impact_drawer', EventActionTypes.OpenUsageImpactDrawer);
     m.set('close_usage_impact_drawer', EventActionTypes.CloseUsageImpactDrawer);
+    m.set('close_edit_code', EventActionTypes.CloseEditCode);
+    m.set('open_edit_code', EventActionTypes.OpenEditCode);
     m.set('close_edit_mapping', EventActionTypes.CloseEditMapping);
     m.set('open_edit_mapping', EventActionTypes.OpenEditMapping);
     m.set('close_edit_model', EventActionTypes.CloseEditModel);

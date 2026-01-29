@@ -1,0 +1,263 @@
+<!-- Edit Code Component - Following edit-model pattern exactly -->
+<div class="edit-code-wrapper">
+  <!-- Main Header (NO Back to Codes link - breadcrumb handles navigation) -->
+  <div class="main-header">
+    <h1 class="edit-title">
+      Editing Code: {{ codeData?.codeSetName || 'Unknown' }} · {{ codeData?.system || 'Unknown' }}
+    </h1>
+
+    <div class="header-actions">
+      <!-- Validation Status Badge -->
+      <div class="validation-badge success">
+        <mat-icon>check_circle</mat-icon>
+        <span>Validated - No issues found</span>
+      </div>
+
+      <button mat-flat-button class="btn-cancel" (click)="onCancel()">Cancel</button>
+
+      <button mat-flat-button class="top-save-btn" [disabled]="!hasChanges" (click)="onSave()">
+        Save Changes
+      </button>
+
+      <button mat-icon-button [matMenuTriggerFor]="moreMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+
+      <mat-menu #moreMenu="matMenu">
+        <button mat-menu-item (click)="onReset()" [disabled]="!hasChanges">
+          <mat-icon>refresh</mat-icon>
+          <span>Reset All Changes</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="onDelete()" class="danger-action">
+          <mat-icon>delete_outline</mat-icon>
+          <span>Delete Code</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="edit-content-grid">
+    <!-- LEFT COLUMN: Edit Sections -->
+    <div class="main-edit-section">
+      <!-- Edit Code Details Block -->
+      <div class="edit-block">
+        <h3 class="block-title">Edit Code Details</h3>
+
+        <!-- Meaning (Description) -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Meaning</mat-label>
+          <textarea
+            matInput
+            [formControl]="descriptionControl"
+            (blur)="onDescriptionChange()"
+            rows="3"
+            placeholder="Enter the clinical meaning or definition"></textarea>
+        </mat-form-field>
+
+        <!-- Status Dropdown -->
+        <mat-form-field appearance="outline" class="status-select">
+          <mat-label>Status</mat-label>
+          <mat-select [formControl]="statusControl" (selectionChange)="onStatusChange()">
+            @for (opt of statusOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- READ-ONLY SECTION HEADER -->
+      <div class="readonly-section-header">
+        <mat-icon>lock</mat-icon>
+        <span>READ-ONLY CODE DETAILS</span>
+      </div>
+
+      <!-- Two-Column Read-Only Grid -->
+      <div class="readonly-grid">
+        <!-- LEFT: Overview Block -->
+        <div class="readonly-block overview-block">
+          <h4 class="block-subtitle">Overview</h4>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Canonical ID:</label>
+              <div class="info-value">
+                {{ codeData?.canonicalId || codeData?.codeSetName }}
+                <mat-icon class="validated-icon" matTooltip="No issues found"
+                  >check_circle</mat-icon
+                >
+                <span class="validated-text">Validated - <em>No issues found</em></span>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <label>System:</label>
+              <span>{{ codeData?.system || 'Unknown' }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Code Type:</label>
+              <span>{{ codeData?.codeType || 'Standard' }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Created by:</label>
+              <span>{{ codeData?.createdBy || 'System Mapping' }}</span>
+            </div>
+
+            <div class="info-item">
+              <label>Last modified:</label>
+              <span>{{ codeData?.lastModified || 'Unknown' }}</span>
+            </div>
+          </div>
+
+          <!-- Referenced In -->
+          <h5 class="subsection-title">Referenced in:</h5>
+          <div class="reference-list">
+            <div class="reference-item">
+              <mat-icon>chevron_right</mat-icon>
+              <span>Mappings:</span>
+              <strong>{{ codeData?.mappings?.length || 3 }}</strong>
+            </div>
+            <div class="reference-item">
+              <mat-icon>chevron_right</mat-icon>
+              <span>Rules:</span>
+              <strong>2</strong>
+            </div>
+            <div class="reference-item">
+              <mat-icon>chevron_right</mat-icon>
+              <span>Pipelines:</span>
+              <strong>1</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Mappings Block -->
+        <div class="readonly-block mappings-block">
+          <h4 class="block-subtitle">Mappings</h4>
+
+          @if (codeData?.mappings && codeData.mappings.length > 0) {
+            <div class="mapping-table">
+              <div class="table-header">
+                <span class="col-target">Target</span>
+                <span class="col-type">Mapping Type</span>
+                <span class="col-status">Status</span>
+              </div>
+              @for (mapping of codeData.mappings; track mapping.name) {
+                <div class="table-row">
+                  <span class="col-target">{{ mapping.target }}</span>
+                  <span class="col-type">{{ mapping.mappingType || 'Direct' }}</span>
+                  <span class="col-status">
+                    <span class="status-badge" [ngClass]="mapping.status?.toLowerCase()">
+                      {{ mapping.status || 'Active' }}
+                    </span>
+                  </span>
+                </div>
+              }
+            </div>
+            <button mat-button class="view-all-link">
+              View all mappings <mat-icon>arrow_forward</mat-icon>
+            </button>
+          } @else {
+            <div class="empty-state">
+              <p>No mappings configured</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Full-Width: Crosswalks Block -->
+      <div class="full-width-block crosswalks-block">
+        <h4 class="block-subtitle">Crosswalks</h4>
+
+        @if (codeData?.crosswalks && codeData.crosswalks.length > 0) {
+          <div class="crosswalk-list">
+            @for (crosswalk of codeData.crosswalks; track crosswalk.from) {
+              <div class="crosswalk-item">
+                <div class="crosswalk-systems">
+                  {{ crosswalk.from }} <mat-icon>arrow_forward</mat-icon> {{ crosswalk.to }}
+                </div>
+                <div class="crosswalk-codes">
+                  {{ crosswalk.code }} <mat-icon>arrow_forward</mat-icon> {{ crosswalk.target }}
+                </div>
+                <span class="status-badge" [ngClass]="crosswalk.status?.toLowerCase()">
+                  {{ crosswalk.status || 'Active' }}
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <p>No crosswalks configured</p>
+          </div>
+        }
+      </div>
+
+      <!-- Full-Width: Attributions Block -->
+      <div class="full-width-block attributions-block">
+        <h4 class="block-subtitle">Attributions</h4>
+
+        <div class="attribution-grid">
+          <div class="attribution-item">
+            <label>Mapped by:</label>
+            <span>Jane Smith - Sep 8, 2020</span>
+          </div>
+          <div class="attribution-item">
+            <label>Last semantic change by:</label>
+            <span>Alex Chen - {{ codeData?.lastModified || 'Unknown' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Pending Changes Sidebar -->
+    <div class="pending-changes-sidebar">
+      <div class="sidebar-header">
+        <h3>Pending Changes</h3>
+        <button mat-button class="reset-link" (click)="onReset()" [disabled]="!hasChanges">
+          Reset All
+        </button>
+      </div>
+
+      @if (!hasChanges) {
+        <div class="empty-state">
+          <div class="empty-icon-container">
+            <mat-icon>assignment_turned_in</mat-icon>
+          </div>
+          <p>No changes yet</p>
+          <p>Modifications will appear here before saving</p>
+        </div>
+      } @else {
+        <div class="changes-list">
+          @for (change of pendingChanges; track change.field) {
+            <div class="change-item">
+              <div class="change-title">
+                <span class="field">{{ change.field | titlecase }}</span>
+                <span class="pill" [ngClass]="change.changeType">
+                  {{ change.changeType }}
+                </span>
+              </div>
+              <div class="diff">
+                <span class="old">{{ change.oldValue }}</span>
+                <span class="arrow">→</span>
+                <span class="new">{{ change.newValue }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="changes-summary">
+          <p>
+            <strong>{{ changesSummary }}</strong> pending
+          </p>
+        </div>
+
+        <div class="sidebar-actions">
+          <button mat-flat-button class="pending-save-btn" (click)="onSave()">Save Changes</button>
+          <button mat-flat-button class="pending-cancel-btn" (click)="onCancel()">Cancel</button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

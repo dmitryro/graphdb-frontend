@@ -9,7 +9,7 @@ interface ConfirmationPayload {
   command?: 'save' | 'delete' | 'reset' | 'confirm';
   itemName?: string;
   title?: string;
-  theme?: 'dark' | 'light'; // Added theme to payload interface
+  theme?: 'dark' | 'light';
 }
 
 @Component({
@@ -25,7 +25,7 @@ export class ConfirmationModalComponent implements OnInit, OnDestroy {
   // Data bindings
   title = 'Confirmation';
   message = 'Are you sure you want to proceed?';
-  command: 'save' | 'delete' | 'confirm' | 'reset' = 'confirm';
+  command: 'save' | 'delete' | 'confirm' | 'discard' | 'reset' = 'confirm';
   itemName = '';
   theme: 'dark' | 'light' = 'dark'; // Default to dark
 
@@ -45,14 +45,16 @@ export class ConfirmationModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  private open(payload: ConfirmationPayload): void {
-    // Check payload first, then fall back to defaults
+  private open(payload: any): void {
+    // Use any here or ensure the publisher matches interface
     this.message = payload?.message || 'Are you sure you want to proceed?';
-    this.command = payload?.command || 'confirm';
-    this.itemName = payload?.itemName || '';
-    this.theme = payload?.theme || 'dark'; // Read theme from payload
 
-    // Set title based on command if not provided
+    // Explicitly extract command, ensuring it defaults correctly if missing
+    this.command = payload?.command || 'confirm';
+
+    this.itemName = payload?.itemName || '';
+    this.theme = payload?.theme || 'dark';
+
     if (payload?.title) {
       this.title = payload.title;
     } else {
@@ -71,6 +73,7 @@ export class ConfirmationModalComponent implements OnInit, OnDestroy {
     this.eventService.publish('nf', `confirmation_${this.command}_confirmed`, {
       itemName: this.itemName,
       confirmed: true,
+      command: this.command,
       action: `confirmation_${this.command}_confirmed`,
     });
     this.close();

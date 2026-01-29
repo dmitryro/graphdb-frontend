@@ -1,1 +1,276 @@
-<p>audit.component works!</p>
+<div class="audit-main-container" [class.table-compact]="showDetailPanel">
+  <header class="audit-header">
+    <div class="breadcrumb-area">
+      <div class="breadcrumb">Governance & Audit</div>
+      <div class="title-row">
+        <h1>{{ pageTitle }}</h1>
+      </div>
+      <p class="subtitle">{{ pageLegend }}</p>
+    </div>
+
+    <div class="workspace-area">
+      <mat-form-field appearance="outline" class="workspace-select">
+        <mat-select [(value)]="selectedEnv">
+          <mat-option value="Production">Production</mat-option>
+          <mat-option value="Staging">Staging</mat-option>
+          <mat-option value="Development">Development</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </header>
+
+  <div class="table-card">
+    <div class="page-title-section">
+      <h2 class="section-title">Audit Log</h2>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="filters-section">
+      <div class="filters-row">
+        <!-- Actor Filter -->
+        <button mat-button class="filter-dropdown" [matMenuTriggerFor]="actorMenu">
+          <mat-icon>person</mat-icon>
+          Actor: <strong>{{ selectedActor }}</strong>
+          <mat-icon class="chevron">expand_more</mat-icon>
+        </button>
+        <mat-menu #actorMenu="matMenu">
+          <button mat-menu-item (click)="setActorFilter('All')">All</button>
+          <button mat-menu-item (click)="setActorFilter('User')">User</button>
+          <button mat-menu-item (click)="setActorFilter('System')">System</button>
+          <button mat-menu-item (click)="setActorFilter('Integration')">Integration</button>
+        </mat-menu>
+
+        <!-- Action Filter -->
+        <button mat-button class="filter-dropdown" [matMenuTriggerFor]="actionMenu">
+          <mat-icon>bolt</mat-icon>
+          Action: <strong>{{ selectedAction }}</strong>
+          <mat-icon class="chevron">expand_more</mat-icon>
+        </button>
+        <mat-menu #actionMenu="matMenu">
+          <button mat-menu-item (click)="setActionFilter('All')">All</button>
+          @for (action of actions; track action) {
+            <button mat-menu-item (click)="setActionFilter(action)">{{ action }}</button>
+          }
+        </mat-menu>
+
+        <!-- Migrate Filter -->
+        <button mat-button class="filter-dropdown" [matMenuTriggerFor]="migrateMenu">
+          <mat-icon>sync_alt</mat-icon>
+          Migrate: <strong>{{ selectedMigrate }}</strong>
+          <mat-icon class="chevron">expand_more</mat-icon>
+        </button>
+        <mat-menu #migrateMenu="matMenu">
+          <button mat-menu-item (click)="setMigrateFilter('All')">All</button>
+          <button mat-menu-item (click)="setMigrateFilter('Yes')">Yes</button>
+          <button mat-menu-item (click)="setMigrateFilter('No')">No</button>
+        </mat-menu>
+
+        <!-- Time Window Filter -->
+        <button mat-button class="filter-dropdown" [matMenuTriggerFor]="timeMenu">
+          <mat-icon>schedule</mat-icon>
+          Time wine: <strong>{{ selectedTimeWindow }}</strong>
+          <mat-icon class="chevron">expand_more</mat-icon>
+        </button>
+        <mat-menu #timeMenu="matMenu">
+          <button mat-menu-item (click)="setTimeWindowFilter('All')">All</button>
+          <button mat-menu-item (click)="setTimeWindowFilter('Last 24h')">Last 24h</button>
+          <button mat-menu-item (click)="setTimeWindowFilter('Last 7d')">Last 7d</button>
+          <button mat-menu-item (click)="setTimeWindowFilter('Last 30d')">Last 30d</button>
+          <button mat-menu-item (click)="setTimeWindowFilter('Custom range')">Custom range</button>
+        </mat-menu>
+
+        <!-- Search Box -->
+        <div class="search-box">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search audit events..."
+            [(ngModel)]="auditSearch"
+            (input)="applyAuditFilter()" />
+        </div>
+
+        <!-- Create Snapshot Button -->
+        <button mat-flat-button class="create-snapshot-btn" (click)="createSnapshot()">
+          <mat-icon>add_photo_alternate</mat-icon>
+          Create Snapshot
+        </button>
+      </div>
+    </div>
+
+    <!-- Split Container: Table + Detail Panel -->
+    <div class="split-container">
+      <!-- Main Table -->
+      <div class="main-table-area" [style.flex]="showDetailPanel ? '0 0 65%' : '1 1 100%'">
+        <table
+          mat-table
+          [dataSource]="auditDataSource"
+          matSort
+          #auditSort="matSort"
+          class="full-width-table">
+          <!-- Timestamp Column -->
+          <ng-container matColumnDef="timestamp">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="timestamp-cell">{{ row.timestampDisplay }}</div>
+            </td>
+          </ng-container>
+
+          <!-- Actor Column -->
+          <ng-container matColumnDef="actor">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Actor</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="actor-cell">
+                <img [src]="row.actorAvatar" class="actor-avatar" alt="Avatar" />
+                <span>{{ row.actor }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Action Column -->
+          <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Action</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.action }}
+            </td>
+          </ng-container>
+
+          <!-- Target Column -->
+          <ng-container matColumnDef="target">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Target</th>
+            <td mat-cell *matCellDef="let row" class="target-cell">
+              {{ row.target }}
+            </td>
+          </ng-container>
+
+          <!-- Initiation Column -->
+          <ng-container matColumnDef="initiation">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Initiation</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.initiation }}
+            </td>
+          </ng-container>
+
+          <!-- Outcome Column -->
+          <ng-container matColumnDef="outcome">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Outcome</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="outcome-cell" [ngClass]="row.outcome.toLowerCase()">
+                <mat-icon>{{ row.outcomeIcon }}</mat-icon>
+                <span>{{ row.outcome }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="auditColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: auditColumns"
+            class="clickable-row"
+            [class.selected-row]="selectedEvent?.id === row.id"
+            (click)="onSelectEvent(row)"></tr>
+        </table>
+
+        <mat-paginator
+          #auditPaginator
+          [pageSize]="10"
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          showFirstLastButtons></mat-paginator>
+      </div>
+
+      <!-- Detail Panel (Slide-in) -->
+      @if (showDetailPanel && selectedEvent) {
+        <div class="detail-panel">
+          <div class="detail-panel-header">
+            <h3>Audit Event Details</h3>
+            <button mat-icon-button (click)="onCloseDetailPanel()" class="close-btn">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="detail-panel-content">
+            <!-- Event ID -->
+            <div class="detail-section">
+              <div class="detail-item">
+                <label>Event ID:</label>
+                <div class="detail-value">{{ selectedEvent.eventId }}</div>
+              </div>
+
+              <div class="detail-item">
+                <label>Timestamp:</label>
+                <div class="detail-value">{{ selectedEvent.timestampDisplay }}</div>
+              </div>
+
+              <div class="detail-item">
+                <label>Actor:</label>
+                <div class="detail-value">{{ selectedEvent.actor }}</div>
+              </div>
+
+              <div class="detail-item">
+                <label>Action:</label>
+                <div class="detail-value">{{ selectedEvent.action }}</div>
+              </div>
+
+              <div class="detail-item">
+                <label>Target:</label>
+                <div class="detail-value">{{ selectedEvent.target }}</div>
+              </div>
+
+              <div class="detail-item">
+                <label>Initiation:</label>
+                <div class="detail-value">{{ selectedEvent.initiation }}</div>
+              </div>
+            </div>
+
+            <!-- Before / After References -->
+            @if (selectedEvent.references && selectedEvent.references.length > 0) {
+              <div class="detail-section">
+                <h4 class="section-subtitle">Before / After References</h4>
+                <div class="reference-list">
+                  @for (ref of selectedEvent.references; track ref.id) {
+                    <div class="reference-item">
+                      <mat-icon>{{ ref.type === 'Conflict' ? 'warning' : 'rule' }}</mat-icon>
+                      <span>{{ ref.label }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Annotated Intent -->
+            @if (selectedEvent.intent) {
+              <div class="detail-section">
+                <h4 class="section-subtitle">Annotated Intent</h4>
+                <p class="intent-text">{{ selectedEvent.intent }}</p>
+              </div>
+            }
+
+            <!-- Related Artifacts -->
+            @if (selectedEvent.artifacts && selectedEvent.artifacts.length > 0) {
+              <div class="detail-section">
+                <h4 class="section-subtitle">Related Artifacts</h4>
+                <div class="artifacts-list">
+                  @for (artifact of selectedEvent.artifacts; track artifact.id) {
+                    <div class="artifact-item">
+                      <mat-icon class="artifact-icon">{{
+                        artifact.type === 'Conflict' ? 'error' : 'description'
+                      }}</mat-icon>
+                      <div class="artifact-content">
+                        <span class="artifact-label">{{ artifact.label }}</span>
+                        @if (artifact.severity) {
+                          <span class="severity-badge" [ngClass]="artifact.severity.toLowerCase()">
+                            {{ artifact.severity }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

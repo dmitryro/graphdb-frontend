@@ -3196,3 +3196,90 @@ $z-overlay: 2000;
     }
   }
 }
+
+/* Code Edit View - Full Overlay */
+.code-edit-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  background: var(--detail-bg);
+  z-index: 2000; /* Above detail panel (100) */
+  overflow-y: auto;
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+
+  ::ng-deep app-edit-code {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+  }
+}
+
+/* Ensure slideInRight/slideOutRight animations exist */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+// ============================================================================
+// APPEND TO END OF normalization.component.scss
+// - Fix for edit-code: Main container slides fully left (-100%) when edit-code opens
+// - Matches view-model/view-mapping: main collapses left, edit slides in right
+// - Uses existing slide-out-to-left class (or define if missing)
+// - No override of other animations, only adds trigger logic
+// ============================================================================
+
+.normalization-main-container {
+  // Ensure transition is smooth for all slide cases
+  transition:
+    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.5s ease;
+
+  // Stronger slide-out: full -100% to fully collapse left
+  &.slide-out-to-left {
+    transform: translateX(-100%) !important;
+    opacity: 1 !important; // Keep opacity 1 to avoid transparency
+    pointer-events: none !important;
+  }
+}
+
+// Edit code view - ensure it slides in from right (append if missing)
+.code-edit-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-color);
+  z-index: 2000; // Above main (0) and other details (1000)
+  overflow-y: auto;
+  animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+// Reinforce slideInRight keyframe (if not already defined)
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

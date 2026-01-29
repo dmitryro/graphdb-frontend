@@ -1,7 +1,11 @@
 <!-- Wrap your normalization content and add the mapping detail view -->
 <app-breadcrumb></app-breadcrumb>
 <div class="normalization-wrapper">
-  <div class="normalization-main-container" [class.slide-out]="showMappingDetail">
+  <div
+    class="normalization-main-container"
+    [class.slide-out-to-left]="
+      showMappingDetail || showModelDetail || showEditCode || isEditingMapping || isEditingModel
+    ">
     <header class="normalization-header">
       <div class="breadcrumb-area">
         <div class="title-row">
@@ -898,13 +902,17 @@
             </div>
 
             <!-- RIGHT SIDE: Detail Panel (slides in) -->
-            @if (showCodeDetail && selectedCodeData) {
+            @if (showCodeDetail && !showEditCode && selectedCodeData) {
               <div class="code-detail-panel">
                 <div class="detail-panel-header">
                   <div class="header-content">
                     <h3>{{ selectedCodeData.codeSetName }} - {{ selectedCodeData.system }}</h3>
                     <div class="header-actions">
-                      <button mat-flat-button color="primary" class="edit-btn">
+                      <button
+                        mat-flat-button
+                        color="primary"
+                        class="edit-btn"
+                        (click)="onEditCodeClick(selectedCodeData)">
                         <mat-icon>edit</mat-icon> Edit
                       </button>
                       <button mat-icon-button (click)="onCloseCodeDetail()" class="close-btn">
@@ -1285,6 +1293,13 @@
     <div class="model-edit-view">
       <app-edit-model [modelData]="selectedModelData" (closeEdit)="onCloseEditModel()">
       </app-edit-model>
+    </div>
+  }
+
+  <!-- Edit Code View (Full overlay component) -->
+  @if (showEditCode && isEditingCode) {
+    <div class="code-edit-view">
+      <app-edit-code [codeData]="selectedCodeData" (closeEdit)="onCloseEditCode()"> </app-edit-code>
     </div>
   }
 </div>

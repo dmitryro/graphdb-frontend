@@ -10,208 +10,552 @@
         [class.dark]="theme() === 'dark'"
         [class.light]="theme() === 'light'">
         <div class="header-title">
-          <mat-icon>settings_input_component</mat-icon>
-          <div>
-            <h2>Create New Value Set</h2>
-            <span class="subtitle">Normalization Engine Configuration</span>
-          </div>
+          <h2>Create New Code Set</h2>
         </div>
         <button mat-icon-button (click)="close()">
           <mat-icon>close</mat-icon>
         </button>
       </header>
 
-      <div class="modal-body" [class.dark]="theme() === 'dark'" [class.light]="theme() === 'light'">
-        <mat-stepper
-          [linear]="true"
-          #stepper
-          [class.dark-stepper]="theme() === 'dark'"
-          [class.light-stepper]="theme() === 'light'">
-          <!-- STEP 1: METADATA -->
-          <mat-step [stepControl]="basicsForm">
-            <ng-template matStepLabel>Metadata</ng-template>
+      <div
+        class="stepper-nav"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <div
+          class="step-item"
+          [class.active]="activeStep() === 0"
+          [class.completed]="step1Complete()"
+          (click)="goToStep(0)">
+          <div class="step-circle">
+            @if (step1Complete() && activeStep() !== 0) {
+              <mat-icon>check</mat-icon>
+            } @else {
+              <span>1</span>
+            }
+          </div>
+          <span class="step-label">Basics</span>
+        </div>
 
-            <form
-              [formGroup]="basicsForm"
-              class="step-content"
-              [class.dark]="theme() === 'dark'"
-              [class.light]="theme() === 'light'">
-              <div class="form-row">
-                <mat-form-field
-                  appearance="outline"
-                  class="flex-2"
-                  [class.dark-field]="theme() === 'dark'"
-                  [class.light-field]="theme() === 'light'">
-                  <mat-label>Meaning / Display Name</mat-label>
-                  <input
-                    matInput
-                    formControlName="name"
-                    placeholder="e.g. Diabetes Mellitus"
-                    required />
-                </mat-form-field>
+        <div
+          class="step-item"
+          [class.active]="activeStep() === 1"
+          [class.completed]="step2Complete()"
+          [class.disabled]="!step1Complete()"
+          (click)="goToStep(1)">
+          <div class="step-circle">
+            @if (step2Complete() && activeStep() !== 1) {
+              <mat-icon>check</mat-icon>
+            } @else {
+              <span>2</span>
+            }
+          </div>
+          <span class="step-label">Semantics</span>
+        </div>
 
-                <mat-form-field
-                  appearance="outline"
-                  class="flex-1"
-                  [class.dark-field]="theme() === 'dark'"
-                  [class.light-field]="theme() === 'light'">
-                  <mat-label>Status</mat-label>
-                  <mat-select formControlName="status" required>
-                    @for (st of statuses(); track st) {
-                      <mat-option [value]="st">{{ st }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-              </div>
+        <div
+          class="step-item"
+          [class.active]="activeStep() === 2"
+          [class.completed]="step3Complete()"
+          [class.disabled]="!step2Complete()"
+          (click)="goToStep(2)">
+          <div class="step-circle">
+            @if (step3Complete() && activeStep() !== 2) {
+              <mat-icon>check</mat-icon>
+            } @else {
+              <span>3</span>
+            }
+          </div>
+          <span class="step-label">Structure</span>
+        </div>
 
-              <div class="form-row">
-                <mat-form-field
-                  appearance="outline"
-                  class="flex-1"
-                  [class.dark-field]="theme() === 'dark'"
-                  [class.light-field]="theme() === 'light'">
-                  <mat-label>System</mat-label>
-                  <mat-select formControlName="system" required>
-                    @for (sys of systems(); track sys) {
-                      <mat-option [value]="sys">{{ sys }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+        <div
+          class="step-item"
+          [class.active]="activeStep() === 3"
+          [class.disabled]="!step3Complete()">
+          <div class="step-circle">
+            <span>4</span>
+          </div>
+          <span class="step-label">Review</span>
+        </div>
+      </div>
 
-                <mat-form-field
-                  appearance="outline"
-                  class="flex-1"
-                  [class.dark-field]="theme() === 'dark'"
-                  [class.light-field]="theme() === 'light'">
-                  <mat-label>Canonical ID</mat-label>
-                  <input matInput formControlName="oid" placeholder="E11.9" required />
-                </mat-form-field>
+      <div
+        class="step-content-wrapper"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        @if (activeStep() === 0) {
+          <div class="step-content">
+            <p class="step-description">Define what this code set represents and why it exists.</p>
 
-                <mat-form-field
-                  appearance="outline"
-                  class="flex-1"
-                  [class.dark-field]="theme() === 'dark'"
-                  [class.light-field]="theme() === 'light'">
-                  <mat-label>Version</mat-label>
-                  <input matInput formControlName="version" placeholder="2026" required />
-                </mat-form-field>
-              </div>
+            <form [formGroup]="basicsForm">
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme() === 'dark'"
+                [class.light-field]="theme() === 'light'">
+                <mat-label>Code Set Name</mat-label>
+                <input
+                  matInput
+                  formControlName="name"
+                  placeholder="e.g., Employment Status Codes" />
+                <mat-hint>Used to identify this code set across rules and mappings.</mat-hint>
+              </mat-form-field>
 
-              <div class="step-footer-actions" [class.dark]="theme() === 'dark'">
-                <div></div>
-                <button
-                  mat-flat-button
-                  class="next-btn"
-                  matStepperNext
-                  [disabled]="basicsForm.invalid">
-                  Continue
-                </button>
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme() === 'dark'"
+                [class.light-field]="theme() === 'light'">
+                <mat-label>Description</mat-label>
+                <textarea
+                  matInput
+                  formControlName="description"
+                  rows="3"
+                  placeholder="Describe what these codes represent and when they should be used."></textarea>
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme() === 'dark'"
+                [class.light-field]="theme() === 'light'">
+                <mat-label>Code System / Authority</mat-label>
+                <input
+                  matInput
+                  formControlName="codeSystem"
+                  placeholder="e.g., Internal, ISO, NAICS, HL7" />
+                <mat-hint>Identifies the source or authority that defines these codes.</mat-hint>
+              </mat-form-field>
+
+              <div
+                class="severity-section"
+                [class.dark]="theme() === 'dark'"
+                [class.light]="theme() === 'light'">
+                <label class="severity-label"
+                  >Severity / Criticality <span class="required-asterisk">*</span></label
+                >
+
+                <mat-radio-group
+                  formControlName="severity"
+                  class="severity-grid"
+                  [class.dark-radio]="theme() === 'dark'"
+                  [class.light-radio]="theme() === 'light'">
+                  <div class="severity-option">
+                    <mat-radio-button value="Critical">
+                      <span class="severity-title">Critical</span>
+                    </mat-radio-button>
+                    <span class="severity-desc">Misuse breaks semantic integrity</span>
+                  </div>
+
+                  <div class="severity-option">
+                    <mat-radio-button value="High">
+                      <span class="severity-title">High</span>
+                    </mat-radio-button>
+                    <span class="severity-desc">Significant downstream impact</span>
+                  </div>
+
+                  <div class="severity-option">
+                    <mat-radio-button value="Medium">
+                      <span class="severity-title">Medium</span>
+                    </mat-radio-button>
+                    <span class="severity-desc">Moderate normalization impact</span>
+                  </div>
+
+                  <div class="severity-option">
+                    <mat-radio-button value="Low">
+                      <span class="severity-title">Low</span>
+                    </mat-radio-button>
+                    <span class="severity-desc">Informational / helper set</span>
+                  </div>
+                </mat-radio-group>
               </div>
             </form>
-          </mat-step>
+          </div>
 
-          <!-- STEP 2: VALUES -->
-          <mat-step [stepControl]="valuesForm">
-            <ng-template matStepLabel>Values</ng-template>
+          <div
+            class="step-footer-actions"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <div></div>
+            <button
+              mat-flat-button
+              class="next-btn"
+              (click)="nextStep()"
+              [disabled]="basicsForm.invalid">
+              Next
+            </button>
+          </div>
+        }
 
-            <div
-              class="step-content-wrapper"
+        @if (activeStep() === 1) {
+          <div class="step-content">
+            <p class="step-description">
+              Establish semantic rules that apply to all codes in the set.
+            </p>
+
+            <form [formGroup]="semanticsForm">
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme() === 'dark'"
+                [class.light-field]="theme() === 'light'">
+                <mat-label>Code Meaning Type</mat-label>
+                <mat-select formControlName="meaningType" placeholder="Select a meaning type">
+                  @for (type of meaningTypes; track type) {
+                    <mat-option [value]="type">{{ type }}</mat-option>
+                  }
+                </mat-select>
+                <mat-hint
+                  >Defines the semantic function of all individual codes within this set.</mat-hint
+                >
+              </mat-form-field>
+
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme() === 'dark'"
+                [class.light-field]="theme() === 'light'">
+                <mat-label>Canonical Representation</mat-label>
+                <mat-select
+                  formControlName="canonicalRepresentation"
+                  placeholder="Select a representation type">
+                  @for (rep of canonicalReps; track rep) {
+                    <mat-option [value]="rep">{{ rep }}</mat-option>
+                  }
+                </mat-select>
+                <mat-hint
+                  >Determines how codes are labeled, depicted, stored, and exported.</mat-hint
+                >
+              </mat-form-field>
+
+              <div
+                class="severity-section"
+                [class.dark]="theme() === 'dark'"
+                [class.light]="theme() === 'light'">
+                <label class="severity-label"
+                  >Is this Code Set extensible? <span class="required-asterisk">*</span></label
+                >
+
+                <mat-radio-group
+                  formControlName="extensible"
+                  class="severity-grid"
+                  [class.dark-radio]="theme() === 'dark'"
+                  [class.light-radio]="theme() === 'light'">
+                  <div class="severity-option">
+                    <mat-radio-button value="yes">
+                      <span class="severity-title">Yes — new codes may be added over time</span>
+                    </mat-radio-button>
+                  </div>
+
+                  <div class="severity-option">
+                    <mat-radio-button value="no">
+                      <span class="severity-title">No — closed / fixed list</span>
+                    </mat-radio-button>
+                  </div>
+                </mat-radio-group>
+                <span class="step-description"
+                  >Defines if other codes can be added to this set in the future.</span
+                >
+              </div>
+
+              <div
+                class="info-callout"
+                [class.dark]="theme() === 'dark'"
+                [class.light]="theme() === 'light'">
+                <mat-checkbox formControlName="deprecatedAllowed">
+                  Allow codes in this set to be marked as deprecated
+                </mat-checkbox>
+                <p>Controls whether codes can later be marked inactive.</p>
+              </div>
+            </form>
+          </div>
+
+          <div
+            class="step-footer-actions"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <button
+              mat-flat-button
+              class="back-btn"
               [class.dark]="theme() === 'dark'"
-              [class.light]="theme() === 'light'">
-              <div class="mapping-card" [class.dark]="theme() === 'dark'">
-                <div class="table-header" [class.dark]="theme() === 'dark'">
-                  <div class="col-code">CODE</div>
-                  <div class="col-display">DISPLAY</div>
-                  <div class="col-actions"></div>
+              [class.light]="theme() === 'light'"
+              (click)="prevStep()">
+              Back
+            </button>
+            <button
+              mat-flat-button
+              class="next-btn"
+              (click)="nextStep()"
+              [disabled]="semanticsForm.invalid">
+              Next
+            </button>
+          </div>
+        }
+
+        @if (activeStep() === 2) {
+          <div class="step-content">
+            <p class="step-description">
+              Define required fields and constraints for individual codes within this set.
+            </p>
+
+            <form [formGroup]="structureForm">
+              <mat-form-field
+                appearance="outline"
+                [class.dark-field]="theme() === 'dark'"
+                [class.light-field]="theme() === 'light'">
+                <mat-label>Code Value Type</mat-label>
+                <mat-select formControlName="codeValueType" placeholder="Select a value type">
+                  @for (type of codeValueTypes; track type) {
+                    <mat-option [value]="type">{{ type }}</mat-option>
+                  }
+                </mat-select>
+                <mat-hint>Constrains the valid format of codes in this set.</mat-hint>
+              </mat-form-field>
+
+              <div class="form-field-group">
+                <label class="group-label"
+                  >Code Uniqueness Scope <span class="required-asterisk">*</span></label
+                >
+                <mat-radio-group
+                  formControlName="uniquenessScope"
+                  class="radio-group-horizontal"
+                  [class.dark]="theme() === 'dark'"
+                  [class.light]="theme() === 'light'">
+                  <mat-radio-button value="local">
+                    <span class="radio-label">Unique within this Code Set</span>
+                    <span class="radio-hint">No duplicates allowed in this set</span>
+                  </mat-radio-button>
+
+                  <mat-radio-button value="global">
+                    <span class="radio-label">Globally unique</span>
+                    <span class="radio-hint">Workspace-wide uniqueness</span>
+                  </mat-radio-button>
+                </mat-radio-group>
+              </div>
+
+              <div style="margin-top: 32px">
+                <label class="severity-label">Code Population Strategy</label>
+                <div class="toggle-container" [class.light]="theme() === 'light'">
+                  <button
+                    type="button"
+                    class="toggle-button"
+                    [class.active]="addCodesNow()"
+                    (click)="addCodesNow.set(true)">
+                    Add codes now
+                  </button>
+                  <button
+                    type="button"
+                    class="toggle-button"
+                    [class.active]="!addCodesNow()"
+                    (click)="addCodesNow.set(false)">
+                    Create empty code set
+                  </button>
                 </div>
 
-                <form [formGroup]="valuesForm">
-                  <div formArrayName="values" class="table-body">
-                    @for (row of valueRows.controls; track row; let i = $index) {
-                      <div [formGroupName]="i" class="table-row" [class.dark]="theme() === 'dark'">
-                        <div class="col-code">
-                          <mat-form-field
-                            appearance="outline"
-                            [class.dark-field]="theme() === 'dark'"
-                            [class.light-field]="theme() === 'light'">
-                            <input matInput formControlName="code" placeholder="Code" />
-                          </mat-form-field>
+                @if (addCodesNow()) {
+                  <div class="codes-table" [class.light]="theme() === 'light'">
+                    <div class="table-header">
+                      <div class="col-value">
+                        CODE VALUE <span class="required-asterisk">*</span>
+                      </div>
+                      <div class="col-label">LABEL <span class="required-asterisk">*</span></div>
+                      <div class="col-desc">DESCRIPTION</div>
+                      <div class="col-status">STATUS</div>
+                      <div class="col-actions"></div>
+                    </div>
+
+                    <div class="table-body">
+                      @if (codesArray().length > 0) {
+                        @for (code of codesArray(); track $index) {
+                          <div class="table-row">
+                            <div class="col-value">{{ code.codeValue }}</div>
+                            <div class="col-label">{{ code.label }}</div>
+                            <div class="col-desc">{{ code.description || '—' }}</div>
+                            <div class="col-status">
+                              <span class="code-status active">{{ code.status }}</span>
+                            </div>
+                            <div class="col-actions">
+                              <button
+                                class="trash-btn"
+                                mat-icon-button
+                                (click)="removeCode($index)"
+                                type="button">
+                                <mat-icon>delete_outline</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      } @else {
+                        <div class="empty-state">
+                          <mat-icon>code</mat-icon>
+                          <p>No codes added yet. Click "Add Code" to start.</p>
                         </div>
-                        <div class="col-display">
-                          <mat-form-field
-                            appearance="outline"
-                            [class.dark-field]="theme() === 'dark'"
-                            [class.light-field]="theme() === 'light'">
-                            <input matInput formControlName="display" placeholder="Display Name" />
-                          </mat-form-field>
-                        </div>
-                        <div class="col-actions">
-                          <button
-                            mat-icon-button
-                            class="trash-btn"
-                            (click)="removeValueRow(i)"
-                            type="button">
-                            <mat-icon>delete_outline</mat-icon>
-                          </button>
-                        </div>
+                      }
+                    </div>
+
+                    <div class="table-footer">
+                      <button
+                        class="add-code-btn"
+                        mat-button
+                        (click)="openAddCodeModal()"
+                        type="button">
+                        <mat-icon>add</mat-icon> Add Code
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </form>
+          </div>
+
+          <div
+            class="step-footer-actions"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <button mat-flat-button class="back-btn" (click)="prevStep()">Back</button>
+            <button
+              mat-flat-button
+              class="next-btn"
+              (click)="nextStep()"
+              [disabled]="structureForm.invalid">
+              Next
+            </button>
+          </div>
+        }
+
+        @if (activeStep() === 3 && reviewSnapshot()) {
+          <div class="step-content">
+            <p class="step-description">
+              Review and confirm the configuration details before creating the new code set.
+            </p>
+
+            <div
+              class="review-section"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="review-header">
+                <mat-icon>info_outline</mat-icon>
+                <h3>Basics</h3>
+              </div>
+
+              <div class="review-grid">
+                <div class="review-item">
+                  <span class="review-label">Code Set Name</span>
+                  <span class="review-value">{{ reviewSnapshot().basics.name }}</span>
+                </div>
+                <div class="review-item">
+                  <span class="review-label">Severity</span>
+                  <span class="review-value">{{ reviewSnapshot().basics.severity }}</span>
+                </div>
+                <div class="review-item full-width">
+                  <span class="review-label">Description</span>
+                  <span class="review-value">{{
+                    reviewSnapshot().basics.description || 'N/A'
+                  }}</span>
+                </div>
+                <div class="review-item full-width">
+                  <span class="review-label">Code System / Authority</span>
+                  <span class="review-value">{{
+                    reviewSnapshot().basics.codeSystem || 'N/A'
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="review-section"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="review-header">
+                <mat-icon>category</mat-icon>
+                <h3>Semantics</h3>
+              </div>
+
+              <div class="review-grid">
+                <div class="review-item">
+                  <span class="review-label">Code Meaning Type</span>
+                  <span class="review-value">{{ reviewSnapshot().semantics.meaningType }}</span>
+                </div>
+                <div class="review-item">
+                  <span class="review-label">Canonical Representation</span>
+                  <span class="review-value">{{
+                    reviewSnapshot().semantics.canonicalRepresentation
+                  }}</span>
+                </div>
+                <div class="review-item">
+                  <span class="review-label">Extensibility</span>
+                  <span class="review-value">{{
+                    reviewSnapshot().semantics.extensible === 'yes'
+                      ? 'Yes - new codes may be added'
+                      : 'No - Fixed set'
+                  }}</span>
+                </div>
+                <div class="review-item">
+                  <span class="review-label">Deprecated Codes Allowed</span>
+                  <span class="review-value">{{
+                    reviewSnapshot().semantics.deprecatedAllowed ? 'Yes' : 'No'
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="review-section"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="review-header">
+                <mat-icon>account_tree</mat-icon>
+                <h3>Structure</h3>
+              </div>
+
+              <div class="review-grid">
+                <div class="review-item">
+                  <span class="review-label">Code Value Type</span>
+                  <span class="review-value">{{ reviewSnapshot().structure.codeValueType }}</span>
+                </div>
+                <div class="review-item">
+                  <span class="review-label">Uniqueness Scope</span>
+                  <span class="review-value">{{
+                    reviewSnapshot().structure.uniquenessScope === 'local'
+                      ? 'Unique within this Code Set'
+                      : 'Globally unique'
+                  }}</span>
+                </div>
+                <div class="review-item">
+                  <span class="review-label">Initial Codes</span>
+                  <span class="review-value">{{ reviewSnapshot().codes.length }} code(s)</span>
+                </div>
+              </div>
+
+              @if (reviewSnapshot().codes.length > 0) {
+                <div class="logic-summary-box">
+                  <p class="transformation-type-title">Initial Codes</p>
+                  <div class="mapping-review-list">
+                    @for (code of reviewSnapshot().codes; track $index) {
+                      <div class="mapping-pill">
+                        <span class="old">{{ code.codeValue }}</span>
+                        <mat-icon>arrow_forward</mat-icon>
+                        <span class="new">{{ code.label }}</span>
                       </div>
                     }
                   </div>
-                </form>
-
-                <div class="table-footer" [class.dark]="theme() === 'dark'">
-                  <button
-                    mat-button
-                    class="add-row-btn"
-                    [class.dark]="theme() === 'dark'"
-                    (click)="addRow()"
-                    type="button">
-                    <mat-icon>add</mat-icon> Add Value Entry
-                  </button>
                 </div>
-              </div>
-
-              <div class="step-footer-actions" [class.dark]="theme() === 'dark'">
-                <button mat-flat-button class="back-btn" matStepperPrevious>Back</button>
-                <button
-                  mat-flat-button
-                  class="next-btn"
-                  matStepperNext
-                  [disabled]="valueRows.length < 1">
-                  Review
-                </button>
-              </div>
+              }
             </div>
-          </mat-step>
+          </div>
 
-          <!-- STEP 3: CONFIRM -->
-          <mat-step>
-            <ng-template matStepLabel>Confirm</ng-template>
-
-            <div class="step-content" [class.dark]="theme() === 'dark'">
-              <div
-                class="final-summary"
-                [class.dark-summary]="theme() === 'dark'"
-                [class.light-summary]="theme() === 'light'">
-                <h3>Review New Code Set</h3>
-                <p>
-                  Name: <strong>{{ basicsForm.get('name')?.value }}</strong>
-                </p>
-                <p>
-                  System: <strong>{{ basicsForm.get('system')?.value }}</strong>
-                </p>
-                <p>Total Items: {{ valueRows.length }}</p>
-              </div>
-
-              <div class="step-footer-actions" [class.dark]="theme() === 'dark'">
-                <button mat-flat-button class="back-btn" matStepperPrevious>Back</button>
-                <button mat-flat-button class="create-btn" (click)="confirmAction()">
-                  Create Value Set
-                </button>
-              </div>
-            </div>
-          </mat-step>
-        </mat-stepper>
+          <div
+            class="step-footer-actions"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <button
+              mat-flat-button
+              class="back-btn"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'"
+              (click)="prevStep()">
+              Back
+            </button>
+            <button mat-flat-button class="create-btn" (click)="confirmCreate()">
+              Create Code Set
+            </button>
+          </div>
+        }
       </div>
     </div>
   </div>

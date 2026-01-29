@@ -1,6 +1,9 @@
 import { Action } from '@modules/events/interfaces/action.interface';
 
 export enum EventActionTypes {
+  CodeAddedToSet = '[Event] Code Added To Set',
+  OpenAddNewCodeModal = '[Event] Open Add New Code Modal',
+  CloseAddNewCodeModal = '[Event] Close Add New Code Modal',
   OpenNewNormalizationRuleModal = '[Event] Open New Normalization Rule Modal',
   CloseNewNormalizationRuleModal = '[Event] Close New Normalization Rule Modal',
   OpenNewRuleModal = '[Event] Open New Rule Modal',
@@ -10,12 +13,15 @@ export enum EventActionTypes {
   ConfirmationDeleteConfirmed = '[Event] Confirmation Delete Confirmed',
   ConfirmationSaveConfirmed = '[Event] Confirmation Save Confirmed',
   ConfirmationConfirmConfirmed = '[Event] Confirmation Confirm Confirmed',
+  ConfirmationDiscardConfirmed = '[Event] Confirmation Discard Confirmed',
   ConfirmationResetConfirmed = '[Event] Confirmation Reset Confirmed',
   PilotTermsAgreed = '[Event] Pilot Terms Agreed',
   PilotContactFormUpdated = '[Event] Pilot Contact Form Updated',
   ToggleHeader = '[Event] Toggle Header',
   ToggleDrawer = '[Event] Toggle Drawer',
   OpenConfirmationModal = '[Event] Open Confirmation Modal',
+  OpenEditCode = '[Event] Open Edit Code',
+  CloseEditCode = '[Event] Close Edit Code',
   OpenEditMapping = '[Event] Open Edit Mapping',
   CloseEditMapping = '[Event] Close Edit Mapping',
   OpenEditModel = '[Event] Open Edit Model',
@@ -90,6 +96,21 @@ export enum EventActionTypes {
   ViewRelatedModel = '[Event] View Related Model',
 }
 
+export class CodeAddedToSet implements Action {
+  readonly type = EventActionTypes.CodeAddedToSet;
+  constructor(public payload: any) {}
+}
+
+export class OpenAddNewCodeModal implements Action {
+  readonly type = EventActionTypes.OpenAddNewCodeModal;
+  constructor(public payload: any) {}
+}
+
+export class CloseAddNewCodeModal implements Action {
+  readonly type = EventActionTypes.CloseAddNewCodeModal;
+  constructor(public payload: any) {}
+}
+
 export class OpenNewNormalizationRuleModal implements Action {
   readonly type = EventActionTypes.OpenNewNormalizationRuleModal;
   constructor(public payload: any) {}
@@ -117,6 +138,11 @@ export class OpenNewValueSetModal implements Action {
 
 export class CloseNewValueSetModal implements Action {
   readonly type = EventActionTypes.CloseNewValueSetModal;
+  constructor(public payload: any) {}
+}
+
+export class ConfirmationDiscardConfirmed implements Action {
+  readonly type = EventActionTypes.ConfirmationDeleteConfirmed;
   constructor(public payload: any) {}
 }
 
@@ -157,6 +183,16 @@ export class ViewRelatedModel implements Action {
 
 export class CloseUsageImpactDrawer implements Action {
   readonly type = EventActionTypes.CloseUsageImpactDrawer;
+  constructor(public payload: any) {}
+}
+
+export class OpenEditCode implements Action {
+  readonly type = EventActionTypes.OpenEditCode;
+  constructor(public payload: any) {}
+}
+
+export class CloseEditCode implements Action {
+  readonly type = EventActionTypes.CloseEditCode;
   constructor(public payload: any) {}
 }
 
@@ -549,10 +585,13 @@ export type EventActions =
   | OpenEditMapping
   | CloseEditModel
   | OpenEditModel
+  | CloseEditCode
+  | OpenEditCode
   | CloseSearch
   | ConfirmationDeleteConfirmed
   | ConfirmationSaveConfirmed
   | ConfirmationConfirmConfirmed
+  | ConfirmationDiscardConfirmed
   | ConfirmationResetConfirmed
   | OpenRegistrationModal
   | CloseRegistrationModal
@@ -590,6 +629,7 @@ export type EventActions =
   | EditRule
   | InspectSource
   | SyncSource
+  | CodeAddedToSet
   | OpenNewRuleModal
   | CloseNewRuleModal
   | OpenNewValueSetModal
@@ -603,6 +643,8 @@ export type EventActions =
   | OpenNewMappingModal
   | CloseNewNormalizationRuleModal
   | OpenNewNormalizationRuleModal
+  | CloseAddNewCodeModal
+  | OpenAddNewCodeModal
   | CloseNewModelModal
   | OpenNewModelModal
   | OpenConfirmationModal
