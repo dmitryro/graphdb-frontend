@@ -1,0 +1,369 @@
+<div
+  class="rule-detail-container"
+  [class.slide-out-to-left]="isEditing"
+  [class.slide-in-from-left]="!isEditing">
+  <div class="view-content-wrapper">
+    <div class="back-navigation">
+      <button mat-button class="back-btn" (click)="onBackToRules()">
+        <mat-icon>arrow_back</mat-icon>
+        <span>back to Rules</span>
+      </button>
+    </div>
+    <div class="rule-header">
+      <div class="header-left">
+        <div class="page-category">Normalization</div>
+        <h1 class="rule-title">{{ ruleData?.name || 'Height Unit Normalization' }}</h1>
+        <div class="header-metadata">
+          <button mat-button class="metadata-pill">
+            <mat-icon>layers</mat-icon>
+            <span>Model: {{ ruleData?.model || 'Patient' }}</span>
+          </button>
+          <button mat-button class="metadata-pill">
+            <mat-icon>reorder</mat-icon>
+            <span>Scope: {{ ruleData?.scope || 'Field-level' }}</span>
+          </button>
+          <button mat-button class="metadata-pill">
+            <mat-icon>bolt</mat-icon>
+            <span>Trigger: {{ ruleData?.trigger || 'Pre-Write' }}</span>
+          </button>
+          <div
+            class="status-pill"
+            [class.active]="ruleData?.status === 'Active' || !ruleData?.status"
+            [class.deprecated]="ruleData?.status === 'Deprecated'"
+            [class.draft]="ruleData?.status === 'Draft'">
+            <mat-icon>
+              @if (ruleData?.status === 'Active') {
+                check_circle
+              } @else if (ruleData?.status === 'Deprecated') {
+                block
+              } @else {
+                edit_note
+              }
+            </mat-icon>
+            <span>{{ ruleData?.status || 'Active' }}</span>
+          </div>
+          <div class="metadata-text">
+            <mat-icon>schedule</mat-icon>
+            <span>Last Modified: {{ ruleData?.lastModified || '3 days ago' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-button class="edit-btn" (click)="onEdit()">
+          <mat-icon>edit</mat-icon>
+          <span>Edit</span>
+        </button>
+        <button mat-button class="status-dropdown-btn" [matMenuTriggerFor]="statusMenu">
+          <span>Change Status</span>
+          <mat-icon>expand_more</mat-icon>
+        </button>
+        <mat-menu #statusMenu="matMenu">
+          <button mat-menu-item [disabled]="ruleData?.status === 'Active'">
+            <mat-icon class="status-active">check_circle</mat-icon>
+            <span>Active {{ ruleData?.status === 'Active' ? '(current)' : '' }}</span>
+          </button>
+          <button mat-menu-item [disabled]="ruleData?.status === 'Draft'">
+            <mat-icon>edit_note</mat-icon>
+            <span>Draft {{ ruleData?.status === 'Draft' ? '(current)' : '' }}</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button
+            mat-menu-item
+            class="danger-action"
+            [disabled]="ruleData?.status === 'Deprecated'">
+            <mat-icon>block</mat-icon>
+            <span
+              >Disable / Deprecate...
+              {{ ruleData?.status === 'Deprecated' ? '(current)' : '' }}</span
+            >
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+    <div class="content-grid">
+      <div class="left-column">
+        <div class="info-block overview-block">
+          <h2 class="block-title">Overview</h2>
+          <p class="description">
+            {{
+              ruleData?.description ||
+                'Normalizes height measurements from various units (inches, feet) into centimeters for consistent storage and analysis in the Patient model.'
+            }}
+          </p>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Target Model</label>
+              <span>{{ ruleData?.model || 'Patient' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Scope Level</label>
+              <span>{{ ruleData?.scope || 'Field-level' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Target Field</label>
+              <span>{{ ruleData?.targetField || 'height' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Trigger Event</label>
+              <span>{{ ruleData?.trigger || 'Pre-Write' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Severity</label>
+              <span
+                class="severity-badge"
+                [class.critical]="ruleData?.severity === 'Critical'"
+                [class.high]="ruleData?.severity === 'High'"
+                [class.medium]="ruleData?.severity === 'Medium'"
+                [class.low]="ruleData?.severity === 'Low'">
+                {{ ruleData?.severity || 'Medium' }}
+              </span>
+            </div>
+            <div class="info-item">
+              <label>Total Transformations</label>
+              <span>{{ totalTransformations }}</span>
+            </div>
+            <div class="info-item">
+              <label>Created</label>
+              <span>2024-01-20 by Dmitry Roitman</span>
+            </div>
+            <div class="info-item">
+              <label>Last Modified</label>
+              <span>{{ ruleData?.lastModified || '2024-02-08' }} by Dmitry Roitman</span>
+            </div>
+          </div>
+        </div>
+        <div class="transformations-section">
+          <h2 class="section-title">Transformation Logic</h2>
+          <div class="field-filters">
+            <div class="search-box">
+              <mat-icon>search</mat-icon>
+              <input
+                type="text"
+                placeholder="Search transformations..."
+                [(ngModel)]="searchTerm"
+                (input)="applyFilter()" />
+            </div>
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="logicTypeMenu">
+              Logic Type: <strong>{{ selectedLogicType }}</strong>
+              <mat-icon>expand_more</mat-icon>
+            </button>
+            <mat-menu #logicTypeMenu="matMenu">
+              <button mat-menu-item (click)="setLogicTypeFilter('All')">All</button>
+              <button mat-menu-item (click)="setLogicTypeFilter('Value Mapping')">
+                Value Mapping
+              </button>
+              <button mat-menu-item (click)="setLogicTypeFilter('Unit Conversion')">
+                Unit Conversion
+              </button>
+              <button mat-menu-item (click)="setLogicTypeFilter('Rename / Alias')">
+                Rename / Alias
+              </button>
+              <button mat-menu-item (click)="setLogicTypeFilter('Derived Value')">
+                Derived Value
+              </button>
+              <button mat-menu-item (click)="setLogicTypeFilter('Default Value')">
+                Default Value
+              </button>
+              <button mat-menu-item (click)="setLogicTypeFilter('Null / Ignore')">
+                Null / Ignore
+              </button>
+            </mat-menu>
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="statusFilterMenu">
+              Status: <strong>{{ selectedStatus }}</strong>
+              <mat-icon>expand_more</mat-icon>
+            </button>
+            <mat-menu #statusFilterMenu="matMenu">
+              <button mat-menu-item (click)="setStatusFilter('All')">All</button>
+              <button mat-menu-item (click)="setStatusFilter('Active')">Active</button>
+              <button mat-menu-item (click)="setStatusFilter('Inactive')">Inactive</button>
+            </mat-menu>
+            <div class="rows-count">
+              1 – 5 of {{ transformationDataSource.data.length }} transformations
+            </div>
+          </div>
+          <table
+            mat-table
+            [dataSource]="transformationDataSource"
+            matSort
+            class="transformation-table">
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="transformation-type">{{ element.type }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="sourceField">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Source Field</th>
+              <td mat-cell *matCellDef="let element" class="field-name">
+                {{ element.sourceField }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="targetField">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Field</th>
+              <td mat-cell *matCellDef="let element" class="field-name">
+                {{ element.targetField || 'N/A' }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="details">
+              <th mat-header-cell *matHeaderCellDef>Transformation Details</th>
+              <td mat-cell *matCellDef="let element" class="details-cell">
+                {{ getTransformationDetails(element) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+              <td mat-cell *matCellDef="let element">
+                <span
+                  class="status-badge"
+                  [class.active-badge]="element.action === 'Active'"
+                  [class.inactive-badge]="element.action === 'Inactive'">
+                  {{ element.action }}
+                </span>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="transformationColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: transformationColumns"></tr>
+          </table>
+          <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20]"></mat-paginator>
+        </div>
+        <div class="stats-footer-row">
+          <div class="info-block metrics-block">
+            <h3 class="block-title">Rule Metrics</h3>
+            <p class="block-subtitle">
+              Key metrics showing the scope and impact of this normalization rule.
+            </p>
+            <div class="metrics-grid">
+              <div class="metric-row">
+                <label>Total transformations</label>
+                <span class="metric-value">{{ totalTransformations }}</span>
+              </div>
+              <div class="metric-row">
+                <label>Affected fields</label>
+                <span class="metric-value">{{ affectedFields }}</span>
+              </div>
+              <div class="metric-row">
+                <label>Execution order</label>
+                <span class="metric-value">Pre-Write (Priority 1)</span>
+              </div>
+              <div class="metric-row">
+                <label>Rule completeness</label>
+                <span class="completeness-badge complete">
+                  <mat-icon>check_circle</mat-icon>
+                  Complete
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="info-block usage-block">
+            <h3 class="block-title">Usage & Impact</h3>
+            <div class="usage-item">
+              <button mat-button class="expand-btn" (click)="togglePipelines()">
+                <label>Used in pipelines</label>
+                <span class="count">3</span>
+                <mat-icon>{{ pipelinesExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+              </button>
+              @if (pipelinesExpanded) {
+                <div class="expanded-content">
+                  <a href="#" class="pipeline-link">Patient Normalization Pipeline</a>
+                  <a href="#" class="pipeline-link">Nightly Epic Sync</a>
+                  <a href="#" class="pipeline-link">Real-time Admission Processing</a>
+                </div>
+              }
+            </div>
+            <div class="usage-item">
+              <button mat-button class="expand-btn" (click)="toggleModels()">
+                <label>Affects models</label>
+                <span class="count">2</span>
+                <mat-icon>{{ modelsExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+              </button>
+              @if (modelsExpanded) {
+                <div class="expanded-content">
+                  <a href="#" class="rule-link">Patient</a>
+                  <a href="#" class="rule-link">Observation</a>
+                </div>
+              }
+            </div>
+            <div class="usage-row">
+              <label>Target model</label>
+              <span>{{ ruleData?.model || 'Patient' }}</span>
+            </div>
+            <div class="usage-row">
+              <label>Normalization usage</label>
+              <span [class.active-text]="ruleData?.status === 'Active'">{{
+                ruleData?.status || 'Active'
+              }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="right-column">
+        <div class="info-block quick-links-block">
+          <h3 class="block-title">Quick Links</h3>
+          <button mat-button class="link-item" (click)="viewInVersions()">
+            <mat-icon>history</mat-icon>
+            <span>View in Versions</span>
+            <mat-icon class="arrow">arrow_forward</mat-icon>
+          </button>
+          <button mat-button class="link-item" (click)="viewInMappings()">
+            <mat-icon>compare_arrows</mat-icon>
+            <span>View in Mappings</span>
+            <mat-icon class="arrow">arrow_forward</mat-icon>
+          </button>
+          <button mat-button class="link-item" (click)="viewTargetModel()">
+            <mat-icon>layers</mat-icon>
+            <span>View Target Model ({{ ruleData?.model || 'Patient' }})</span>
+            <mat-icon class="arrow">arrow_forward</mat-icon>
+          </button>
+        </div>
+        <div class="info-block status-block">
+          <h3 class="block-title">Status</h3>
+          <div
+            class="status-pill large"
+            [class.active]="ruleData?.status === 'Active' || !ruleData?.status"
+            [class.deprecated]="ruleData?.status === 'Deprecated'"
+            [class.draft]="ruleData?.status === 'Draft'">
+            <mat-icon>
+              @if (ruleData?.status === 'Active') {
+                check_circle
+              } @else if (ruleData?.status === 'Deprecated') {
+                block
+              } @else {
+                edit_note
+              }
+            </mat-icon>
+            <span>{{ ruleData?.status || 'Active' }}</span>
+          </div>
+          <p class="status-description">
+            @if (ruleData?.status === 'Deprecated') {
+              This rule is legacy and no longer recommended for active normalization.
+            } @else {
+              Applied during normalization to ensure data consistency.
+            }
+          </p>
+        </div>
+        <div class="info-block versions-block">
+          <h3 class="block-title">Versions</h3>
+          <div class="version-list">
+            @for (version of versions; track version.version) {
+              <div class="version-item">
+                <div class="version-header">
+                  <strong>{{ version.version }}</strong>
+                  @if (version.action !== 'Created') {
+                    <span> — {{ version.action }} by {{ version.editor }}</span>
+                  } @else {
+                    <span> — {{ version.action }}</span>
+                  }
+                </div>
+                <div class="version-time">{{ version.timestamp }}</div>
+              </div>
+            }
+          </div>
+          <button mat-button class="view-all-link" (click)="viewVersionHistory()">
+            View full version history
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

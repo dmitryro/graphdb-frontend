@@ -71,11 +71,28 @@
         <div
           class="step-item"
           [class.active]="activeStep() === 3"
-          [class.disabled]="!step3Complete()">
+          [class.completed]="step4Complete()"
+          [class.disabled]="!step3Complete()"
+          (click)="goToStep(3)">
           <div class="step-circle">
-            <span>4</span>
+            @if (step4Complete() && activeStep() !== 3) {
+              <mat-icon>check</mat-icon>
+            } @else {
+              <span>4</span>
+            }
           </div>
           <span class="step-label">Review</span>
+        </div>
+
+        <div
+          class="step-item"
+          [class.active]="activeStep() === 4"
+          [class.disabled]="!step4Complete()"
+          (click)="goToStep(4)">
+          <div class="step-circle">
+            <span>5</span>
+          </div>
+          <span class="step-label">Next Steps</span>
         </div>
       </div>
 
@@ -83,6 +100,7 @@
         class="step-content-wrapper"
         [class.dark]="theme() === 'dark'"
         [class.light]="theme() === 'light'">
+        <!-- STEP 1: BASICS -->
         @if (activeStep() === 0) {
           <div class="step-content">
             <p class="step-description">Define what this code set represents and why it exists.</p>
@@ -184,6 +202,7 @@
           </div>
         }
 
+        <!-- STEP 2: SEMANTICS -->
         @if (activeStep() === 1) {
           <div class="step-content">
             <p class="step-description">
@@ -287,6 +306,7 @@
           </div>
         }
 
+        <!-- STEP 3: STRUCTURE -->
         @if (activeStep() === 2) {
           <div class="step-content">
             <p class="step-description">
@@ -418,6 +438,7 @@
           </div>
         }
 
+        <!-- STEP 4: REVIEW -->
         @if (activeStep() === 3 && reviewSnapshot()) {
           <div class="step-content">
             <p class="step-description">
@@ -551,8 +572,150 @@
               (click)="prevStep()">
               Back
             </button>
-            <button mat-flat-button class="create-btn" (click)="confirmCreate()">
-              Create Code Set
+            <button mat-flat-button class="next-btn" (click)="nextStep()">Create Code Set</button>
+          </div>
+        }
+
+        <!-- STEP 5: CONNECT / NEXT STEPS -->
+        @if (activeStep() === 4 && createdCodeSetData()) {
+          <div class="step-content step-5-connect">
+            <!-- Success Header -->
+            <div
+              class="success-header"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <div class="success-icon">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+              <h2 class="success-title">Code Set created</h2>
+              <p class="success-subtitle">
+                Connect this Code Set to a mapping or rule so it can be used in normalization.
+              </p>
+            </div>
+
+            <!-- Two-Column Layout -->
+            <div
+              class="connect-grid"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'">
+              <!-- Left Column: Code Set Summary -->
+              <div class="summary-column">
+                <h3 class="column-title">Code Set Summary</h3>
+
+                <div
+                  class="summary-card"
+                  [class.dark]="theme() === 'dark'"
+                  [class.light]="theme() === 'light'">
+                  <div class="summary-row">
+                    <span class="summary-label">Code Set Name:</span>
+                    <span class="summary-value">{{ createdCodeSetName() }}</span>
+                  </div>
+
+                  <div class="summary-row">
+                    <span class="summary-label">System / Authority:</span>
+                    <span class="summary-value">
+                      {{ createdCodeSetData().basics.codeSystem || 'Custom' }}
+                    </span>
+                  </div>
+
+                  <div class="summary-row">
+                    <span class="summary-label">Version:</span>
+                    <span class="summary-value">v1</span>
+                  </div>
+
+                  <div class="summary-row">
+                    <span class="summary-label">Status:</span>
+                    <span class="summary-value">
+                      <span class="status-badge draft">Draft</span>
+                    </span>
+                  </div>
+
+                  <div class="summary-row">
+                    <span class="summary-label">Codes created:</span>
+                    <span class="summary-value">{{ createdCodeSetData().codes.length }}</span>
+                  </div>
+
+                  <div class="summary-row">
+                    <span class="summary-label">Created:</span>
+                    <span class="summary-value">Just now by Barb</span>
+                  </div>
+                </div>
+
+                <!-- View Details Link -->
+                <button mat-button class="view-details-link" (click)="viewCodeSetDetails()">
+                  <span>View Code Set details</span>
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              </div>
+
+              <!-- Right Column: Next Actions -->
+              <div class="actions-column">
+                <h3 class="column-title">Next: Connect this Code Set</h3>
+
+                <!-- Create Mapping Button -->
+                <button
+                  mat-flat-button
+                  class="action-card mapping-action"
+                  [class.dark]="theme() === 'dark'"
+                  [class.light]="theme() === 'light'"
+                  (click)="createMappingWithCodeSet()">
+                  <div class="action-icon">
+                    <mat-icon>compare_arrows</mat-icon>
+                  </div>
+                  <div class="action-content">
+                    <div class="action-title">Create mapping using this Code Set</div>
+                    <div class="action-description">
+                      Map source values to these codes during normalization
+                    </div>
+                  </div>
+                  <mat-icon class="action-arrow">arrow_forward</mat-icon>
+                </button>
+
+                <!-- Create Validation Rule Button -->
+                <button
+                  mat-flat-button
+                  class="action-card validation-action"
+                  [class.dark]="theme() === 'dark'"
+                  [class.light]="theme() === 'light'"
+                  (click)="createValidationRuleForCodeSet()">
+                  <div class="action-icon">
+                    <mat-icon>verified_user</mat-icon>
+                  </div>
+                  <div class="action-content">
+                    <div class="action-title">Create validation rule for this Code Set</div>
+                    <div class="action-description">
+                      Validate incoming values against this Code Set
+                    </div>
+                  </div>
+                  <mat-icon class="action-arrow">arrow_forward</mat-icon>
+                </button>
+
+                <!-- Divider -->
+                <div class="action-divider"></div>
+
+                <!-- Not Now Link -->
+                <button mat-button class="not-now-link" (click)="finishWithoutConnecting()">
+                  Not now
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5 Footer -->
+          <div
+            class="step-footer-actions"
+            [class.dark]="theme() === 'dark'"
+            [class.light]="theme() === 'light'">
+            <button
+              mat-flat-button
+              class="back-btn"
+              [class.dark]="theme() === 'dark'"
+              [class.light]="theme() === 'light'"
+              (click)="prevStep()">
+              Back
+            </button>
+            <button mat-flat-button class="next-btn" (click)="finishWithoutConnecting()">
+              Done
             </button>
           </div>
         }

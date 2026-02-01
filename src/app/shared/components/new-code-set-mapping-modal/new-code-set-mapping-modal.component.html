@@ -1,0 +1,47 @@
+@if (isOpen()) {
+  <div class="modal-overlay" (click)="close()">
+    <div
+      class="modal-container"
+      [class.dark]="theme() === 'dark'"
+      [class.light]="theme() === 'light'"
+      (click)="$event.stopPropagation()">
+      <header
+        class="modal-header"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <h2>Add New Code Set Mapping</h2>
+        <button mat-icon-button (click)="close()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <div
+        class="modal-subheader"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <p>
+          Add a new code to this Code Set. All codes must follow the structure and constraints
+          defined for this set.
+        </p>
+      </div>
+
+      <div class="modal-body" [class.dark]="theme() === 'dark'" [class.light]="theme() === 'light'">
+        <form [formGroup]="mappingForm" class="code-form"></form>
+      </div>
+
+      <div
+        class="modal-footer"
+        [class.dark]="theme() === 'dark'"
+        [class.light]="theme() === 'light'">
+        <button mat-flat-button class="cancel-btn" (click)="close()">Cancel</button>
+        <button
+          mat-flat-button
+          class="add-btn"
+          (click)="addMapping()"
+          [disabled]="mappingForm.invalid">
+          Add Mapping
+        </button>
+      </div>
+    </div>
+  </div>
+}

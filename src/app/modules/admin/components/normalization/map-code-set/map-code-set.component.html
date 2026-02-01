@@ -1,0 +1,360 @@
+<!-- Map Code Set Component - Full Page Workspace -->
+<div class="map-code-set-wrapper">
+  <!-- STICKY HEADER -->
+  <div class="main-header">
+    <div class="header-content">
+      <h1 class="page-title">Map this Code Set</h1>
+
+      <!-- Source → Target Line -->
+      <div class="source-target-line">
+        <span class="source-label">Source:</span>
+        <strong class="source-value">{{ mappingData?.sourceCodeSet || 'Unknown' }}</strong>
+        <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+
+        <!-- Target Code Set Selector -->
+        <mat-form-field appearance="outline" class="target-selector">
+          <mat-select
+            [formControl]="targetCodeSetControl"
+            (selectionChange)="onTargetCodeSetChange()"
+            placeholder="Select Target Code Set">
+            @for (codeSet of targetCodeSets; track codeSet) {
+              <mat-option [value]="codeSet">{{ codeSet }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Status Badges -->
+        <div class="status-badges">
+          <span class="status-badge" [ngClass]="statusBadgeClass">
+            <mat-icon>{{ isDraft ? 'edit' : 'check_circle' }}</mat-icon>
+            {{ statusBadgeText }}
+          </span>
+          <span class="unsaved-badge" [class.has-changes]="hasUnsavedChanges">
+            {{ unsavedBadgeText }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button mat-flat-button class="btn-cancel" (click)="onCancel()">Cancel</button>
+
+      <button mat-flat-button class="btn-save" [disabled]="!canSave" (click)="onSave()">
+        Save Mapping
+      </button>
+    </div>
+  </div>
+
+  <!-- MAPPING CONTEXT & PROGRESS STRIP -->
+  <div class="context-strip">
+    <div class="context-left">
+      <!-- Editable Name -->
+      <div class="name-field">
+        <label>Name:</label>
+        <input
+          type="text"
+          [formControl]="nameControl"
+          (blur)="trackChange()"
+          class="inline-input"
+          placeholder="Enter mapping name" />
+      </div>
+
+      <!-- Optional Description (Collapsed) -->
+      <button mat-button class="add-description-btn">
+        <mat-icon>add</mat-icon>
+        Add description
+      </button>
+
+      <!-- Coverage Indicators -->
+      <div class="coverage-indicators">
+        <div class="indicator success">
+          <mat-icon>check_circle</mat-icon>
+          <span
+            >Mapped <strong>{{ mappedCount }}</strong> of
+            <strong>{{ totalCodes }}</strong> codes</span
+          >
+        </div>
+
+        @if (unmappedCount > 0) {
+          <div class="indicator warning">
+            <mat-icon>warning</mat-icon>
+            <span
+              ><strong>{{ unmappedCount }}</strong> Unmapped remaining</span
+            >
+          </div>
+        }
+
+        @if (overridesCount > 0) {
+          <div class="indicator alert">
+            <mat-icon>error_outline</mat-icon>
+            <span
+              ><strong>{{ overridesCount }}</strong> Overrides detected</span
+            >
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="context-right">
+      <!-- Show Unmapped Toggle -->
+      <mat-slide-toggle [formControl]="showUnmappedControl" class="show-unmapped-toggle">
+        Show Unmapped
+      </mat-slide-toggle>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT GRID -->
+  <div class="main-content-grid">
+    <!-- LEFT: Mapping Table Section -->
+    <section class="table-section">
+      <!-- Table Controls -->
+      <div class="table-controls">
+        <button
+          mat-flat-button
+          class="bulk-action-btn"
+          [disabled]="selection.selected.length === 0"
+          [matMenuTriggerFor]="bulkMenu">
+          <mat-icon>more_horiz</mat-icon>
+          Bulk Actions
+        </button>
+
+        <mat-menu #bulkMenu="matMenu">
+          <button mat-menu-item (click)="onBulkIgnore()">
+            <mat-icon>block</mat-icon>
+            <span>Set to Null / Ignore</span>
+          </button>
+          <button mat-menu-item (click)="onBulkDefault()">
+            <mat-icon>label</mat-icon>
+            <span>Set to Default</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item class="danger-action" (click)="onBulkDelete()">
+            <mat-icon>delete_outline</mat-icon>
+            <span>Delete Selected</span>
+          </button>
+        </mat-menu>
+      </div>
+
+      <!-- Table Wrapper (no scroll - paginator handles it) -->
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="mapping-table">
+          <!-- Select Column -->
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef class="col-select">
+              <mat-checkbox
+                [checked]="isAllSelected()"
+                [indeterminate]="isSomeSelected()"
+                (change)="masterToggle()">
+              </mat-checkbox>
+            </th>
+            <td mat-cell *matCellDef="let row" class="col-select">
+              <mat-checkbox
+                [checked]="selection.isSelected(row)"
+                (change)="selection.toggle(row)"
+                (click)="$event.stopPropagation()">
+              </mat-checkbox>
+            </td>
+          </ng-container>
+
+          <!-- Source Code Column -->
+          <ng-container matColumnDef="sourceCode">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-source-code">
+              SOURCE CODE
+            </th>
+            <td mat-cell *matCellDef="let row" class="col-source-code">
+              <span class="code-value">{{ row.sourceCode }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Source Label Column -->
+          <ng-container matColumnDef="sourceLabel">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-source-label">
+              SOURCE LABEL
+            </th>
+            <td mat-cell *matCellDef="let row" class="col-source-label">
+              {{ row.sourceLabel }}
+            </td>
+          </ng-container>
+
+          <!-- Target Code Column -->
+          <ng-container matColumnDef="targetCode">
+            <th mat-header-cell *matHeaderCellDef class="col-target-code">TARGET CODE</th>
+            <td mat-cell *matCellDef="let row" class="col-target-code">
+              <mat-form-field appearance="outline" class="inline-select">
+                <mat-select
+                  [(value)]="row.targetCode"
+                  (selectionChange)="onTargetCodeChange(row, $event)"
+                  [disabled]="!targetCodeSetControl.value || row.mappingType === 'Null / Ignore'"
+                  placeholder="Select code">
+                  @for (target of availableTargetCodes; track target.code) {
+                    <mat-option [value]="target.code">
+                      {{ target.code }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <!-- Target Label Column -->
+          <ng-container matColumnDef="targetLabel">
+            <th mat-header-cell *matHeaderCellDef class="col-target-label">TARGET LABEL</th>
+            <td mat-cell *matCellDef="let row" class="col-target-label">
+              <span class="target-label-text">{{ row.targetLabel || '—' }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Mapping Type Column -->
+          <ng-container matColumnDef="mappingType">
+            <th mat-header-cell *matHeaderCellDef class="col-mapping-type">MAPPING TYPE</th>
+            <td mat-cell *matCellDef="let row" class="col-mapping-type">
+              <mat-form-field appearance="outline" class="inline-select">
+                <mat-select
+                  [(value)]="row.mappingType"
+                  (selectionChange)="onMappingTypeChange(row, $event)">
+                  @for (type of mappingTypeOptions; track type) {
+                    <mat-option [value]="type">{{ type }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef class="col-status">STATUS</th>
+            <td mat-cell *matCellDef="let row" class="col-status">
+              @if (row.hasWarning) {
+                <button
+                  mat-icon-button
+                  class="warning-icon"
+                  [matTooltip]="row.warningMessage || 'Warning'"
+                  (click)="onRowClick(row); $event.stopPropagation()">
+                  <mat-icon>warning</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Header & Row Definitions -->
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            [class.has-warning]="row.hasWarning"
+            [class.selected]="selection.isSelected(row)"
+            [class.active-warning]="selectedRow?.id === row.id"
+            (click)="onRowClick(row)"></tr>
+        </table>
+      </div>
+
+      <!-- PAGINATOR - placed here like edit-mapping -->
+      <div class="table-footer">
+        <mat-paginator
+          [pageSizeOptions]="[5, 10, 20, 50]"
+          [pageSize]="5"
+          [length]="dataSource.data.length"
+          showFirstLastButtons
+          aria-label="Select page of mappings">
+        </mat-paginator>
+      </div>
+    </section>
+
+    <!-- RIGHT: Progress & Warnings Rail -->
+    <div class="right-rail">
+      <!-- Coverage Progress Block -->
+      <div class="rail-block progress-block">
+        <h3 class="block-title">Coverage Progress</h3>
+
+        <!-- Progress Bar -->
+        <mat-progress-bar
+          [value]="mappingProgress"
+          [color]="progressBarColor"
+          mode="determinate"
+          class="coverage-progress-bar">
+        </mat-progress-bar>
+
+        <!-- Stats -->
+        <div class="progress-stats">
+          <div class="stat-row">
+            <span class="stat-label">Mapped</span>
+            <span class="stat-value primary">{{ mappedCount }} / {{ totalCodes }}</span>
+          </div>
+          @if (unmappedCount > 0) {
+            <div class="stat-row">
+              <span class="stat-label">Unmapped</span>
+              <span class="stat-value warning">{{ unmappedCount }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Status Label -->
+        <div class="progress-status">
+          @if (mappingProgress === 0) {
+            <span class="status-label not-started">Not started</span>
+          } @else if (mappingProgress < 100) {
+            <span class="status-label in-progress">In progress</span>
+          } @else {
+            <span class="status-label complete">
+              <mat-icon>check_circle</mat-icon>
+              Complete
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Override Warnings Block -->
+      @if (overridesCount > 0) {
+        <div class="rail-block warnings-block">
+          <div class="block-header">
+            <mat-icon class="warning-icon">warning</mat-icon>
+            <h3 class="block-title">Override Warnings</h3>
+          </div>
+
+          <p class="warning-description">
+            <strong>{{ overridesCount }}</strong> Existing mappings overridden
+          </p>
+
+          <p class="warning-explanation">
+            These mappings override existing Code Set or Code-level mappings
+          </p>
+
+          <!-- Selected Row Warning Detail -->
+          @if (selectedRow && selectedRow.hasWarning) {
+            <div class="active-warning-detail">
+              <div class="warning-title">
+                <mat-icon>error_outline</mat-icon>
+                <strong>Override detected</strong>
+              </div>
+
+              <p class="warning-message">
+                This code already maps via
+                {{ selectedRow.existingMapping?.type || 'another mapping' }} →
+                {{ selectedRow.existingMapping?.targetCode || 'LOINC' }}.
+              </p>
+
+              <p class="warning-impact">This mapping will take precedence.</p>
+
+              <button
+                mat-button
+                class="view-existing-link"
+                (click)="onViewExistingMapping(selectedRow)">
+                View existing mapping
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- BOTTOM ACTIONS (Optional Secondary Save) -->
+  <div class="bottom-actions">
+    <button mat-flat-button class="btn-cancel" (click)="onCancel()">Cancel</button>
+
+    <button mat-flat-button class="btn-save" [disabled]="!canSave" (click)="onSave()">
+      Save Mapping
+    </button>
+  </div>
+</div>

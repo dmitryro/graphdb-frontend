@@ -209,6 +209,18 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.OpenEditRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseEditRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     case EventActionTypes.AddNormalizationMapping: {
       return {
         ...state,
@@ -396,6 +408,48 @@ export function eventReducer(
       };
     }
     case EventActionTypes.CodeAddedToSet: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenNewCodeSetMappingModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseNewCodeSetMappingModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenNewCodeSetValidationRuleModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseNewCodeSetValidationRuleModal: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenMapCodeSet: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseMapCodeSet: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CodeMappingSaved: {
       return {
         ...state,
         items: (action as any).payload,

@@ -1,6 +1,8 @@
 import { AddNewCodeModalComponent } from './add-new-code-modal/add-new-code-modal.component';
 import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
+import { NewCodeSetMappingModalComponent } from './new-code-set-mapping-modal/new-code-set-mapping-modal.component';
 import { NewCodeSetModalComponent } from './new-code-set-modal/new-code-set-modal.component';
+import { NewCodeSetValidationRuleModalComponent } from './new-code-set-validation-rule-modal/new-code-set-validation-rule-modal.component';
 import { NewGoldenRecordModalComponent } from './new-golden-record-modal//new-golden-record-modal.component';
 import { NewMappingModalComponent } from './new-mapping-modal/new-mapping-modal.component';
 import { NewModelModalComponent } from './new-model-modal/new-model-modal.component';
@@ -22,11 +24,15 @@ export const components: any[] = [
   ConfirmationModalComponent,
   NewCodeSetModalComponent,
   NewGoldenRecordModalComponent,
+  NewCodeSetMappingModalComponent,
+  NewCodeSetValidationRuleModalComponent,
 ];
 
 export * from './add-new-code-modal/add-new-code-modal.component';
 export * from './confirmation-modal/confirmation-modal.component';
+export * from './new-code-set-mapping-modal/new-code-set-mapping-modal.component';
 export * from './new-code-set-modal/new-code-set-modal.component';
+export * from './new-code-set-validation-rule-modal/new-code-set-validation-rule-modal.component';
 export * from './new-golden-record-modal//new-golden-record-modal.component';
 export * from './new-mapping-modal/new-mapping-modal.component';
 export * from './new-model-modal/new-model-modal.component';

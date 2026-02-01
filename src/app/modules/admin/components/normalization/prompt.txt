@@ -1,0 +1,7 @@
+You have several clues to design view-rule.component.ts, view-rule.component.html and view-rule.component.scss
+
+1. You use new-rule-modal.component.ts, new-rule-modal.component.html to learn about functionalities and fields that must be editable in view-rule.component.ts
+
+2. It must animate to and from Rule tab of normalization component same way view-mapping.component.ts animates to and from normalization component - 1 in 1 out. Carefully learn the logic in view-mapping.component.ts, view-mapping.component.html and view-mapping.component.scss to implement all same styles and behaviors, including breadcrumb steps (this will be View Rule instead of View Mapping), include Edit button for the next step edit-rule.component (will be implemented later - for now focus on view-rule). Based on new-rule-model identify what filds must become dropdowns, inputs, text fields, text-fields are there and follow practices used by view-mapping.component and styles from view-mapping-components to lay it out.
+Provide panels and tables in a similar way with rule specifics. Implement all same animations and styles in a consistent way with dark/light mode
+switch, style consistency and animations. This serves same purpose for Rules what view-mapping.component serves for mappings. Integration into normalization.component must be provided in a similar way. Implement it - learn logic from modal, styles from view-mapping. Come up with logical, feasible, consistent and comprehensive design and implement it in this new component view-rule.component (ts/scss/html)

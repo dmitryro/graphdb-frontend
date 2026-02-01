@@ -4,7 +4,14 @@
   <div
     class="normalization-main-container"
     [class.slide-out-to-left]="
-      showMappingDetail || showModelDetail || showEditCode || isEditingMapping || isEditingModel
+      showMappingDetail ||
+      showModelDetail ||
+      showRuleDetail ||
+      showEditCode ||
+      showMapCodeSet ||
+      isEditingMapping ||
+      isEditingModel ||
+      isEditingRule
     ">
     <header class="normalization-header">
       <div class="breadcrumb-area">
@@ -242,6 +249,18 @@
           </div>
 
           <div class="filter-actions">
+            <!-- Type Filter (New) -->
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingTypeMenu">
+              <mat-icon>category</mat-icon>
+              Type: <strong>{{ selectedMappingType || 'All' }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #mappingTypeMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setMappingTypeFilter('All')">All*</button>
+              <button mat-menu-item (click)="setMappingTypeFilter('Model')">Model Mappings</button>
+              <button mat-menu-item (click)="setMappingTypeFilter('Code')">Code Mappings</button>
+            </mat-menu>
+
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingStatusMenu">
               <mat-icon>list</mat-icon>
               Status: <strong>{{ selectedMappingStatus }}</strong>
@@ -335,6 +354,18 @@
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapping Name</th>
               <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
+            </ng-container>
+
+            <!-- Type Column (New Leftmost Column) -->
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+              <td mat-cell *matCellDef="let element">
+                <span
+                  class="type-tag"
+                  [ngClass]="element.type?.toLowerCase() === 'model' ? 'tag-blue' : 'tag-purple'">
+                  {{ element.type }}
+                </span>
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="source">
@@ -570,7 +601,12 @@
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="ruleColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: ruleColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: ruleColumns"
+              class="clickable-row"
+              [class.selected-row]="selectedRuleData?.id === row.id"
+              (click)="onRuleRowClick(row)"></tr>
           </table>
 
           <mat-paginator
@@ -910,6 +946,14 @@
                     <div class="header-actions">
                       <button
                         mat-flat-button
+                        color="accent"
+                        class="map-btn"
+                        (click)="onMapCodeSet(selectedCodeData)">
+                        <mat-icon>compare_arrows</mat-icon>
+                        Map Code Set
+                      </button>
+                      <button
+                        mat-flat-button
                         color="primary"
                         class="edit-btn"
                         (click)="onEditCodeClick(selectedCodeData)">
@@ -1070,6 +1114,11 @@
           <button mat-menu-item (click)="onCodeRowClick(item)">
             <mat-icon>visibility</mat-icon>
             <span>View Details</span>
+          </button>
+          <!-- ADD THIS BUTTON: -->
+          <button mat-menu-item (click)="onMapCodeSet(item)">
+            <mat-icon>compare_arrows</mat-icon>
+            <span>Map Code Set</span>
           </button>
           <button mat-menu-item (click)="editValueSet(item)">
             <mat-icon>edit</mat-icon>
@@ -1300,6 +1349,30 @@
   @if (showEditCode && isEditingCode) {
     <div class="code-edit-view">
       <app-edit-code [codeData]="selectedCodeData" (closeEdit)="onCloseEditCode()"> </app-edit-code>
+    </div>
+  }
+
+  <!-- Rule Detail View -->
+  @if (showRuleDetail) {
+    <div class="rule-detail-view">
+      <app-view-rule [ruleData]="selectedRuleData" (closeView)="onCloseRuleDetail()">
+      </app-view-rule>
+    </div>
+  }
+
+  @if (isEditingRule) {
+    <div class="rule-edit-view">
+      <app-edit-rule [ruleData]="selectedRuleData" (closeEdit)="onCloseEditRule()"> </app-edit-rule>
+    </div>
+  }
+
+  <!-- Map Code Set View (Full overlay component) -->
+  @if (showMapCodeSet) {
+    <div class="map-code-set-view">
+      <app-map-code-set
+        [mappingData]="selectedCodeSetForMapping"
+        (closeMapping)="onCloseMapCodeSet()">
+      </app-map-code-set>
     </div>
   }
 </div>

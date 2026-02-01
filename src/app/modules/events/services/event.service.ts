@@ -17,6 +17,19 @@ export class EventService {
     m.set('confirmation_save_confirmed', EventActionTypes.ConfirmationSaveConfirmed);
     m.set('confirmation_confirm_confirmed', EventActionTypes.ConfirmationConfirmConfirmed);
     m.set('confirmation_reset_confirmed', EventActionTypes.ConfirmationResetConfirmed);
+    m.set('code_mapping_saved', EventActionTypes.CodeMappingSaved);
+    m.set('open_map_code_set', EventActionTypes.OpenMapCodeSet);
+    m.set('close_map_code_set', EventActionTypes.CloseMapCodeSet);
+    m.set('open_new_code_set_mapping_modal', EventActionTypes.OpenNewCodeSetMappingModal);
+    m.set('close_new_code_set_mapping_modal', EventActionTypes.CloseNewCodeSetMappingModal);
+    m.set(
+      'open_new_code_set_validation_rule_modal',
+      EventActionTypes.OpenNewCodeSetValidationRuleModal,
+    );
+    m.set(
+      'close_new_code_set_validation_rule_modal',
+      EventActionTypes.CloseNewCodeSetValidationRuleModal,
+    );
     m.set('open_add_new_code_modal', EventActionTypes.OpenAddNewCodeModal);
     m.set('close_add_new_code_modal', EventActionTypes.CloseAddNewCodeModal);
     m.set('open_new_value_set_modal', EventActionTypes.OpenNewValueSetModal);
@@ -35,6 +48,8 @@ export class EventService {
     m.set('open_edit_code', EventActionTypes.OpenEditCode);
     m.set('close_edit_mapping', EventActionTypes.CloseEditMapping);
     m.set('open_edit_mapping', EventActionTypes.OpenEditMapping);
+    m.set('close_edit_rule', EventActionTypes.CloseEditRule);
+    m.set('open_edit_rule', EventActionTypes.OpenEditRule);
     m.set('close_edit_model', EventActionTypes.CloseEditModel);
     m.set('open_edit_model', EventActionTypes.OpenEditModel);
     m.set('view_related_model', EventActionTypes.ViewRelatedModel);

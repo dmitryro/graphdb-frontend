@@ -50,7 +50,10 @@ import { UsageImpactDrawerComponent } from './usage-impact-drawer/usage-impact-d
 // Add these imports at the top with the other component imports:
 import { EditCodeComponent } from './edit-code/edit-code.component';
 import { EditModelComponent } from './edit-model/edit-model.component';
+import { EditRuleComponent } from './edit-rule/edit-rule.component';
+import { MapCodeSetComponent } from './map-code-set/map-code-set.component';
 import { ViewModelComponent } from './view-model/view-model.component';
+import { ViewRuleComponent } from './view-rule/view-rule.component';
 // Core Date Imports
 import {
   DateAdapter,
@@ -93,6 +96,9 @@ import { UsersModule } from '@modules/users/users-module';
     EditMappingComponent,
     ViewModelComponent,
     EditModelComponent,
+    ViewRuleComponent,
+    EditRuleComponent,
+    MapCodeSetComponent,
     UsageImpactDrawerComponent,
     BreadcrumbComponent,
   ],
@@ -143,6 +149,11 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   showMappingDetail = false;
   showModelDetail = false; // Add this missing declaration
   selectedMappingData: any = null;
+
+  // Rule Detail View State
+  showRuleDetail = false;
+  selectedRuleData: any = null;
+  isEditingRule = false;
 
   // Model Detail View State
   isEditingModel = false;
@@ -200,6 +211,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   ];
   public mappingColumns: string[] = [
     'name',
+    'type',
     'source',
     'target',
     'fields',
@@ -226,6 +238,10 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   // Edit Code state
   showEditCode = false;
   isEditingCode = false;
+
+  // Map Code Set state
+  showMapCodeSet = false;
+  selectedCodeSetForMapping: any = null;
 
   public versionColumns: string[] = ['versionTag', 'releasedBy', 'status', 'timestamp', 'actions'];
   // UPDATED: Column structure
@@ -264,6 +280,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   selectedMappingStatus = 'All Statuses';
   selectedMappingSource = 'All Sources';
   selectedMappingTarget = 'All Targets';
+  selectedMappingType = 'All Types';
   selectedMappingCoverage = 'All Coverage';
 
   // Rule Governance Filter Defaults
@@ -303,6 +320,11 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   setMappingTargetFilter(val: string) {
     this.selectedMappingTarget = val;
+    this.applyMappingFilter();
+  }
+
+  setMappingTypeFilter(val: string) {
+    this.selectedMappingType = val;
     this.applyMappingFilter();
   }
 
@@ -522,15 +544,28 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
    * Processes navigation signals from the breadcrumb.
    * Ensures clickable segments for: Normalization > [Tab] > View > Edit
    */
+
   private handleBreadcrumbNavigation(target: string): void {
     // 1. Handle "Edit" views - stay in current state but update path
-    if (target === 'EDIT_MAPPING' || target === 'EDIT_MODEL') {
+    if (target === 'EDIT_MAPPING' || target === 'EDIT_MODEL' || target === 'EDIT_RULE') {
       this.updateBreadcrumbPath();
       this.cdr.detectChanges();
       return;
     }
 
-    // ADD THIS BLOCK:
+    // 2. Handle navigation back to View Rule
+    if (target === 'VIEW_RULE') {
+      this.showRuleDetail = true;
+      this.eventService.publish('nf', 'close_edit_rule', {
+        ruleId: this.selectedRuleData?.id,
+        action: 'close_edit_rule',
+      });
+      this.updateBreadcrumbPath('View Rule');
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // 3. Handle navigation back to View Code
     if (target === 'VIEW_CODE') {
       this.showCodeDetail = true;
       this.eventService.publish('nf', 'close_edit_code', {
@@ -541,7 +576,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
-    // 2. Handle "View" views (Back navigation from Edit)
+    // 4. Handle navigation back to View Mapping
     if (target === 'VIEW_MAPPING') {
       this.showMappingDetail = true;
       this.eventService.publish('nf', 'close_edit_mapping', {
@@ -552,6 +587,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
+    // 5. Handle navigation back to View Model
     if (target === 'VIEW_MODEL') {
       this.showModelDetail = true;
       this.eventService.publish('nf', 'close_edit_model', { modelId: this.selectedModelData?.id });
@@ -560,24 +596,29 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
-    // 3. Handle Root or Tab Navigation (Reset detail views)
+    // 6. Handle Root or Tab Navigation (Reset detail views)
     if (target === 'ROOT' || target.startsWith('TAB_')) {
-      // Clear detail/edit states
+      // Clear all detail and edit states
       this.showMappingDetail = false;
       this.showModelDetail = false;
+      this.showRuleDetail = false;
+      this.showCodeDetail = false;
+
+      // Clear selected data
       this.selectedMappingData = null;
       this.selectedModelData = null;
-      this.showCodeDetail = false; // NEW: Reset code detail
-      this.selectedCodeData = null; // NEW: Reset selected code
+      this.selectedRuleData = null;
+      this.selectedCodeData = null;
+
+      // Reset edit/mapping flags
       this.showEditCode = false;
       this.isEditingCode = false;
-      let targetIndex = this.activeTabIndex;
+      this.showMapCodeSet = false; // Hide map view
+      this.selectedCodeSetForMapping = null; // Clear mapping context
 
-      // FIX: Ensure these indices match your template [Models(0), Mappings(1), etc.]
+      let targetIndex = this.activeTabIndex;
       switch (target) {
         case 'ROOT':
-          targetIndex = 0;
-          break;
         case 'TAB_MODELS':
           targetIndex = 0;
           break;
@@ -593,24 +634,34 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         case 'TAB_CODES':
           targetIndex = 4;
           break;
+        default:
+          targetIndex = 0;
       }
 
-      // THE FIX: Use setTimeout to ensure mat-tab-group registers the index change
       setTimeout(() => {
         this.activeTabIndex = targetIndex;
         if (this.tabOrder && this.tabOrder[this.activeTabIndex]) {
           this.activeTabLabel = this.tabOrder[this.activeTabIndex];
         }
 
-        // Finalize UI
         this.updateBreadcrumbPath();
-        this.onCloseMappingDetail(); // Ensure slide-in animations trigger
+        this.onCloseMappingDetail();
         this.onCloseModelDetail();
+        this.onCloseRuleDetail();
         this.cdr.detectChanges();
       }, 0);
+      return;
+    }
+
+    // 7. NEW: Handle direct click on 'Map Code Set' breadcrumb (no-op)
+    // This can happen if the user manually triggers navigation to MAP_CODE_SET,
+    // but since it's always the active/last item, this is typically unreachable.
+    // Still, include for safety without disrupting other flows.
+    if (target === 'MAP_CODE_SET') {
+      // Do nothing — MapCodeSetComponent manages its own lifecycle
+      return;
     }
   }
-
   /**
    * Updates the breadcrumb path by publishing a signal to the EventStore.
    * Ensures all items follow the expected type structure.
@@ -635,6 +686,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.eventService.publish('nf', 'update_breadcrumb', { path });
   }
+
   // Define a central path update method to reduce boilerplate
 
   /**
@@ -726,6 +778,21 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     }, 0);
   }
 
+  onRuleRowClick(rule: any): void {
+    this.selectedRuleData = { ...rule };
+    this.showRuleDetail = true;
+
+    // Update path: Normalization > Rules > View Rule
+    this.updateBreadcrumbPath('View Rule');
+
+    setTimeout(() => {
+      const container = document.querySelector('.normalization-main-container');
+      if (container) {
+        container.classList.add('slide-out');
+      }
+    }, 0);
+  }
+
   // NEW: Handle code row click
   onCodeRowClick(code: any): void {
     this.selectedCodeData = { ...code };
@@ -777,6 +844,16 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.cdr.detectChanges();
   }
 
+  onCloseEditRule(): void {
+    // 1. Reverse the animation: Slide back from the left
+    this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'VIEW_RULE' });
+
+    // 2. Clean up the Edit component AFTER its slide-out animation finishes
+    setTimeout(() => {
+      this.isEditingRule = false;
+    }, 600);
+  }
+
   // Add this method to handle closing the mapping detail view:
   onCloseMappingDetail(): void {
     const container = document.querySelector('.normalization-main-container');
@@ -810,6 +887,168 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         container.classList.remove('slide-in');
       }
     }, 400);
+  }
+
+  onCloseRuleDetail(): void {
+    const container = document.querySelector('.normalization-main-container');
+    if (container) {
+      container.classList.remove('slide-out');
+      container.classList.add('slide-in');
+    }
+
+    setTimeout(() => {
+      this.showRuleDetail = false;
+      this.selectedRuleData = null;
+      this.updateBreadcrumbPath(); // Reset breadcrumb after closing
+
+      if (container) {
+        container.classList.remove('slide-in');
+      }
+      this.cdr.detectChanges();
+    }, 400);
+  }
+
+  /**
+   * Opens Map Code Set component with proper animation and state management
+   */
+  onMapCodeSet(codeRow: any): void {
+    // Prepare mapping data with source code rows
+    this.selectedCodeSetForMapping = {
+      id: codeRow.id,
+      sourceCodeSet: codeRow.codeSetName || codeRow.system,
+      targetCodeSet: '', // User will select
+      sourceCodeRows: this.generateSourceCodeRows(codeRow),
+    };
+
+    this.showMapCodeSet = true;
+
+    // Breadcrumb: Normalization > Codes > Map: [Code Set Name]
+    const breadcrumbPath = [
+      { label: 'Normalization', target: 'ROOT' },
+      { label: 'Codes', target: 'TAB_CODES' },
+      { label: `Map: ${this.selectedCodeSetForMapping.sourceCodeSet}`, active: true },
+    ];
+    this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
+
+    this.eventService.publish('nf', 'open_map_code_set', {
+      action: 'open_map_code_set',
+      codeSetId: codeRow.id,
+      fullData: this.selectedCodeSetForMapping,
+    });
+  }
+
+  onCloseMapCodeSet(): void {
+    console.log('[Normalization] Closing Map Code Set component');
+
+    // Reset state
+    this.showMapCodeSet = false;
+    this.selectedCodeSetForMapping = null;
+
+    // Update breadcrumb back to Codes tab
+    const breadcrumbPath = [
+      { label: 'Normalization', target: 'ROOT' },
+      { label: 'Codes', target: 'TAB_CODES', active: true },
+    ];
+    this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
+
+    // Optional: publish close event so child can react if needed
+    this.eventService.publish('nf', 'close_map_code_set', {});
+
+    // Trigger change detection
+    this.cdr.detectChanges();
+  }
+  /**
+   * Generate mock source code rows for mapping
+   */
+  private generateSourceCodeRows(codeRow: any): any[] {
+    // Mock data - in production, fetch from API based on code set
+    console.log(`[generateSourceCodeRows] codeRow: ${JSON.stringify(codeRow)}`);
+
+    const sourceRows = [
+      {
+        sourceCode: 'NA',
+        sourceLabel: 'Sodium',
+        targetCode: '',
+        targetLabel: '',
+        mappingType: 'Direct',
+        hasWarning: false,
+      },
+      {
+        sourceCode: 'GLU',
+        sourceLabel: 'Glucose',
+        targetCode: '',
+        targetLabel: '',
+        mappingType: 'Direct',
+        hasWarning: false,
+      },
+      {
+        sourceCode: 'HGB',
+        sourceLabel: 'Hemoglobin',
+        targetCode: '',
+        targetLabel: '',
+        mappingType: 'Direct',
+        hasWarning: false,
+      },
+      {
+        sourceCode: 'A1C',
+        sourceLabel: 'C-Reactive Protein',
+        targetCode: '4548-4',
+        targetLabel: 'C-Reactive Protein [Mass/volume]',
+        mappingType: 'Direct',
+        hasWarning: true,
+        warningMessage: 'Override detected',
+        existingMapping: {
+          type: 'Code Set',
+          targetCode: 'LOINC:4548-4',
+        },
+      },
+      {
+        sourceCode: 'CRP',
+        sourceLabel: 'C-Reactive Protein',
+        targetCode: '',
+        targetLabel: '',
+        mappingType: 'Direct',
+        hasWarning: false,
+      },
+      {
+        sourceCode: 'TROP',
+        sourceLabel: 'Troponin I',
+        targetCode: '',
+        targetLabel: '',
+        mappingType: 'Direct',
+        hasWarning: false,
+      },
+      {
+        sourceCode: 'LYMES',
+        sourceLabel: 'Lyme Disease Antibody',
+        targetCode: '',
+        targetLabel: '',
+        mappingType: 'Direct',
+        hasWarning: false,
+      },
+      {
+        sourceCode: 'VITD',
+        sourceLabel: 'Vitamin D',
+        targetCode: '',
+        targetLabel: '',
+        mappingType: 'Direct',
+        hasWarning: false,
+      },
+    ];
+
+    // Add more rows to reach 40 total (matching the screenshot)
+    for (let i = sourceRows.length; i < 40; i++) {
+      sourceRows.push({
+        sourceCode: `CODE${i + 1}`,
+        sourceLabel: `Test Code ${i + 1}`,
+        targetCode: '',
+        targetLabel: '',
+        mappingType: 'Direct',
+        hasWarning: false,
+      });
+    }
+
+    return sourceRows;
   }
 
   /**
@@ -876,7 +1115,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       }
 
       // Handle navigation to a related model
-      // Inside subscribeToEvents() in normalization.component.ts
       if (eventName === 'view_related_model' && eventData) {
         // Pass the whole payload { modelName, modelId }
         this.handleRelatedModelNavigation({
@@ -886,13 +1124,11 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       }
 
       if (eventName === 'open_edit_mapping') {
-        // Initialize with the received data
         this.isEditingMapping = true;
         this.isExiting = false;
       }
 
       if (eventName === 'close_edit_mapping') {
-        // Initialize with the received data
         this.isEditingMapping = false;
         this.isExiting = true;
       }
@@ -921,6 +1157,49 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         this.isExiting = true;
       }
 
+      if (eventName === 'open_edit_rule') {
+        this.isEditingRule = true;
+        this.isExiting = false;
+      }
+
+      if (eventName === 'close_edit_rule') {
+        this.isEditingRule = false;
+        this.isExiting = true;
+      }
+
+      // Handle map code set events – FIXED: store data BEFORE showing component
+      if (eventName === 'open_map_code_set' && eventData?.fullData) {
+        console.log('[Normalization] Preparing to open map code set with data:', {
+          sourceCodeSet: eventData.fullData.sourceCodeSet,
+          rowCount: eventData.fullData.sourceCodeRows?.length ?? 0,
+          firstRowExample: eventData.fullData.sourceCodeRows?.[0] ?? 'no rows',
+        });
+
+        // Store the full mapping data so [mappingData] input can bind it
+        this.selectedCodeSetForMapping = eventData.fullData;
+
+        // Now reveal the component → *ngIf becomes true and input is set
+        this.showMapCodeSet = true;
+        this.isExiting = false;
+
+        // Ensure Angular sees the change immediately
+        this.cdr.detectChanges();
+      }
+
+      if (eventName === 'close_map_code_set') {
+        this.showMapCodeSet = false;
+        this.selectedCodeSetForMapping = null;
+        this.isExiting = true;
+        this.cdr.detectChanges();
+      }
+
+      if (eventName === 'code_mapping_saved') {
+        // Refresh code data after mapping is saved
+        console.log('[Normalization] Code mapping saved', eventData);
+        // In production: reload code table data
+        this.onCloseMapCodeSet();
+      }
+
       // 2. Handle Theme Change Events
       if (eventName === 'theme_change' || lastAction === 'theme_updated') {
         console.log('[NormalizationComponent] Theme change detected, reapplying layout fixes...');
@@ -936,8 +1215,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       }
 
       // 3. Handle Breadcrumb Navigation Signals
-      // This allows the breadcrumb click to trigger handleNavigation()
-      // Inside subscribeToEvents() around line 721
       if (eventName === 'breadcrumb_navigate' && eventData) {
         // FIX: Change handleNavigation to handleBreadcrumbNavigation
         this.handleBreadcrumbNavigation(eventData.target);
@@ -1829,7 +2106,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     let filtered = [...this.originalMappingData];
 
     // 2. DEEP SEARCH BOX FILTER
-    // Matches Name, Source, Target, Status, and even Field counts/Coverage
     if (this.mappingSearch?.trim()) {
       const search = this.mappingSearch.toLowerCase().trim();
       filtered = filtered.filter(item => {
@@ -1839,7 +2115,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
           item.target?.toLowerCase().includes(search) ||
           item.status?.toLowerCase().includes(search) ||
           item.fields?.toString().includes(search) ||
-          item.coverage?.toLowerCase().includes(search)
+          item.coverage?.toLowerCase().includes(search) ||
+          item.type?.toLowerCase().includes(search) // ← Added for safety
         );
       });
     }
@@ -1877,7 +2154,13 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       filtered = filtered.filter(item => item.target.toLowerCase() === targetKey);
     }
 
-    // 6. Coverage Filter
+    // 6. TYPE FILTER ← ADDED / FIXED
+    const typeKey = (this.selectedMappingType || '').toLowerCase();
+    if (typeKey !== '' && typeKey !== 'all' && typeKey !== 'any' && typeKey !== 'all types') {
+      filtered = filtered.filter(item => item.type?.toLowerCase() === typeKey);
+    }
+
+    // 7. Coverage Filter
     const coverageKey = (this.selectedMappingCoverage || '').toLowerCase();
     if (
       coverageKey !== '' &&
@@ -1888,13 +2171,12 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       filtered = filtered.filter(item => item.coverage.toLowerCase().includes(coverageKey));
     }
 
-    // 7. Date Range Filter
+    // 8. Date Range Filter
     const { start, end } = this.mappingDateRange.value;
     if (start || end) {
       filtered = filtered.filter(item => {
         const mappingDate = new Date(item.lastModified);
         mappingDate.setHours(0, 0, 0, 0);
-
         if (start) {
           const startDate = new Date(start);
           startDate.setHours(0, 0, 0, 0);
@@ -1909,14 +2191,13 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       });
     }
 
-    // 8. Assign data and reset pagination
+    // 9. Assign data and reset pagination
     this.mappingDataSource.data = filtered;
     if (this.mappingPaginator) {
       this.mappingPaginator.firstPage();
     }
 
-    // 9. FIX STYLE DEATH & TAB VISIBILITY
-    // Force Change Detection then run Renderer2 styles in next tick
+    // 10. Refresh layout
     this.cdr.detectChanges();
     setTimeout(() => {
       this.fixMappingsDateInputLayout();
@@ -2731,6 +3012,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     const fieldTypes = ['String', 'Number', 'Date', 'Boolean', 'Enum', 'Object'];
     const requirements = ['Required', 'Optional'];
     console.log(`Requirements options ${JSON.stringify(requirements)}`);
+
     // 1. Models Data (Updated to include Field Objects)
     this.originalModelData = Array.from({ length: 35 }, (_, index) => {
       const governanceType = index === 0 ? 'Canonical' : governanceTypes[index % 3];
@@ -2834,29 +3116,36 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     // 2. Enhanced Mapping Data
     this.originalMappingData = Array.from({ length: 35 }, (_, index) => {
       const sourceSystem = index % 2 === 0 ? 'Epic' : 'QuestLab';
-      const targetModelObject = this.originalModelData[index % 35];
+
+      // Fixed: Logic to explicitly set 'Code' vs 'Model' type
+      const isCodeType = index % 3 === 0;
+      const mappingType = isCodeType ? 'Code' : 'Model';
+
+      // Sample content for Code systems vs Data Models
+      const codeSystems = ['SNOMED CT', 'LOINC', 'ICD-10-CM', 'RxNorm', 'CPT'];
+      const targetName = isCodeType
+        ? `${codeSystems[index % codeSystems.length]} Terminology`
+        : this.originalModelData[index % 35].name;
+
+      const targetId = isCodeType ? `codesys-${index}` : this.originalModelData[index % 35].id;
+
       const day = Math.max(1, 15 - (index % 14))
         .toString()
         .padStart(2, '0');
       const dateString = `2026-01-${day}`;
       const fieldCount = 10 + (index % 15);
 
-      // Assuming generateFieldMappings exists in your component
-      const fields = this.generateFieldMappings(
-        sourceSystem,
-        targetModelObject.name,
-        fieldCount,
-        index,
-      );
-      const pipelines = this.generatePipelineUsage(sourceSystem, targetModelObject.name, index);
-      const rules = this.generateRuleReferences(sourceSystem, targetModelObject.name, index);
+      const fields = this.generateFieldMappings(sourceSystem, targetName, fieldCount, index);
+      const pipelines = this.generatePipelineUsage(sourceSystem, targetName, index);
+      const rules = this.generateRuleReferences(sourceSystem, targetName, index);
 
       return {
         id: `mapping-${index}`,
-        name: `${sourceSystem} → ${targetModelObject.name}`,
+        name: `${sourceSystem} → ${targetName}`,
+        type: mappingType, // Column required for Filtering
         source: index % 2 === 0 ? 'Epic Health Network' : 'QuestLab Systems',
-        target: targetModelObject.name,
-        targetId: targetModelObject.id,
+        target: targetName,
+        targetId: targetId,
         fields: fields,
         fieldCount: fieldCount,
         coverage: `${15 + (index % 5)} / 20`,
@@ -2870,13 +3159,14 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
           pipelineCount: pipelines.length,
           rules: rules,
           ruleCount: rules.length,
-          targetModel: targetModelObject.name,
+          targetModel: targetName,
           normalizationActive: index % 4 !== 3,
         },
       };
     });
 
     // 3. Rules Data
+    // 3. Rules Data - ENHANCED
     this.originalRuleData = Array.from({ length: 35 }, (_, index) => {
       const severity = ruleSeverities[index % 4];
       const scope = ruleScopes[index % 3];
@@ -2887,18 +3177,53 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         .padStart(2, '0');
       const dateString = `2026-01-${day}`;
 
+      // Enhanced rule data with transformation details
       return {
         id: `rule-${index}`,
-        ruleName:
-          index % 5 === 0
-            ? `Required Field Missing (patient_id)`
-            : `Normalization_Rule_${100 + index}`,
-        severity: severity,
+        name: index === 0 ? 'Height Unit Normalization' : `Normalization_Rule_${100 + index}`,
+        ruleName: index === 0 ? 'Height Unit Normalization' : `Normalization_Rule_${100 + index}`,
+        description:
+          index === 0
+            ? 'Converts height measurements from inches to centimeters for standardization'
+            : `Automated normalization rule for ${scope} data processing`,
+        model: index % 3 === 0 ? 'Patient' : index % 3 === 1 ? 'Lab Result' : 'Vital Signs',
         scope: scope,
+        targetField: index === 0 ? 'height' : `field_${index}`,
         trigger: trigger,
+        severity: severity,
         status: status,
         sourcesAffected: (index % 6) + 1,
         lastModified: dateString,
+
+        // Transformation details (for view-rule component)
+        details: {
+          mappings:
+            index === 0
+              ? [
+                  { sourceValue: 'Male', targetValue: 'M' },
+                  { sourceValue: 'Female', targetValue: 'F' },
+                ]
+              : [],
+          aliases: [],
+          conversions:
+            index === 0
+              ? [{ sourceField: 'height', fromUnit: 'Inches (in)', toUnit: 'Centimeters (cm)' }]
+              : [],
+          formulas: [],
+          defaults: index === 0 ? [{ sourceField: 'blood_type', defaultValue: 'Unknown' }] : [],
+          ignoreList: [],
+        },
+
+        // Version info
+        version: 'v2',
+        lastSavedBy: index % 2 === 0 ? 'Dmitry Roitman' : 'admin',
+        lastSavedRelative: '3 days ago',
+
+        // Usage data
+        usageData: {
+          pipelineCount: 2 + (index % 3),
+          modelCount: 1 + (index % 2),
+        },
       };
     });
 
@@ -2953,7 +3278,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       ];
       const statusOptions = ['Active', 'Superseded', 'Deprecated', 'Invalid'];
 
-      // ADD THIS: Generate dateString like in other data generation
       const day = Math.max(1, 15 - (index % 14))
         .toString()
         .padStart(2, '0');
@@ -2979,8 +3303,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         status: statusOptions[index % 4],
         mappedTo: index % 2 === 0 ? `ICD-10  E11.9` : index % 3 === 0 ? 'ICD-9  VS8.67' : '---',
         lastModified: dateString,
-
-        // Additional fields for detail view
         canonicalId: index % 6 === 0 ? 'E11.9' : `CODE-${index}`,
         codeType: 'Standard',
         createdBy: 'System Mapping',

@@ -237,8 +237,53 @@ body {
   }
 }
 
+.mat-mdc-checkbox {
+  color: var(--checkbox-border) !important;
+}
+
+.cdk-overlay-pane .mat-mdc-option {
+  color: var(--select-text) !important;
+}
+
 .cdk-overlay-container {
   // This ensures that our drawer (at 50000) is definitely
   // above the container where Menus live (which usually lacks a z-index or is lower)
   z-index: 1000 !important;
+}
+
+:root {
+  --dropdown-text: #3c4043;
+  --dropdown-caret: #3c4043;
+}
+
+[data-theme='dark'],
+.dark-theme {
+  --dropdown-text: #979797;
+  --dropdown-caret: #979797;
+}
+
+.mat-mdc-select-panel {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+}
+
+.mat-mdc-option {
+  background: var(--surface-color);
+}
+
+.mat-mdc-option .mdc-list-item__primary-text {
+  color: var(--dropdown-text) !important;
+}
+
+.mat-mdc-option.mdc-list-item--selected .mdc-list-item__primary-text {
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+
+.mat-mdc-select-value {
+  color: var(--dropdown-text);
+}
+
+.mat-mdc-select-arrow {
+  color: var(--dropdown-caret);
 }

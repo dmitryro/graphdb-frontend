@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 interface ConfirmationPayload {
   message?: string;
-  command?: 'save' | 'delete' | 'reset' | 'confirm';
+  command?: 'save' | 'delete' | 'reset' | 'confirm' | 'discard';
   itemName?: string;
   title?: string;
   theme?: 'dark' | 'light';

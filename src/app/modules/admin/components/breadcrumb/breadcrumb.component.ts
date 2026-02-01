@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 
 export interface BreadcrumbItem {
   label: string;
-  target?: string; // e.g., 'TAB_MAPPINGS', 'TAB_MODELS', 'VIEW_MAPPING', 'VIEW_MODEL'
+  target?: string; // e.g., 'TAB_MAPPINGS', 'TAB_MODELS', 'VIEW_MAPPING', 'VIEW_MODEL', 'VIEW_RULE'
   active?: boolean;
 }
 
@@ -45,7 +45,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
 
   /**
    * Navigates back based on the target property.
-   * Handles Mappings and Models consistently.
+   * Handles Mappings, Models, and Rules consistently.
    */
   onItemClick(item: BreadcrumbItem, index: number): void {
     if (index === this.items.length - 1) return;
@@ -62,23 +62,32 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // 3. Logic for further back navigation (Tabs or Root)
-    if (item.target === 'ROOT') {
-      // Close any potential edit mode
-      this.eventService.publish('nf', 'close_edit_mapping', { action: 'close_edit_mapping' });
-      this.eventService.publish('nf', 'close_edit_model', { action: 'close_edit_model' });
+    // 3. NEW: Handle navigation back to View Rule specifically
+    if (item.target === 'VIEW_RULE') {
+      this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'VIEW_RULE' });
+      return;
+    }
 
+    // 4. Logic for further back navigation (Tabs or Root)
+    if (item.target === 'ROOT') {
+      this.closeAllActiveEdits();
       this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'ROOT' });
     } else if (item.target?.startsWith('TAB_')) {
-      // Close any potential edit mode
-      this.eventService.publish('nf', 'close_edit_mapping', { action: 'close_edit_mapping' });
-      this.eventService.publish('nf', 'close_edit_model', { action: 'close_edit_model' });
-
+      this.closeAllActiveEdits();
       this.eventService.publish('nf', 'breadcrumb_navigate', {
         target: item.target,
         tabIndex: index,
       });
     }
+  }
+
+  /**
+   * Cleanly signals to close any active editors before navigating back in the hierarchy
+   */
+  private closeAllActiveEdits(): void {
+    this.eventService.publish('nf', 'close_edit_mapping', { action: 'close_edit_mapping' });
+    this.eventService.publish('nf', 'close_edit_model', { action: 'close_edit_model' });
+    this.eventService.publish('nf', 'close_edit_rule', { action: 'close_edit_rule' });
   }
 
   ngOnDestroy(): void {

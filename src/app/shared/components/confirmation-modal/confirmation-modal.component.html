@@ -49,6 +49,12 @@
           </button>
         }
 
+        @if (command === 'discard') {
+          <button mat-flat-button class="action-btn discard" (click)="executeAction()">
+            DISCARD
+          </button>
+        }
+
         @if (command === 'reset') {
           <button mat-flat-button class="action-btn reset" (click)="executeAction()">RESET</button>
         }

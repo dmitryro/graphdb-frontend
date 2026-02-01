@@ -3283,3 +3283,76 @@ $z-overlay: 2000;
     opacity: 1;
   }
 }
+
+// Rule Detail & Edit Views
+.rule-detail-view,
+.rule-edit-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  min-height: 100vh;
+  background: var(--detail-bg) !important;
+  color: var(--detail-text);
+  z-index: 1000;
+  padding-bottom: 40px;
+  overflow: visible;
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.rule-edit-view {
+  z-index: 2000; // Above detail view
+}
+
+// Ensure inner components don't collapse
+.rule-detail-view ::ng-deep app-view-rule,
+.rule-edit-view ::ng-deep app-edit-rule {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+// Make rule table rows clickable
+.rules-tab-wrapper {
+  .full-width-table {
+    tr.clickable-row {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: rgba(67, 109, 157, 0.05) !important;
+      }
+
+      &:active {
+        background-color: rgba(67, 109, 157, 0.1) !important;
+      }
+
+      &.selected-row {
+        background-color: rgba(67, 109, 157, 0.12) !important;
+      }
+    }
+  }
+}
+
+// Map Code Set View - Full Overlay
+.map-code-set-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-color);
+  z-index: 2000; // Above main (0), details (1000), and edit-code (2000)
+  overflow-y: auto;
+  animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+// Ensure inner component doesn't collapse
+.map-code-set-view ::ng-deep app-map-code-set {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
