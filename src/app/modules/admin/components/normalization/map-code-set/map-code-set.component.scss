@@ -1460,3 +1460,385 @@ button:disabled {
     }
   }
 }
+
+/* =============================================================================
+   HARD OVERRIDE — MDC CHECKBOXES (BULK + ROWS)
+   NO VARIABLES. NO TOKENS. NO MDC MAGIC.
+   ============================================================================= */
+
+/* ---------- LIGHT MODE ---------- */
+:host-context(.light-theme),
+:host-context(:not(.dark-theme)) {
+  ::ng-deep .mat-mdc-checkbox {
+    --mdc-checkbox-unselected-outline-color: #777a7c !important;
+
+    .mdc-checkbox__background {
+      background-color: transparent !important;
+      border: 2px solid #777a7c !important;
+    }
+
+    .mdc-checkbox__checkmark,
+    .mdc-checkbox__checkmark-path {
+      stroke: #777a7c !important;
+      color: #777a7c !important;
+      fill: none !important; /* FIXED: Removed fill to prevent triangle */
+    }
+
+    &.mat-mdc-checkbox-checked .mdc-checkbox__background,
+    &.mdc-checkbox--selected .mdc-checkbox__background {
+      background-color: var(--primary) !important;
+      border-color: var(--primary) !important;
+    }
+
+    &.mat-mdc-checkbox-checked .mdc-checkbox__checkmark-path,
+    &.mdc-checkbox--selected .mdc-checkbox__checkmark-path {
+      stroke: #777a7c !important; /* checkmark matches light-mode border color */
+      fill: none !important; /* FIXED: Removed fill to prevent triangle */
+    }
+
+    &.mat-mdc-checkbox-indeterminate .mdc-checkbox__mixedmark {
+      background-color: #777a7c !important;
+    }
+  }
+}
+
+/* ---------- DARK MODE ---------- */
+:host-context(.dark-theme) {
+  ::ng-deep .mat-mdc-checkbox {
+    --mdc-checkbox-unselected-outline-color: #979797 !important;
+
+    /* FIXED: Border stays #979797 and does not flip to black */
+    .mdc-checkbox__background {
+      background-color: transparent !important;
+      border: 2px solid #979797 !important;
+    }
+
+    .mdc-checkbox__checkmark,
+    .mdc-checkbox__checkmark-path {
+      stroke: #979797 !important;
+      color: #979797 !important;
+      fill: none !important; /* FIXED: Removed fill to prevent triangle */
+    }
+
+    /* FIXED: Border stays #979797 even when checked */
+    &.mat-mdc-checkbox-checked .mdc-checkbox__background,
+    &.mdc-checkbox--selected .mdc-checkbox__background {
+      background-color: var(--primary) !important;
+      border-color: #979797 !important;
+    }
+
+    &.mat-mdc-checkbox-checked .mdc-checkbox__checkmark-path,
+    &.mdc-checkbox--selected .mdc-checkbox__checkmark-path {
+      stroke: #979797 !important; /* checkmark matches dark-mode 979797 */
+      fill: none !important; /* FIXED: Removed fill to prevent triangle */
+    }
+
+    &.mat-mdc-checkbox-indeterminate .mdc-checkbox__mixedmark {
+      background-color: #979797 !important;
+    }
+  }
+}
+
+/* ---------- TABLE / BULK CHECKBOXES (EXPLICIT) ---------- */
+::ng-deep .mat-mdc-table .mat-mdc-checkbox,
+::ng-deep .mat-mdc-header-row .mat-mdc-checkbox,
+::ng-deep .mapping-table .mat-mdc-checkbox {
+  background: transparent !important;
+}
+
+/* CHECKMARK COLOR — THIS IS THE REAL ONE */
+::ng-deep
+  .mat-mdc-checkbox
+  .mdc-checkbox__native-control:checked
+  ~ .mdc-checkbox__background
+  .mdc-checkbox__checkmark-path {
+  stroke: inherit !important; /* inherit theme-specific gray from above */
+  fill: none !important; /* FIXED: Removed fill to prevent triangle */
+}
+
+::ng-deep .mat-mdc-checkbox .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background {
+  background-color: var(--primary) !important;
+  /* border-color handled by theme-specific blocks below */
+}
+
+::ng-deep .mat-mdc-checkbox .mdc-checkbox__background {
+  background-color: transparent !important;
+}
+
+::ng-deep .mat-mdc-checkbox .mdc-checkbox__mixedmark {
+  /* background-color handled by theme-specific blocks below */
+}
+
+/* =============================================================================
+   CHECKBOX COLOR FIX - SURGICAL OVERRIDE
+   Apply this AFTER all other styles in map-code-set.component.scss
+   
+   Requirements (final, as clarified):
+   - Light mode: #777A7C for box border, dash, checkmark stroke
+   - Dark mode: #979797 for box border, dash, checkmark stroke
+   - Checked background: var(--primary)
+   - Checkmark: NEVER white, NEVER black — always matches border color
+   ============================================================================= */
+
+/* LIGHT MODE - #777A7C */
+.map-code-set-wrapper {
+  ::ng-deep .mat-mdc-checkbox {
+    .mdc-checkbox__background {
+      border: 2px solid #777a7c !important;
+      background-color: transparent !important;
+    }
+
+    .mdc-checkbox__checkmark-path {
+      stroke: #777a7c !important;
+      fill: none !important; /* FIXED: Removed fill to prevent triangle */
+    }
+
+    .mdc-checkbox__mixedmark {
+      background-color: #777a7c !important;
+    }
+
+    &.mat-mdc-checkbox-checked .mdc-checkbox__background,
+    &.mdc-checkbox--selected .mdc-checkbox__background {
+      background-color: var(--primary) !important;
+      border-color: var(--primary) !important;
+    }
+
+    &.mat-mdc-checkbox-checked .mdc-checkbox__checkmark-path,
+    &.mdc-checkbox--selected .mdc-checkbox__checkmark-path {
+      stroke: #777a7c !important;
+      fill: none !important;
+    }
+
+    &.mat-mdc-checkbox-indeterminate .mdc-checkbox__background {
+      border-color: #777a7c !important;
+      background-color: transparent !important;
+    }
+  }
+}
+
+/* DARK MODE - #979797 */
+:host-context(.dark-theme) .map-code-set-wrapper,
+:host-context([data-theme='dark']) .map-code-set-wrapper {
+  ::ng-deep .mat-mdc-checkbox {
+    .mdc-checkbox__background {
+      border: 2px solid #979797 !important;
+      background-color: transparent !important;
+    }
+
+    .mdc-checkbox__checkmark-path {
+      stroke: #979797 !important;
+      fill: none !important; /* FIXED: Removed fill to prevent triangle */
+    }
+
+    .mdc-checkbox__mixedmark {
+      background-color: #979797 !important;
+    }
+
+    &.mat-mdc-checkbox-checked .mdc-checkbox__background,
+    &.mdc-checkbox--selected .mdc-checkbox__background {
+      background-color: var(--primary) !important;
+      border-color: #979797 !important; /* FIXED: Border does not flip */
+    }
+
+    &.mat-mdc-checkbox-checked .mdc-checkbox__checkmark-path,
+    &.mdc-checkbox--selected .mdc-checkbox__checkmark-path {
+      stroke: #979797 !important;
+      fill: none !important;
+    }
+
+    &.mat-mdc-checkbox-indeterminate .mdc-checkbox__background {
+      border-color: #979797 !important;
+      background-color: transparent !important;
+    }
+  }
+}
+
+/* =============================================================================
+   TARGETED MDC CHECKBOX OVERRIDES – ADD THIS BLOCK AT THE VERY END OF THE FILE
+   Fixes checked (.mdc-checkbox--selected) + indeterminate states
+   Ensures checkmark always matches border color — never white, never black
+   ============================================================================= */
+
+/* ────────────────────────────────────────────────
+   LIGHT MODE
+───────────────────────────────────────────────── */
+:host-context(.light-theme),
+:host-context(:not(.dark-theme)) {
+  ::ng-deep {
+    .mdc-checkbox:not(.mdc-checkbox--selected):not(.mdc-checkbox--indeterminate) {
+      .mdc-checkbox__background {
+        border: 2px solid #777a7c !important;
+        background-color: transparent !important;
+      }
+    }
+
+    .mdc-checkbox--selected,
+    .mat-mdc-checkbox-checked {
+      .mdc-checkbox__background {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+      }
+      .mdc-checkbox__checkmark-path {
+        stroke: #777a7c !important;
+        fill: none !important;
+      }
+    }
+
+    .mdc-checkbox--indeterminate {
+      .mdc-checkbox__background {
+        border: 2px solid #777a7c !important;
+        background-color: transparent !important;
+      }
+      .mdc-checkbox__mixedmark {
+        background-color: #777a7c !important;
+      }
+    }
+
+    .mdc-checkbox:hover:not(.mdc-checkbox--selected):not(.mdc-checkbox--indeterminate) {
+      .mdc-checkbox__background {
+        background-color: rgba(128, 128, 128, 0.08) !important;
+      }
+    }
+  }
+}
+
+/* ────────────────────────────────────────────────
+   DARK MODE
+───────────────────────────────────────────────── */
+:host-context(.dark-theme),
+[data-theme='dark'],
+.dark-theme,
+.dark {
+  ::ng-deep {
+    .mdc-checkbox:not(.mdc-checkbox--selected):not(.mdc-checkbox--indeterminate) {
+      .mdc-checkbox__background {
+        border: 2px solid #979797 !important;
+        background-color: transparent !important;
+      }
+    }
+
+    .mdc-checkbox--selected,
+    .mat-mdc-checkbox-checked {
+      .mdc-checkbox__background {
+        background-color: var(--primary) !important;
+        border-color: #979797 !important; /* FIXED: Border does not flip */
+      }
+      .mdc-checkbox__checkmark-path {
+        stroke: #979797 !important;
+        fill: none !important;
+      }
+    }
+
+    .mdc-checkbox--indeterminate {
+      .mdc-checkbox__background {
+        border: 2px solid #979797 !important;
+        background-color: transparent !important;
+      }
+      .mdc-checkbox__mixedmark {
+        background-color: #979797 !important;
+      }
+    }
+
+    .mdc-checkbox:hover:not(.mdc-checkbox--selected):not(.mdc-checkbox--indeterminate) {
+      .mdc-checkbox__background {
+        background-color: rgba(200, 200, 200, 0.12) !important;
+      }
+    }
+  }
+}
+
+/* =============================================================================
+   FINAL MDC CHECKBOX--SELECTED & INDETERMINATE FIXES
+   Add this AT THE VERY END – highest specificity
+   Ensures checkmark always matches border color (never white, never black)
+   ============================================================================= */
+
+/* LIGHT MODE ──────────────────────────────────────── */
+:host-context(.light-theme),
+:host-context(:not(.dark-theme)) {
+  ::ng-deep {
+    .mdc-checkbox--selected,
+    .mat-mdc-checkbox-checked {
+      .mdc-checkbox__background {
+        background-color: var(--primary) !important;
+        border-color: var(--primary) !important;
+      }
+      .mdc-checkbox__checkmark-path {
+        stroke: #777a7c !important;
+        fill: none !important;
+      }
+    }
+
+    .mdc-checkbox--indeterminate {
+      .mdc-checkbox__background {
+        border-color: #777a7c !important;
+        background: transparent !important;
+      }
+      .mdc-checkbox__mixedmark {
+        background-color: #777a7c !important;
+      }
+    }
+
+    .mdc-checkbox:not(.mdc-checkbox--selected):not(.mdc-checkbox--indeterminate) {
+      .mdc-checkbox__background {
+        border: 2px solid #777a7c !important;
+        background: transparent !important;
+      }
+    }
+  }
+}
+
+/* DARK MODE ───────────────────────────────────────── */
+:host-context(.dark-theme),
+[data-theme='dark'],
+.dark-theme,
+.dark {
+  ::ng-deep {
+    .mdc-checkbox--selected,
+    .mat-mdc-checkbox-checked {
+      .mdc-checkbox__background {
+        background-color: var(--primary) !important;
+        border-color: #979797 !important; /* FIXED: Border does not flip */
+      }
+      .mdc-checkbox__checkmark-path {
+        stroke: #979797 !important;
+        fill: none !important;
+      }
+    }
+
+    .mdc-checkbox--indeterminate {
+      .mdc-checkbox__background {
+        border-color: #979797 !important;
+        background: transparent !important;
+      }
+      .mdc-checkbox__mixedmark {
+        background-color: #979797 !important;
+      }
+    }
+
+    .mdc-checkbox:not(.mdc-checkbox--selected):not(.mdc-checkbox--indeterminate) {
+      .mdc-checkbox__background {
+        border: 2px solid #979797 !important;
+        background: transparent !important;
+      }
+    }
+  }
+}
+
+/* Extra insurance: prevent white/black checkmark bleed */
+::ng-deep {
+  .mat-mdc-checkbox .mdc-checkbox__checkmark-path {
+    stroke: inherit !important;
+    fill: none !important;
+  }
+
+  .mat-mdc-checkbox-checked .mdc-checkbox__checkmark-path,
+  .mdc-checkbox--selected .mdc-checkbox__checkmark-path {
+    stroke: inherit !important !important;
+    fill: none !important;
+  }
+
+  .mat-mdc-checkbox .mdc-checkbox__mixedmark {
+    background-color: inherit !important;
+  }
+}

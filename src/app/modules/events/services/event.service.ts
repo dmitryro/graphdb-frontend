@@ -30,6 +30,9 @@ export class EventService {
       'close_new_code_set_validation_rule_modal',
       EventActionTypes.CloseNewCodeSetValidationRuleModal,
     );
+    m.set('close_edit_codeset', EventActionTypes.CloseEditCodeSet);
+    m.set('open_edit_codeset', EventActionTypes.OpenEditCodeSet);
+    m.set('execute_codeset_action', EventActionTypes.ExecuteCodeSetAction);
     m.set('open_add_new_code_modal', EventActionTypes.OpenAddNewCodeModal);
     m.set('close_add_new_code_modal', EventActionTypes.CloseAddNewCodeModal);
     m.set('open_new_value_set_modal', EventActionTypes.OpenNewValueSetModal);
@@ -48,6 +51,12 @@ export class EventService {
     m.set('open_edit_code', EventActionTypes.OpenEditCode);
     m.set('close_edit_mapping', EventActionTypes.CloseEditMapping);
     m.set('open_edit_mapping', EventActionTypes.OpenEditMapping);
+    m.set('close_code_set_edit_mapping', EventActionTypes.CloseCodeSetEditMapping);
+    m.set('open_code_set_edit_mapping', EventActionTypes.OpenCodeSetEditMapping);
+    m.set('close_edit_code_set_mapping', EventActionTypes.CloseEditCodeSetMapping);
+    m.set('open_edit_code_set_mapping', EventActionTypes.OpenEditCodeSetMapping);
+    m.set('close_edit_mixed_mapping', EventActionTypes.CloseEditMixedMapping);
+    m.set('open_edit_mixed_mapping', EventActionTypes.OpenEditMixedMapping);
     m.set('close_edit_rule', EventActionTypes.CloseEditRule);
     m.set('open_edit_rule', EventActionTypes.OpenEditRule);
     m.set('close_edit_model', EventActionTypes.CloseEditModel);

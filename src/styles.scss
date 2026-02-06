@@ -287,3 +287,52 @@ body {
 .mat-mdc-select-arrow {
   color: var(--dropdown-caret);
 }
+
+/* ============================================================
+   MDC CHECKBOX – FORCE CHECKMARK COLOR (GLOBAL ONLY)
+   ============================================================ */
+
+.mat-mdc-checkbox {
+  /* kill MDC defaults */
+  --mdc-checkbox-selected-checkmark-color: currentColor !important;
+  --mdc-checkbox-selected-icon-color: currentColor !important;
+}
+
+/* ---------- LIGHT MODE ---------- */
+.light-theme .mat-mdc-checkbox,
+:root:not(.dark-theme) .mat-mdc-checkbox {
+  color: #e0e0e7 !important;
+}
+
+/* ---------- DARK MODE ---------- */
+.dark-theme .mat-mdc-checkbox {
+  color: #333333 !important;
+}
+
+/* ---------- FORCE SVG PATH ---------- */
+.mat-mdc-checkbox svg,
+.mat-mdc-checkbox svg path {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* =========================================================
+   MDC CHECKBOX — FORCE CHECKMARK COLOR (REAL FIX)
+   ========================================================= */
+
+/* unchecked box border */
+.mdc-checkbox__background {
+  border-color: var(--checkbox-border, #666) !important;
+}
+
+/* CHECKED STATE — THIS IS THE CRITICAL PART */
+.mdc-checkbox.mdc-checkbox--selected {
+  --mdc-checkbox-selected-checkmark-color: #000000 !important; /* <-- FIX */
+  --mdc-checkbox-selected-icon-color: #000000 !important;
+}
+
+/* dark theme override */
+.dark-theme .mdc-checkbox.mdc-checkbox--selected {
+  --mdc-checkbox-selected-checkmark-color: #e0e0e7 !important;
+  --mdc-checkbox-selected-icon-color: #e0e0e7 !important;
+}

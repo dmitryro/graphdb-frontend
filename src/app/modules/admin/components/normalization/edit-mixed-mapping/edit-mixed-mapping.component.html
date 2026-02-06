@@ -1,0 +1,343 @@
+<div class="edit-mapping-wrapper" [class.slide-out-to-right]="isExiting">
+  <div class="main-header">
+    <div class="header-content">
+      <h1 class="page-title">Editing Mixed Mapping</h1>
+
+      <div class="source-target-line">
+        <span class="mapping-name"
+          >{{ sourceCodeSetName || 'Unknown Source' }} →
+          {{ targetCodeSetName || 'Unknown Target' }}</span
+        >
+        <span class="last-updated">Last updated {{ lastUpdated }} by {{ lastUpdatedBy }}</span>
+      </div>
+
+      <div class="usage-summary">
+        <span class="usage-item"> <strong>Used in:</strong> {{ usedInPipelines }} pipelines </span>
+        <span class="usage-separator">•</span>
+        <span class="usage-item">
+          <strong>Referenced by:</strong> {{ referencedByRules }} rules
+        </span>
+        <button mat-button class="view-usage-link" (click)="openUsageImpact()">
+          View usage & impact
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button mat-flat-button class="btn-cancel" (click)="onCancel()">Cancel</button>
+
+      <button mat-flat-button class="btn-save" [disabled]="!canSave" (click)="onSave()">
+        Save Changes
+      </button>
+    </div>
+  </div>
+
+  <div class="main-content-grid">
+    <section class="table-section">
+      <div class="table-header">
+        <h2 class="table-title">Edit Code Set Mappings</h2>
+
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            [formControl]="searchControl"
+            placeholder="Search source or target codes..." />
+        </mat-form-field>
+      </div>
+
+      <div class="filters-row">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Mapping Status</mat-label>
+          <mat-select [formControl]="mappingStatusFilter">
+            <mat-option value="all">All</mat-option>
+            <mat-option value="mapped">Mapped</mat-option>
+            <mat-option value="unmapped">Unmapped</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Mapping Type</mat-label>
+          <mat-select [formControl]="mappingTypeFilter">
+            <mat-option value="all">All</mat-option>
+            <mat-option value="Direct">Direct</mat-option>
+            <mat-option value="Constant">Constant</mat-option>
+            <mat-option value="Derived">Derived</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Requirement</mat-label>
+          <mat-select [formControl]="requirementFilter">
+            <mat-option value="all">All</mat-option>
+            <mat-option value="required">Required</mat-option>
+            <mat-option value="optional">Optional</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        @if (
+          searchControl.value ||
+          mappingStatusFilter.value !== 'all' ||
+          mappingTypeFilter.value !== 'all' ||
+          requirementFilter.value !== 'all'
+        ) {
+          <button mat-button class="clear-filters-btn" (click)="clearFilters()">
+            <mat-icon>clear</mat-icon>
+            Clear filters
+          </button>
+        }
+      </div>
+
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="mapping-table">
+          <ng-container matColumnDef="sourceCode">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-source-code">
+              SOURCE CODE
+            </th>
+            <td mat-cell *matCellDef="let row" class="col-source-code">
+              <div class="source-code-cell">
+                <span class="code-value">{{ row.sourceCode }}</span>
+                <span class="code-label">{{ row.sourceLabel }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="targetCode">
+            <th mat-header-cell *matHeaderCellDef class="col-target-code">TARGET CODE</th>
+            <td mat-cell *matCellDef="let row" class="col-target-code">
+              <mat-form-field appearance="outline" class="inline-select">
+                <mat-select
+                  [(value)]="row.targetCode"
+                  (selectionChange)="onTargetCodeChange(row, $event)"
+                  placeholder="Select target code">
+                  <mat-option [value]="">-- None --</mat-option>
+                  @for (target of availableTargetCodes; track target.code) {
+                    <mat-option [value]="target.code">
+                      {{ target.code }} - {{ target.label }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="mappingType">
+            <th mat-header-cell *matHeaderCellDef class="col-mapping-type">MAPPING TYPE</th>
+            <td mat-cell *matCellDef="let row" class="col-mapping-type">
+              <mat-form-field appearance="outline" class="inline-select">
+                <mat-select
+                  [(value)]="row.mappingType"
+                  (selectionChange)="onMappingTypeChange(row, $event)">
+                  @for (type of mappingTypeOptions; track type) {
+                    <mat-option [value]="type">{{ type }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="notes">
+            <th mat-header-cell *matHeaderCellDef class="col-notes">NOTES</th>
+            <td mat-cell *matCellDef="let row" class="col-notes">
+              <span class="notes-text">{{ row.notes || '—' }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef class="col-status">STATUS</th>
+            <td mat-cell *matCellDef="let row" class="col-status">
+              <span
+                class="status-badge"
+                [class.mapped]="row.status === 'Mapped'"
+                [class.unmapped]="row.status === 'Unmapped'"
+                [class.required]="row.required && row.status === 'Unmapped'">
+                {{ row.status }}
+                @if (row.required && row.status === 'Unmapped') {
+                  <mat-icon class="required-icon">priority_high</mat-icon>
+                }
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns"
+            [class.modified]="row.isModified"
+            [class.is-new]="row.isNew"></tr>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <mat-paginator
+          [pageSizeOptions]="[10, 20, 50, 100]"
+          [pageSize]="20"
+          showFirstLastButtons
+          aria-label="Select page of mappings">
+        </mat-paginator>
+      </div>
+    </section>
+
+    <div class="right-rail">
+      <div class="pending-changes-block">
+        <div class="block-header">
+          <h3 class="block-title">Pending Changes</h3>
+          @if (pendingChanges.length > 0) {
+            <button mat-button class="clear-all-btn" (click)="resetAllChanges()">Clear all</button>
+          }
+        </div>
+
+        @if (pendingChanges.length === 0) {
+          <div class="empty-state">
+            <mat-icon>edit_note</mat-icon>
+            <p class="empty-title">No changes yet</p>
+            <p class="empty-description">Edits you make will appear here before you save.</p>
+          </div>
+        }
+
+        @if (pendingChanges.length > 0) {
+          <div class="changes-list">
+            @for (change of pendingChanges; track change.id) {
+              <div
+                class="change-item"
+                [class.added]="change.changeType === 'Added'"
+                [class.modified]="change.changeType === 'Modified'"
+                [class.removed]="change.changeType === 'Removed'">
+                <div class="change-header">
+                  <div class="change-icon">
+                    @if (change.changeType === 'Added') {
+                      <mat-icon>add_circle_outline</mat-icon>
+                    } @else if (change.changeType === 'Modified') {
+                      <mat-icon>edit</mat-icon>
+                    } @else {
+                      <mat-icon>remove_circle_outline</mat-icon>
+                    }
+                  </div>
+
+                  <div class="change-info">
+                    <div class="change-type-badge">{{ change.changeType }}</div>
+                    <div class="change-code">{{ change.sourceCode }}</div>
+                  </div>
+
+                  <button
+                    mat-icon-button
+                    class="revert-btn"
+                    (click)="revertChange(change)"
+                    matTooltip="Revert this change">
+                    <mat-icon>undo</mat-icon>
+                  </button>
+                </div>
+
+                <div class="change-description">
+                  {{ change.description }}
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="changes-actions">
+            <button mat-flat-button class="btn-cancel-changes" (click)="resetAllChanges()">
+              Cancel
+            </button>
+            <button mat-flat-button class="btn-save-changes" (click)="onSave()">
+              Save Changes
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-actions">
+    <button mat-flat-button class="btn-cancel" (click)="onCancel()">Cancel</button>
+
+    <button mat-flat-button class="btn-save" [disabled]="!canSave" (click)="onSave()">
+      Save Changes
+    </button>
+  </div>
+</div>
+
+@if (showUsageImpact) {
+  <div class="usage-impact-overlay" (click)="closeUsageImpact()">
+    <div class="usage-impact-panel" (click)="$event.stopPropagation()">
+      <header class="panel-header">
+        <div class="panel-title">
+          <h2>Usage & Impact</h2>
+          <p class="panel-subtitle">Read-only · Full details open in View Mode</p>
+        </div>
+        <button mat-icon-button (click)="closeUsageImpact()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <div class="panel-body">
+        <div class="panel-section">
+          <h3>Target Code Set</h3>
+          <p class="code-set-name">{{ targetCodeSetName || 'N/A' }}</p>
+        </div>
+
+        <div class="panel-section">
+          <h3>Normalization usage status</h3>
+          <span class="status-badge active">Active</span>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-header">
+            <mat-icon>account_tree</mat-icon>
+            <h3>{{ usedInPipelines }} Pipelines</h3>
+          </div>
+
+          @if (usedInPipelines > 0) {
+            <div class="pipeline-list">
+              <div class="pipeline-item">
+                <mat-icon>account_tree</mat-icon>
+                <span>HL7 Ingest → HL7 Normalization</span>
+              </div>
+              <div class="pipeline-item">
+                <mat-icon>account_tree</mat-icon>
+                <span>HL7 Normalization → Clinical Analytics</span>
+              </div>
+              <div class="pipeline-item">
+                <mat-icon>account_tree</mat-icon>
+                <span>FTP Lab Pull → FHIR ETL</span>
+              </div>
+            </div>
+          } @else {
+            <p class="empty-text">Not used in any pipelines</p>
+          }
+        </div>
+
+        <div class="panel-section">
+          <div class="section-header">
+            <mat-icon>rule</mat-icon>
+            <h3>{{ referencedByRules }} Rules</h3>
+          </div>
+
+          @if (referencedByRules > 0) {
+            <div class="rule-list">
+              <div class="rule-item">
+                <mat-icon>rule</mat-icon>
+                <span>HL7 Code Set Completeness</span>
+              </div>
+              <div class="rule-item">
+                <mat-icon>rule</mat-icon>
+                <span>LOINC Mapping Standards</span>
+              </div>
+              <div class="rule-item">
+                <mat-icon>rule</mat-icon>
+                <span>Missing Mappings Alert</span>
+              </div>
+            </div>
+          } @else {
+            <p class="empty-text">Not referenced by any rules</p>
+          }
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <button mat-flat-button class="done-btn" (click)="closeUsageImpact()">Done</button>
+      </div>
+    </div>
+  </div>
+}

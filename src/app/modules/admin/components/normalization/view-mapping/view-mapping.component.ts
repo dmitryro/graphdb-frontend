@@ -133,13 +133,18 @@ export class ViewMappingComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     protected eventService: EventService,
     protected eventStore: Store<{ nf: EventState }>,
-  ) {}
+  ) {
+    console.log('Constructing...');
+  }
 
   ngOnInit(): void {
     this.setupFilterPredicate();
     this.loadFieldMappings();
     this.loadVersions();
     this.subscribeToEvents();
+
+    // FIXED: Use update_breadcrumb with path instead of breadcrumb_navigate to avoid infinite loop
+    this.updateBreadcrumb('view');
   }
 
   ngAfterViewInit(): void {
@@ -152,16 +157,44 @@ export class ViewMappingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * UPDATED: Subscribe to close_edit_mapping event to trigger reverse animation
+   * Listens for closing signals from the Edit component or Breadcrumb returns.
    */
   private subscribeToEvents(): void {
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       const eventName = state?.items?.event;
+      const payload = state?.items?.payload;
 
       // Listen for the Edit component's cancel/close event
       if (eventName === 'close_edit_mapping') {
         this.onCloseEdit();
       }
+
+      // Handle return to this view via breadcrumb click
+      if (eventName === 'breadcrumb_navigate' && payload?.target === 'VIEW_MODEL_MAPPING') {
+        if (this.isExitedToLeft) {
+          this.onCloseEdit();
+        }
+      }
+    });
+  }
+
+  /**
+   * Centralized breadcrumb management to avoid nav loops.
+   */
+  private updateBreadcrumb(mode: 'view' | 'edit'): void {
+    const path = [
+      { label: 'Normalization', target: 'ROOT' },
+      { label: 'Mappings', target: 'TAB_MAPPINGS' },
+      { label: 'View Model Mapping', target: 'VIEW_MODEL_MAPPING', active: mode === 'view' },
+    ];
+
+    if (mode === 'edit') {
+      path.push({ label: 'Edit Mapping', target: 'EDIT_MODEL_MAPPING', active: true });
+    }
+
+    this.eventService.publish('nf', 'update_breadcrumb', {
+      action: 'update_breadcrumb',
+      path: path,
     });
   }
 
@@ -317,7 +350,10 @@ export class ViewMappingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // 3. Log transaction
-    this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'TAB_MAPPINGS' });
+    this.eventService.publish('nf', 'breadcrumb_navigate', {
+      action: 'breadcrumb_navigate',
+      target: 'TAB_MAPPINGS',
+    });
 
     // 4. Wait for animation to finish before destroying
     setTimeout(() => {
@@ -329,50 +365,45 @@ export class ViewMappingComponent implements OnInit, AfterViewInit, OnDestroy {
    * Opening Edit: View slides out to LEFT, Edit slides in from RIGHT
    */
   onEdit(): void {
-    // 1. Immediately hide the parent component AND set editing state together
     this.isExitedToLeft = true;
     this.isReturningFromLeft = false;
     this.isEditing = true;
 
-    // 2. Publish the open event immediately (no delay needed)
     this.eventService.publish('nf', 'open_edit_mapping', {
       action: 'open_edit_mapping',
       mappingId: this.mappingData?.id,
       fullData: this.mappingData,
     });
 
-    // Note: Breadcrumb update is now handled by EditMappingComponent
-    // when it receives the 'open_edit_mapping' event
+    // Update Breadcrumb to Edit Mode
+    this.updateBreadcrumb('edit');
   }
 
   /**
-   * UPDATED: Closing Edit - REVERSE ANIMATION
+   * Closing Edit - REVERSE ANIMATION
    * Edit slides out to RIGHT, View slides in from LEFT
    */
   onCloseEdit(): void {
-    // 1. Re-enable pointer events immediately so View becomes interactive
     this.isExitedToLeft = false;
-
-    // 2. Trigger slide-in animation from left
     this.isReturningFromLeft = true;
 
-    // Note: Breadcrumb update is now handled by EditMappingComponent's onCancel method
+    // Restore View Breadcrumb when closing Edit
+    this.updateBreadcrumb('view');
 
-    // 3. Clean up the Edit component AFTER its slide-out animation finishes
     setTimeout(() => {
       this.isEditing = false;
       this.isReturningFromLeft = false;
-    }, 500); // Match Edit component's animation duration
+    }, 500);
   }
 
   onChangeStatus(): void {
     /**
      * Any status change must be logged into the graph of events.
-     * Use execute_merge_query_with_context for specific patient golden records.
      */
     console.log('Change status action triggered');
     this.eventService.publish('nf', 'execute_merge_query_with_context', {
       action: 'STATUS_CHANGE',
+      command: 'STATUS_CHANGE',
       mappingId: this.mappingData?.id,
       timestamp: new Date().toISOString(),
     });

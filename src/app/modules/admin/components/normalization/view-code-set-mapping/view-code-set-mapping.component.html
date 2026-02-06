@@ -1,0 +1,259 @@
+<div
+  class="mapping-detail-container"
+  [class.slide-out-to-left]="isExitedToLeft()"
+  [class.slide-in-from-left]="isReturningFromLeft()"
+  [class.slide-out-to-right]="isExiting()">
+  <div class="view-content-wrapper">
+    <div class="back-navigation">
+      <button mat-button class="back-btn" (click)="onBackToMappings()">
+        <mat-icon>arrow_back</mat-icon>
+        <span>back to Mappings</span>
+      </button>
+    </div>
+
+    <div class="mapping-header">
+      <div class="header-left">
+        <div class="page-category">Normalization</div>
+        <h1 class="mapping-title">{{ codesetData?.name || 'Code Set Mapping' }}</h1>
+        <div class="header-metadata">
+          <button mat-button class="metadata-pill">
+            <mat-icon>hub</mat-icon>
+            <span>Source: {{ codesetData?.sourceCodeSet || codesetData?.source || 'Source' }}</span>
+          </button>
+          <button mat-button class="metadata-pill">
+            <mat-icon>layers</mat-icon>
+            <span>Target: {{ codesetData?.targetCodeSet || codesetData?.target || 'Target' }}</span>
+          </button>
+          <div
+            class="status-pill"
+            [class.active]="codesetData?.status === 'Active' || !codesetData?.status"
+            [class.deprecated]="codesetData?.status === 'Deprecated'"
+            [class.draft]="codesetData?.status === 'Draft'">
+            <mat-icon>
+              @if (codesetData?.status === 'Active') {
+                check_circle
+              } @else if (codesetData?.status === 'Deprecated') {
+                block
+              } @else {
+                edit_note
+              }
+            </mat-icon>
+            <span>{{ codesetData?.status || 'Active' }}</span>
+          </div>
+          <div class="metadata-text">
+            <mat-icon>schedule</mat-icon>
+            <span>Last Modified: {{ codesetData?.lastModified || 'Just now' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button mat-button class="edit-btn" (click)="onEdit()">
+          <mat-icon>edit</mat-icon>
+          <span>Edit Mapping</span>
+        </button>
+        <button mat-button class="status-dropdown-btn" [matMenuTriggerFor]="statusMenu">
+          <span>Change Status</span>
+          <mat-icon>expand_more</mat-icon>
+        </button>
+        <mat-menu #statusMenu="matMenu">
+          <button
+            mat-menu-item
+            (click)="onChangeStatus()"
+            [disabled]="codesetData?.status === 'Active'">
+            <mat-icon class="status-active">check_circle</mat-icon>
+            <span>Active</span>
+          </button>
+          <button
+            mat-menu-item
+            (click)="onChangeStatus()"
+            [disabled]="codesetData?.status === 'Draft'">
+            <mat-icon>edit_note</mat-icon>
+            <span>Draft</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button
+            mat-menu-item
+            class="danger-action"
+            (click)="onChangeStatus()"
+            [disabled]="codesetData?.status === 'Deprecated'">
+            <mat-icon>block</mat-icon>
+            <span>Disable / Deprecate</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="left-column">
+        <div class="info-block overview-block">
+          <h2 class="block-title">Overview</h2>
+          <p class="description">
+            {{
+              codesetData?.description ||
+                'No business intent or description provided for this code set mapping.'
+            }}
+          </p>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Mapping ID</label>
+              <span>{{ codesetData?.id }}</span>
+            </div>
+            <div class="info-item">
+              <label>Mapping Type</label>
+              <span>{{ codesetData?.mappingType || 'Direct' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Created By</label>
+              <span>{{ codesetData?.createdBy || codesetData?.lastSavedBy || 'System' }}</span>
+            </div>
+            <div class="info-item">
+              <label>Validation State</label>
+              <span class="completeness-badge complete">Valid</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-mappings-section">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 20px;
+            ">
+            <h2 class="section-title" style="margin: 0">Mapping Preview</h2>
+            <button mat-button (click)="onEdit()" style="color: #436d9d; font-weight: 600">
+              View full mapping
+              <mat-icon style="font-size: 18px">north_east</mat-icon>
+            </button>
+          </div>
+          <table mat-table [dataSource]="previewDataSource" class="mapping-table">
+            <ng-container matColumnDef="sourceCode">
+              <th mat-header-cell *matHeaderCellDef>Source Code</th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.sourceCode || element.sourceField }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="sourceLabel">
+              <th mat-header-cell *matHeaderCellDef>Source Label</th>
+              <td mat-cell *matCellDef="let element" class="secondary-text">
+                {{ element.sourceLabel || element.type }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="targetCode">
+              <th mat-header-cell *matHeaderCellDef>Target Code</th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.targetCode || element.targetField }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="targetLabel">
+              <th mat-header-cell *matHeaderCellDef>Target Label</th>
+              <td mat-cell *matCellDef="let element" class="secondary-text">
+                {{ element.targetLabel || element.mappingType }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="system">
+              <th mat-header-cell *matHeaderCellDef>System</th>
+              <td mat-cell *matCellDef="let element">
+                {{ element.system || element.requirement }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let element">
+                <span class="status-badge mapped">{{ element.status || 'Mapped' }}</span>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
+
+        <div class="stats-footer-row">
+          <div class="info-block coverage-block">
+            <h3 class="block-title">Coverage</h3>
+            <div class="coverage-metrics">
+              <div class="metric-row">
+                <label>Total Source Codes</label>
+                <span class="metric-value">{{
+                  codesetData?.totalSourceCodes || codesetData?.fieldCount || 0
+                }}</span>
+              </div>
+              <div class="metric-row">
+                <label>Successfully Mapped</label>
+                <span class="metric-value">{{ codesetData?.mappedCount || 0 }}</span>
+              </div>
+              <div class="metric-row">
+                <label>Unmapped</label>
+                <span
+                  class="metric-value"
+                  [style.color]="codesetData?.unmappedCount > 0 ? '#e67e22' : 'inherit'">
+                  {{ codesetData?.unmappedCount || 0 }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-block usage-block">
+            <h3 class="block-title">Usage & Impact</h3>
+            <div class="usage-item">
+              <button mat-button class="expand-btn" (click)="togglePipelines()">
+                <label>Used in pipelines</label>
+                <span class="count">{{ codesetData?.pipelineCount || 0 }}</span>
+                <mat-icon>{{ pipelinesExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+              </button>
+            </div>
+            <div class="usage-item">
+              <button mat-button class="expand-btn" (click)="toggleRules()">
+                <label>Referenced by rules</label>
+                <span class="count">{{ codesetData?.ruleCount || 0 }}</span>
+                <mat-icon>{{ rulesExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="info-block quick-links-block">
+          <h3 class="block-title">Rules</h3>
+          <button mat-button class="link-item" (click)="viewInRules()">
+            <mat-icon>rule</mat-icon>
+            <span>View All Linked Rules</span>
+            <mat-icon class="arrow">arrow_forward</mat-icon>
+          </button>
+        </div>
+
+        <div class="info-block status-block">
+          <h3 class="block-title">Attributions</h3>
+          <div class="usage-row">
+            <label>Created By</label>
+            <span>{{ codesetData?.createdBy || codesetData?.lastSavedBy }}</span>
+          </div>
+          <div class="usage-row">
+            <label>Last Modified</label>
+            <span>{{ codesetData?.lastModifiedBy || codesetData?.lastModified }}</span>
+          </div>
+        </div>
+
+        <div class="info-block versions-block">
+          <h3 class="block-title">Version History</h3>
+          <div class="version-list">
+            <div class="version-item">
+              <div class="version-header">
+                <strong>{{ codesetData?.version || 'v1.0' }}</strong> —
+                {{ codesetData?.lastSavedBy || 'Admin' }}
+              </div>
+              <div class="version-time">{{ codesetData?.lastModified || 'Feb 12, 2024' }}</div>
+            </div>
+          </div>
+          <button mat-button class="view-all-link" (click)="viewVersionHistory()">
+            View full history
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

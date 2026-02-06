@@ -7,11 +7,15 @@
       showMappingDetail ||
       showModelDetail ||
       showRuleDetail ||
+      showViewCodeSetMapping ||
+      showViewMixedMapping ||
       showEditCode ||
       showMapCodeSet ||
       isEditingMapping ||
       isEditingModel ||
-      isEditingRule
+      isEditingRule ||
+      showEditCodeSetMapping ||
+      showEditMixedMapping
     ">
     <header class="normalization-header">
       <div class="breadcrumb-area">
@@ -22,7 +26,6 @@
           {{ normalizationSubTitle }}
         </p>
       </div>
-
       <div class="workspace-area">
         <mat-form-field appearance="outline" class="workspace-select">
           <mat-select [(value)]="selectedEnv">
@@ -33,7 +36,6 @@
         </mat-form-field>
       </div>
     </header>
-
     <div class="table-card">
       <div class="tabs-section">
         <mat-tab-group
@@ -47,7 +49,6 @@
           <mat-tab label="Codes"></mat-tab>
         </mat-tab-group>
       </div>
-
       @if (activeTabIndex === 0) {
         <div class="tab-content models-tab-wrapper">
           <div class="search-section">
@@ -67,11 +68,11 @@
                 }
               </div>
               <button mat-flat-button class="add-source-btn" (click)="addNewModel()">
-                <mat-icon>add</mat-icon> New Model
+                <mat-icon>add</mat-icon>
+                New Model
               </button>
             </div>
           </div>
-
           <div class="filter-actions">
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="statusMenu">
               <mat-icon>list</mat-icon>
@@ -85,7 +86,6 @@
               <button mat-menu-item (click)="setStatusFilter('Draft')">Draft</button>
               <button mat-menu-item (click)="setStatusFilter('Archived')">Archived</button>
             </mat-menu>
-
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="typeMenu">
               <mat-icon>layers</mat-icon>
               Type: <strong>{{ selectedType === 'Any' ? 'Canonical*' : selectedType }}</strong>
@@ -99,7 +99,6 @@
                 External / Imported
               </button>
             </mat-menu>
-
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="usageMenu">
               <mat-icon>account_tree</mat-icon>
               Usage: <strong>{{ selectedUsage === 'Any' ? 'Any*' : selectedUsage }}</strong>
@@ -119,18 +118,15 @@
                 Unused / Orphaned
               </button>
             </mat-menu>
-
             <div class="filter-date-range">
               <mat-form-field appearance="outline" class="custom-pill-date">
                 <mat-date-range-input [formGroup]="modelDateRange" [rangePicker]="modelPicker">
                   <input matStartDate formControlName="start" placeholder="Start date" />
                   <input matEndDate formControlName="end" placeholder="End date" />
                 </mat-date-range-input>
-
                 <mat-datepicker-toggle matIconSuffix [for]="modelPicker"></mat-datepicker-toggle>
                 <mat-date-range-picker #modelPicker></mat-date-range-picker>
               </mat-form-field>
-
               <button
                 *ngIf="modelDateRange.value.start || modelDateRange.value.end"
                 mat-icon-button
@@ -140,7 +136,6 @@
               </button>
             </div>
           </div>
-
           <table
             mat-table
             [dataSource]="modelDataSource"
@@ -151,7 +146,6 @@
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Model Name</th>
               <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
             </ng-container>
-
             <ng-container matColumnDef="type">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
               <td mat-cell *matCellDef="let element">
@@ -160,40 +154,35 @@
                 </span>
               </td>
             </ng-container>
-
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td mat-cell *matCellDef="let element">
                 <div class="status-pill" [ngClass]="element.status?.toLowerCase() || ''">
-                  <mat-icon>check_circle</mat-icon>{{ element.status }}
+                  <mat-icon>check_circle</mat-icon>
+                  {{ element.status }}
                 </div>
               </td>
             </ng-container>
-
             <ng-container matColumnDef="usage">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Usage</th>
               <td mat-cell *matCellDef="let element" class="usage-cell">{{ element.usage }}</td>
             </ng-container>
-
             <ng-container matColumnDef="fields">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Fields</th>
               <td mat-cell *matCellDef="let element">
                 {{ element.fields?.length || 0 }}
               </td>
             </ng-container>
-
             <ng-container matColumnDef="dependencies">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Dependencies</th>
               <td mat-cell *matCellDef="let element">
                 {{ element.dependencyData?.relatedModels?.length || 0 }}
               </td>
             </ng-container>
-
             <ng-container matColumnDef="lastModified">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
               <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
             </ng-container>
-
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let element">
@@ -206,7 +195,6 @@
                 </button>
               </td>
             </ng-container>
-
             <tr mat-header-row *matHeaderRowDef="modelColumns"></tr>
             <tr
               mat-row
@@ -215,7 +203,6 @@
               [class.selected-row]="selectedModelData?.id === row.id"
               (click)="onModelRowClick(row)"></tr>
           </table>
-
           <mat-paginator
             #modelPaginator
             [pageSize]="10"
@@ -223,7 +210,6 @@
             showFirstLastButtons></mat-paginator>
         </div>
       }
-
       @if (activeTabIndex === 1) {
         <div class="tab-content mapping-tab-wrapper">
           <div class="search-section">
@@ -243,13 +229,13 @@
                 }
               </div>
               <button mat-flat-button class="add-source-btn" (click)="addNewMapping()">
-                <mat-icon>add</mat-icon> New Mapping
+                <mat-icon>add</mat-icon>
+                New Mapping
               </button>
             </div>
           </div>
 
           <div class="filter-actions">
-            <!-- Type Filter (New) -->
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingTypeMenu">
               <mat-icon>category</mat-icon>
               Type: <strong>{{ selectedMappingType || 'All' }}</strong>
@@ -259,6 +245,7 @@
               <button mat-menu-item (click)="setMappingTypeFilter('All')">All*</button>
               <button mat-menu-item (click)="setMappingTypeFilter('Model')">Model Mappings</button>
               <button mat-menu-item (click)="setMappingTypeFilter('Code')">Code Mappings</button>
+              <button mat-menu-item (click)="setMappingTypeFilter('Mixed')">Mixed Mappings</button>
             </mat-menu>
 
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingStatusMenu">
@@ -288,12 +275,6 @@
               <button mat-menu-item (click)="setMappingSourceFilter('QuestLab Systems')">
                 QuestLab Systems
               </button>
-              <button mat-menu-item (click)="setMappingSourceFilter('MediBridge Clinic')">
-                MediBridge Clinic
-              </button>
-              <button mat-menu-item (click)="setMappingSourceFilter('CSV Import')">
-                CSV Import
-              </button>
             </mat-menu>
 
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingTargetMenu">
@@ -305,12 +286,6 @@
               <button mat-menu-item (click)="setMappingTargetFilter('Any')">Any*</button>
               <button mat-menu-item (click)="setMappingTargetFilter('Patient')">Patient</button>
               <button mat-menu-item (click)="setMappingTargetFilter('Encounter')">Encounter</button>
-              <button mat-menu-item (click)="setMappingTargetFilter('Lab Result')">
-                Lab Result
-              </button>
-              <button mat-menu-item (click)="setMappingTargetFilter('Medication')">
-                Medication
-              </button>
             </mat-menu>
 
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="mappingCoverageMenu">
@@ -321,10 +296,6 @@
             <mat-menu #mappingCoverageMenu="matMenu" class="governance-menu">
               <button mat-menu-item (click)="setMappingCoverageFilter('Any')">Any*</button>
               <button mat-menu-item (click)="setMappingCoverageFilter('Complete')">Complete</button>
-              <button mat-menu-item (click)="setMappingCoverageFilter('Partial')">Partial</button>
-              <button mat-menu-item (click)="setMappingCoverageFilter('Missing Required Fields')">
-                Missing Required Fields
-              </button>
             </mat-menu>
 
             <div class="filter-date-range">
@@ -336,104 +307,125 @@
                 <mat-datepicker-toggle matIconSuffix [for]="mappingPicker"></mat-datepicker-toggle>
                 <mat-date-range-picker #mappingPicker></mat-date-range-picker>
               </mat-form-field>
-
-              @if (mappingDateRange.value.start || mappingDateRange.value.end) {
-                <button mat-icon-button class="clear-date-btn" (click)="clearMappingDateRange()">
-                  <mat-icon>close</mat-icon>
-                </button>
-              }
             </div>
           </div>
 
-          <table
-            mat-table
-            [dataSource]="mappingDataSource"
-            matSort
-            #mappingSort="matSort"
-            class="full-width-table">
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapping Name</th>
-              <td mat-cell *matCellDef="let element" class="primary-text">{{ element.name }}</td>
-            </ng-container>
+          <div
+            class="mappings-split-view"
+            [class.detail-open]="
+              (showViewCodeSetMapping && selectedCodeSetMappingDetail) ||
+              (showViewMixedMapping && selectedMixedMappingDetail)
+            ">
+            <div class="mappings-table-section">
+              <div class="table-wrapper">
+                <table
+                  mat-table
+                  [dataSource]="mappingDataSource"
+                  matSort
+                  #mappingSort="matSort"
+                  class="full-width-table">
+                  <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapping Name</th>
+                    <td mat-cell *matCellDef="let element" class="primary-text">
+                      {{ element.name }}
+                    </td>
+                  </ng-container>
 
-            <!-- Type Column (New Leftmost Column) -->
-            <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
-              <td mat-cell *matCellDef="let element">
-                <span
-                  class="type-tag"
-                  [ngClass]="element.type?.toLowerCase() === 'model' ? 'tag-blue' : 'tag-purple'">
-                  {{ element.type }}
-                </span>
-              </td>
-            </ng-container>
+                  <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+                    <td mat-cell *matCellDef="let element">
+                      <span
+                        class="type-tag"
+                        [ngClass]="{
+                          'tag-blue': element.type?.toLowerCase() === 'model',
+                          'tag-purple': element.type?.toLowerCase() === 'code',
+                          'tag-orange': element.type?.toLowerCase().includes('mix'),
+                        }">
+                        {{ element.type }}
+                      </span>
+                    </td>
+                  </ng-container>
 
-            <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
-              <td mat-cell *matCellDef="let element">{{ element.source }}</td>
-            </ng-container>
+                  <ng-container matColumnDef="source">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Source</th>
+                    <td mat-cell *matCellDef="let element">{{ element.source }}</td>
+                  </ng-container>
 
-            <ng-container matColumnDef="target">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Model</th>
-              <td mat-cell *matCellDef="let element" class="secondary-text">
-                {{ element.target }}
-              </td>
-            </ng-container>
+                  <ng-container matColumnDef="target">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Model</th>
+                    <td mat-cell *matCellDef="let element" class="secondary-text">
+                      {{ element.target }}
+                    </td>
+                  </ng-container>
 
-            <ng-container matColumnDef="fields">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapped Fields</th>
-              <td mat-cell *matCellDef="let element">{{ element.fieldCount }}</td>
-            </ng-container>
+                  <ng-container matColumnDef="fields">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapped Fields</th>
+                    <td mat-cell *matCellDef="let element">{{ element.fieldCount }}</td>
+                  </ng-container>
 
-            <ng-container matColumnDef="coverage">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Coverage</th>
-              <td mat-cell *matCellDef="let element">{{ element.coverage }}</td>
-            </ng-container>
+                  <ng-container matColumnDef="coverage">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Coverage</th>
+                    <td mat-cell *matCellDef="let element">{{ element.coverage }}</td>
+                  </ng-container>
 
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
-              <td mat-cell *matCellDef="let element">
-                <div class="status-pill" [ngClass]="element.status.toLowerCase()">
-                  {{ element.status }}
-                </div>
-              </td>
-            </ng-container>
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+                    <td mat-cell *matCellDef="let element">
+                      <div class="status-pill" [ngClass]="element.status?.toLowerCase()">
+                        {{ element.status }}
+                      </div>
+                    </td>
+                  </ng-container>
 
-            <ng-container matColumnDef="lastModified">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
-              <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
-            </ng-container>
+                  <ng-container matColumnDef="lastModified">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+                    <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
+                  </ng-container>
 
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let element">
-                <button
-                  mat-icon-button
-                  [matMenuTriggerFor]="modelMenu"
-                  [matMenuTriggerData]="{ item: element }"
-                  (click)="$event.stopPropagation()">
-                  <mat-icon>more_vert</mat-icon>
-                </button>
-              </td>
-            </ng-container>
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let element">
+                      <button
+                        mat-icon-button
+                        [matMenuTriggerFor]="mappingMenu"
+                        [matMenuTriggerData]="{ item: element }"
+                        (click)="$event.stopPropagation()">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="mappingColumns"></tr>
-            <tr
-              mat-row
-              *matRowDef="let row; columns: mappingColumns"
-              class="clickable-row"
-              [class.selected-row]="selectedMappingData?.id === row.id"
-              (click)="onMappingRowClick(row)"></tr>
-          </table>
+                  <tr mat-header-row *matHeaderRowDef="mappingColumns"></tr>
+                  <tr
+                    mat-row
+                    *matRowDef="let row; columns: mappingColumns"
+                    class="clickable-row"
+                    [class.selected-row]="
+                      selectedCodeSetMappingDetail?.id === row.id ||
+                      selectedMixedMappingDetail?.id === row.id
+                    "
+                    (click)="onMappingsTableRowClick(row)"></tr>
+                </table>
 
-          <mat-paginator
-            #mappingPaginator
-            [pageSize]="10"
-            [pageSizeOptions]="[5, 10, 20, 50]"
-            showFirstLastButtons></mat-paginator>
+                <mat-menu #mappingMenu="matMenu" class="governance-menu">
+                  <ng-template matMenuContent let-item="item">
+                    <button mat-menu-item (click)="onEditMappingFromMenu(item)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Edit</span>
+                    </button>
+                  </ng-template>
+                </mat-menu>
+
+                <mat-paginator
+                  #mappingPaginator
+                  [pageSize]="10"
+                  [pageSizeOptions]="[5, 10, 20, 50]"
+                  showFirstLastButtons></mat-paginator>
+              </div>
+            </div>
+          </div>
         </div>
       }
-
       @if (activeTabIndex === 2) {
         <div class="tab-content rules-tab-wrapper">
           <div class="search-section">
@@ -453,11 +445,11 @@
                 }
               </div>
               <button mat-flat-button class="add-source-btn" (click)="addNewRule()">
-                <mat-icon>add</mat-icon> New Rule
+                <mat-icon>add</mat-icon>
+                New Rule
               </button>
             </div>
           </div>
-
           <div class="filter-actions">
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleStatusMenu">
               <mat-icon>list</mat-icon>
@@ -472,7 +464,6 @@
               <button mat-menu-item (click)="setRuleStatusFilter('Draft')">Draft</button>
               <button mat-menu-item (click)="setRuleStatusFilter('Archived')">Archived</button>
             </mat-menu>
-
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleSeverityMenu">
               <mat-icon>priority_high</mat-icon>
               Severity: <strong>{{ selectedRuleSeverity }}</strong>
@@ -487,7 +478,6 @@
               <button mat-menu-item (click)="setRuleSeverityFilter('Medium')">Medium</button>
               <button mat-menu-item (click)="setRuleSeverityFilter('Source')">Source</button>
             </mat-menu>
-
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleScopeMenu">
               <mat-icon>adjust</mat-icon>
               Scope: <strong>{{ selectedRuleScope }}</strong>
@@ -499,7 +489,6 @@
               <button mat-menu-item (click)="setRuleScopeFilter('System')">System</button>
               <button mat-menu-item (click)="setRuleScopeFilter('Source')">Source</button>
             </mat-menu>
-
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleTriggerMenu">
               <mat-icon>bolt</mat-icon>
               Trigger: <strong>{{ selectedRuleTrigger }}</strong>
@@ -513,7 +502,6 @@
               <button mat-menu-item (click)="setRuleTriggerFilter('Aggregate')">Aggregate</button>
               <button mat-menu-item (click)="setRuleTriggerFilter('Scheduled')">Scheduled</button>
             </mat-menu>
-
             <div class="filter-date-range">
               <mat-form-field appearance="outline" class="custom-pill-date">
                 <mat-date-range-input [formGroup]="ruleDateRange" [rangePicker]="rulePicker">
@@ -523,7 +511,6 @@
                 <mat-datepicker-toggle matIconSuffix [for]="rulePicker"></mat-datepicker-toggle>
                 <mat-date-range-picker #rulePicker></mat-date-range-picker>
               </mat-form-field>
-
               @if (ruleDateRange.value.start || ruleDateRange.value.end) {
                 <button mat-icon-button class="clear-date-btn" (click)="clearRuleDateRange()">
                   <mat-icon>close</mat-icon>
@@ -531,7 +518,6 @@
               }
             </div>
           </div>
-
           <table
             mat-table
             [dataSource]="ruleDataSource"
@@ -547,7 +533,6 @@
                 </span>
               </td>
             </ng-container>
-
             <ng-container matColumnDef="severity">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Severity</th>
               <td mat-cell *matCellDef="let element">
@@ -556,24 +541,20 @@
                 </div>
               </td>
             </ng-container>
-
             <ng-container matColumnDef="scope">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
               <td mat-cell *matCellDef="let element">{{ element.scope }}</td>
             </ng-container>
-
             <ng-container matColumnDef="trigger">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Trigger</th>
               <td mat-cell *matCellDef="let element">{{ element.trigger }}</td>
             </ng-container>
-
             <ng-container matColumnDef="sourcesAffected">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Sources Affected</th>
               <td mat-cell *matCellDef="let element" style="text-align: center">
                 {{ element.sourcesAffected }}
               </td>
             </ng-container>
-
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td mat-cell *matCellDef="let element">
@@ -582,12 +563,10 @@
                 </div>
               </td>
             </ng-container>
-
             <ng-container matColumnDef="lastModified">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
               <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
             </ng-container>
-
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let element">
@@ -599,7 +578,6 @@
                 </button>
               </td>
             </ng-container>
-
             <tr mat-header-row *matHeaderRowDef="ruleColumns"></tr>
             <tr
               mat-row
@@ -608,7 +586,6 @@
               [class.selected-row]="selectedRuleData?.id === row.id"
               (click)="onRuleRowClick(row)"></tr>
           </table>
-
           <mat-paginator
             #rulePaginator
             [pageSize]="10"
@@ -616,7 +593,6 @@
             showFirstLastButtons></mat-paginator>
         </div>
       }
-
       @if (activeTabIndex === 3) {
         <div class="tab-content">
           <div class="search-filter-wrapper">
@@ -643,7 +619,6 @@
                   }
                 </div>
               </div>
-
               <div class="version-meta-actions">
                 <span class="v-count"
                   >{{ pagedVersionHistory.length }} of {{ versionHistory.length }} versions</span
@@ -651,7 +626,9 @@
                 <button mat-icon-button title="Refresh History" (click)="loadAllData()">
                   <mat-icon>history</mat-icon>
                 </button>
-                <button mat-icon-button><mat-icon>toll</mat-icon></button>
+                <button mat-icon-button>
+                  <mat-icon>toll</mat-icon>
+                </button>
                 <button
                   mat-icon-button
                   [matMenuTriggerFor]="versionsMenu"
@@ -660,7 +637,6 @@
                 </button>
               </div>
             </div>
-
             <div class="version-filters-bar">
               <div class="spacer"></div>
               <mat-paginator
@@ -671,7 +647,6 @@
                 showFirstLastButtons
                 class="compact-paginator"></mat-paginator>
             </div>
-
             <div class="timeline-container">
               @for (commit of pagedVersionHistory; track commit.hash) {
                 <div class="timeline-card">
@@ -681,9 +656,7 @@
                     <span class="abs-time">{{ commit.absoluteTime }}</span>
                     <code class="hash">{{ commit.hash }}</code>
                     <span class="author link-style">{{ commit.author.name }}</span>
-
                     <div class="spacer"></div>
-
                     <div class="header-actions">
                       <mat-icon title="History">history</mat-icon>
                       <mat-icon title="Share">share</mat-icon>
@@ -696,7 +669,6 @@
                       <mat-icon class="toggle">expand_more</mat-icon>
                     </div>
                   </div>
-
                   <div class="card-body">
                     @for (event of commit.events; track $index) {
                       <div class="timeline-event">
@@ -718,7 +690,6 @@
                         </div>
                         <span class="event-time">{{ event.timestamp }}</span>
                       </div>
-
                       @if (event.nested) {
                         <div class="tree-container">
                           <div class="tree-line"></div>
@@ -739,7 +710,6 @@
                         </div>
                       }
                     }
-
                     <div class="timeline-row-item">
                       <mat-icon class="edit-icon">arrow_forward</mat-icon>
                       <span class="label">Edited</span>
@@ -751,14 +721,13 @@
                       <span class="row-time">2 days ago</span>
                       <mat-icon class="info">info_outline</mat-icon>
                     </div>
-
                     <div class="timeline-row-item">
                       <img src="https://ui-avatars.com/api/?name=U" class="mini-avatar" />
                       <span class="label">Added</span>
                       <mat-icon class="type-icon added">add_box</mat-icon>
-                      <span class="subject link-style">Epic → Patient (v3)</span>
+                      <span class="subject link-style">Epic â Patient (v3)</span>
                       <span class="node-tag model">Model</span>
-                      <span class="meta">Field count: 28 → 30</span>
+                      <span class="meta">Field count: 28 â 30</span>
                       <div class="spacer"></div>
                       <span class="row-time">5 hours ago</span>
                     </div>
@@ -771,7 +740,7 @@
           </div>
         </div>
       }
-      <!-- CORRECTED CODES TAB SECTION - Replace existing Codes tab in normalization.component.html -->
+
       @if (activeTabIndex === 4) {
         <div class="tab-content codes-tab-wrapper">
           <!-- Search and filters section -->
@@ -792,11 +761,11 @@
                 }
               </div>
               <button mat-flat-button class="add-source-btn" (click)="addNewValueSet()">
-                <mat-icon>add</mat-icon> New Code Set
+                <mat-icon>add</mat-icon>
+                New Code Set
               </button>
             </div>
           </div>
-
           <div class="filter-actions">
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeSystemMenu">
               <mat-icon>hub</mat-icon>
@@ -812,7 +781,6 @@
               <button mat-menu-item (click)="setCodeSource('RxNorm')">RxNorm</button>
               <button mat-menu-item (click)="setCodeSource('CPT')">CPT</button>
             </mat-menu>
-
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="codeStatusMenu">
               <mat-icon>list</mat-icon>
               Status: <strong>{{ selectedCodeStatus }}</strong>
@@ -825,7 +793,6 @@
               <button mat-menu-item (click)="setCodeStatus('Deprecated')">Deprecated</button>
               <button mat-menu-item (click)="setCodeStatus('Invalid')">Invalid</button>
             </mat-menu>
-
             <div class="filter-date-range">
               <mat-form-field appearance="outline" class="custom-pill-date">
                 <mat-date-range-input [formGroup]="codeDateRange" [rangePicker]="codePicker">
@@ -835,7 +802,6 @@
                 <mat-datepicker-toggle matIconSuffix [for]="codePicker"></mat-datepicker-toggle>
                 <mat-date-range-picker #codePicker></mat-date-range-picker>
               </mat-form-field>
-
               @if (codeDateRange.value.start || codeDateRange.value.end) {
                 <button mat-icon-button class="clear-date-btn" (click)="clearCodeDateRange()">
                   <mat-icon>close</mat-icon>
@@ -843,7 +809,6 @@
               }
             </div>
           </div>
-
           <!-- SPLIT VIEW CONTAINER - Table and Detail Panel Side by Side -->
           <div class="codes-split-view" [class.detail-open]="showCodeDetail">
             <!-- LEFT SIDE: Table -->
@@ -862,7 +827,6 @@
                       {{ element.codeSetName }}
                     </td>
                   </ng-container>
-
                   <!-- System Column -->
                   <ng-container matColumnDef="system">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>System</th>
@@ -870,7 +834,6 @@
                       {{ element.system }}
                     </td>
                   </ng-container>
-
                   <!-- Meaning Column -->
                   <ng-container matColumnDef="meaning">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Meaning</th>
@@ -878,7 +841,6 @@
                       {{ element.meaning }}
                     </td>
                   </ng-container>
-
                   <!-- Version Column -->
                   <ng-container matColumnDef="version">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Version</th>
@@ -886,7 +848,6 @@
                       {{ element.version }}
                     </td>
                   </ng-container>
-
                   <!-- Status Column -->
                   <ng-container matColumnDef="status">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
@@ -896,7 +857,6 @@
                       </div>
                     </td>
                   </ng-container>
-
                   <!-- Mapped To Column -->
                   <ng-container matColumnDef="mappedTo">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Mapped To</th>
@@ -904,7 +864,6 @@
                       {{ element.mappedTo }}
                     </td>
                   </ng-container>
-
                   <!-- Actions Column -->
                   <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef></th>
@@ -918,7 +877,6 @@
                       </button>
                     </td>
                   </ng-container>
-
                   <tr mat-header-row *matHeaderRowDef="codeColumns; sticky: true"></tr>
                   <tr
                     mat-row
@@ -927,7 +885,6 @@
                     [class.selected-row]="selectedCodeData?.id === row.id"
                     (click)="onCodeRowClick(row)"></tr>
                 </table>
-
                 <mat-paginator
                   #codePaginator
                   [pageSize]="10"
@@ -936,7 +893,6 @@
                 </mat-paginator>
               </div>
             </div>
-
             <!-- RIGHT SIDE: Detail Panel (slides in) -->
             @if (showCodeDetail && !showEditCode && selectedCodeData) {
               <div class="code-detail-panel">
@@ -957,7 +913,8 @@
                         color="primary"
                         class="edit-btn"
                         (click)="onEditCodeClick(selectedCodeData)">
-                        <mat-icon>edit</mat-icon> Edit
+                        <mat-icon>edit</mat-icon>
+                        Edit
                       </button>
                       <button mat-icon-button (click)="onCloseCodeDetail()" class="close-btn">
                         <mat-icon>close</mat-icon>
@@ -965,7 +922,6 @@
                     </div>
                   </div>
                 </div>
-
                 <div class="detail-panel-content">
                   <!-- Code Title and Badges -->
                   <div class="code-title-section">
@@ -978,11 +934,9 @@
                       <span class="info-badge">{{ selectedCodeData.codeType || 'Standard' }}</span>
                     </div>
                   </div>
-
                   <!-- Overview Section -->
                   <div class="detail-section">
                     <h4 class="section-title">OVERVIEW</h4>
-
                     <div class="detail-row-layout">
                       <!-- Left Column -->
                       <div class="detail-column">
@@ -998,32 +952,27 @@
                             <span class="validated-text">Validated - <em>No issues found</em></span>
                           </div>
                         </div>
-
                         <div class="detail-item">
                           <label>System:</label>
                           <div class="detail-value">{{ selectedCodeData.system }}</div>
                         </div>
-
                         <div class="detail-item">
                           <label>Code Type:</label>
                           <div class="detail-value">
                             {{ selectedCodeData.codeType || 'Standard' }}
                           </div>
                         </div>
-
                         <div class="detail-item">
                           <label>Created by:</label>
                           <div class="detail-value">
                             {{ selectedCodeData.createdBy || 'System Mapping' }}
                           </div>
                         </div>
-
                         <div class="detail-item">
                           <label>Last modified:</label>
                           <div class="detail-value">{{ selectedCodeData.lastModified }}</div>
                         </div>
                       </div>
-
                       <!-- Right Column - Referenced In -->
                       <div class="detail-column">
                         <h5 class="subsection-title">Referenced in:</h5>
@@ -1047,7 +996,6 @@
                       </div>
                     </div>
                   </div>
-
                   <!-- Mappings and Crosswalks Section -->
                   <div class="two-column-section">
                     <!-- Mappings -->
@@ -1063,10 +1011,10 @@
                         }
                       </div>
                       <button mat-button class="view-all-link">
-                        View all mappings <mat-icon>arrow_forward</mat-icon>
+                        View all mappings
+                        <mat-icon>arrow_forward</mat-icon>
                       </button>
                     </div>
-
                     <!-- Crosswalks -->
                     <div class="detail-section half-width">
                       <h4 class="section-title">CROSSWALKS</h4>
@@ -1074,11 +1022,13 @@
                         @for (crosswalk of selectedCodeData.crosswalks; track crosswalk.from) {
                           <div class="crosswalk-item">
                             <div class="crosswalk-header">
-                              {{ crosswalk.from }} <mat-icon>arrow_forward</mat-icon>
+                              {{ crosswalk.from }}
+                              <mat-icon>arrow_forward</mat-icon>
                               {{ crosswalk.to }}
                             </div>
                             <div class="crosswalk-codes">
-                              {{ crosswalk.code }} <mat-icon>arrow_forward</mat-icon>
+                              {{ crosswalk.code }}
+                              <mat-icon>arrow_forward</mat-icon>
                               {{ crosswalk.target }}
                             </div>
                           </div>
@@ -1086,7 +1036,6 @@
                       </div>
                     </div>
                   </div>
-
                   <!-- Attributions Section -->
                   <div class="detail-section">
                     <h4 class="section-title">ATTRIBUTIONS</h4>
@@ -1107,15 +1056,12 @@
           </div>
         </div>
       }
-
-      <!-- Context Menu -->
       <mat-menu #codesGlobalMenu="matMenu" class="governance-menu">
         <ng-template matMenuContent let-item="item">
           <button mat-menu-item (click)="onCodeRowClick(item)">
             <mat-icon>visibility</mat-icon>
             <span>View Details</span>
           </button>
-          <!-- ADD THIS BUTTON: -->
           <button mat-menu-item (click)="onMapCodeSet(item)">
             <mat-icon>compare_arrows</mat-icon>
             <span>Map Code Set</span>
@@ -1199,7 +1145,8 @@
     <mat-menu #modelMenu="matMenu" class="compact-list-menu" xPosition="before">
       <ng-template matMenuContent let-item="item">
         <button mat-menu-item (click)="onEditModel(item)">
-          <mat-icon>edit</mat-icon><span>Edit Model</span>
+          <mat-icon>edit</mat-icon>
+          <span>Edit Model</span>
         </button>
         <div class="menu-divider"></div>
         <button mat-menu-item (click)="onDeleteModel(item)">
@@ -1212,10 +1159,12 @@
     <mat-menu #mappingMenu="matMenu" class="compact-list-menu" xPosition="before">
       <ng-template matMenuContent let-item="item">
         <button mat-menu-item (click)="onEditMapping(item)">
-          <mat-icon>edit</mat-icon><span>Edit Mapping</span>
+          <mat-icon>edit</mat-icon>
+          <span>Edit Mapping</span>
         </button>
         <button mat-menu-item (click)="onTestMapping(item)">
-          <mat-icon>play_circle_outline</mat-icon><span>Test Transformation</span>
+          <mat-icon>play_circle_outline</mat-icon>
+          <span>Test Transformation</span>
         </button>
         <div class="menu-divider"></div>
         <button mat-menu-item (click)="onDeleteMapping(item)">
@@ -1228,10 +1177,12 @@
     <mat-menu #ruleMenu="matMenu" class="compact-list-menu" xPosition="before">
       <ng-template matMenuContent let-item="item">
         <button mat-menu-item (click)="onEditRule(item)">
-          <mat-icon>edit</mat-icon><span>Edit Rule</span>
+          <mat-icon>edit</mat-icon>
+          <span>Edit Rule</span>
         </button>
         <button mat-menu-item (click)="onViewRuleLogs(item)">
-          <mat-icon>history</mat-icon><span>Execution Logs</span>
+          <mat-icon>history</mat-icon>
+          <span>Execution Logs</span>
         </button>
         <div class="menu-divider"></div>
         <button mat-menu-item (click)="onDeleteRule(item)">
@@ -1244,10 +1195,12 @@
     <mat-menu #versionsMenu="matMenu" class="compact-list-menu" xPosition="before">
       <ng-template matMenuContent let-item="item">
         <button mat-menu-item (click)="onViewVersionDetails(item)">
-          <mat-icon>visibility</mat-icon><span>View Details</span>
+          <mat-icon>visibility</mat-icon>
+          <span>View Details</span>
         </button>
         <button mat-menu-item (click)="onRestoreVersion(item)">
-          <mat-icon color="primary">settings_backup_restore</mat-icon><span>Rollback</span>
+          <mat-icon color="primary">settings_backup_restore</mat-icon>
+          <span>Rollback</span>
         </button>
       </ng-template>
     </mat-menu>
@@ -1255,7 +1208,8 @@
     <mat-menu #codesMenu="matMenu" class="compact-list-menu" xPosition="before">
       <ng-template matMenuContent let-item="item">
         <button mat-menu-item (click)="onEditCode(item)">
-          <mat-icon>edit</mat-icon><span>Edit Code System</span>
+          <mat-icon>edit</mat-icon>
+          <span>Edit Code System</span>
         </button>
         <div class="menu-divider"></div>
         <button mat-menu-item (click)="onDeleteCode(item)">
@@ -1315,15 +1269,14 @@
       </ng-template>
     </mat-menu>
   </div>
-
   <!-- Mapping Detail View -->
-
   @if (showMappingDetail) {
     <div class="mapping-detail-view">
       <app-view-mapping [mappingData]="selectedMappingData" (closeView)="onCloseMappingDetail()">
       </app-view-mapping>
     </div>
   }
+
   @if (isEditingMapping) {
     <div class="mapping-edit-view">
       <app-edit-mapping [mappingData]="selectedMappingData" (closeEdit)="onCloseEditMapping()">
@@ -1331,13 +1284,13 @@
     </div>
   }
 
-  <!-- Model Detail View -->
   @if (showModelDetail) {
     <div class="model-detail-view">
       <app-view-model [modelData]="selectedModelData" (closeView)="onCloseModelDetail()">
       </app-view-model>
     </div>
   }
+
   @if (isEditingModel) {
     <div class="model-edit-view">
       <app-edit-model [modelData]="selectedModelData" (closeEdit)="onCloseEditModel()">
@@ -1345,14 +1298,12 @@
     </div>
   }
 
-  <!-- Edit Code View (Full overlay component) -->
   @if (showEditCode && isEditingCode) {
     <div class="code-edit-view">
       <app-edit-code [codeData]="selectedCodeData" (closeEdit)="onCloseEditCode()"> </app-edit-code>
     </div>
   }
 
-  <!-- Rule Detail View -->
   @if (showRuleDetail) {
     <div class="rule-detail-view">
       <app-view-rule [ruleData]="selectedRuleData" (closeView)="onCloseRuleDetail()">
@@ -1366,13 +1317,50 @@
     </div>
   }
 
-  <!-- Map Code Set View (Full overlay component) -->
   @if (showMapCodeSet) {
     <div class="map-code-set-view">
       <app-map-code-set
         [mappingData]="selectedCodeSetForMapping"
         (closeMapping)="onCloseMapCodeSet()">
       </app-map-code-set>
+    </div>
+  }
+
+  @if (showCodeSetDetail) {
+    <div class="code-set-detail-view">
+      <app-view-code-set-mapping
+        [mappingData]="selectedCodeSetMappingDetail"
+        [isEditing]="showEditCodeSetMapping"
+        (closeView)="onCloseCodeSetDetail()"
+        (editCodeSet)="onOpenEditCodeSetMapping($event)">
+      </app-view-code-set-mapping>
+    </div>
+  }
+  @if (showMixedDetail) {
+    <div class="mixed-detail-view">
+      <app-view-mixed-mapping
+        [mappingData]="selectedMixedMappingDetail"
+        [isEditing]="showEditMixedMapping"
+        (closeView)="onCloseMixedDetail()"
+        (editCodeSet)="onOpenEditMixedMapping($event)">
+      </app-view-mixed-mapping>
+    </div>
+  }
+
+  @if (showEditCodeSetMapping && selectedCodeSetMappingForEdit) {
+    <div class="edit-code-set-mapping-view">
+      <app-edit-code-set-mapping
+        [mappingData]="selectedCodeSetMappingForEdit"
+        (closeMapping)="onCloseEditCodeSetMapping()">
+      </app-edit-code-set-mapping>
+    </div>
+  }
+  @if (showEditMixedMapping && selectedMixedMappingForEdit) {
+    <div class="edit-mixed-mapping-view">
+      <app-edit-mixed-mapping
+        [mappingData]="selectedMixedMappingForEdit"
+        (closeMapping)="onCloseEditMixedMapping()">
+      </app-edit-mixed-mapping>
     </div>
   }
 </div>

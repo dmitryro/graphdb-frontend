@@ -1,6 +1,9 @@
 import { Action } from '@modules/events/interfaces/action.interface';
 
 export enum EventActionTypes {
+  ExecuteCodeSetAction = '[Event] Execute Code Set Action',
+  OpenEditCodeSet = '[Event] Open Edit Code Set',
+  CloseEditCodeSet = '[Event] Close Edit code Set',
   OpenMapCodeSet = '[Event] Open Map Code Set',
   CloseMapCodeSet = '[Event] Close Map Code Set',
   CodeMappingSaved = '[Event] Code Mapping Saved',
@@ -31,6 +34,12 @@ export enum EventActionTypes {
   CloseEditCode = '[Event] Close Edit Code',
   OpenEditMapping = '[Event] Open Edit Mapping',
   CloseEditMapping = '[Event] Close Edit Mapping',
+  OpenCodeSetEditMapping = '[Event] Open Code Set Edit Mapping',
+  CloseCodeSetEditMapping = '[Event] Close Code Set Edit Mapping',
+  OpenEditCodeSetMapping = '[Event] Open Edit Code Set Mapping',
+  CloseEditCodeSetMapping = '[Event] Close Edit Code Set Mapping',
+  OpenEditMixedMapping = '[Event] Open Edit Mixed Mapping',
+  CloseEditMixedMapping = '[Event] Close Edit Mixed Mapping',
   OpenEditModel = '[Event] Open Edit Model',
   CloseEditModel = '[Event] Close Edit Model',
   OpenEditRule = '[Event] Oppen Edit Rule',
@@ -103,6 +112,18 @@ export enum EventActionTypes {
   UpdateBreadcrumb = '[Event] Update Breadcrumb',
   BreadcrumbNavigate = '[Event] Breadcrumb Navigate',
   ViewRelatedModel = '[Event] View Related Model',
+}
+
+export class ExecuteCodeSetAction implements Action {
+  readonly type = EventActionTypes.ExecuteCodeSetAction;
+}
+
+export class CloseEditCodeSet implements Action {
+  readonly type = EventActionTypes.CloseEditCodeSet;
+}
+
+export class OpenEditCodeSet implements Action {
+  readonly type = EventActionTypes.OpenEditCodeSet;
 }
 
 export class CodeMappingSaved implements Action {
@@ -257,6 +278,36 @@ export class OpenEditModel implements Action {
 
 export class CloseEditModel implements Action {
   readonly type = EventActionTypes.CloseEditModel;
+  constructor(public payload: any) {}
+}
+
+export class OpenCodeSetEditMapping implements Action {
+  readonly type = EventActionTypes.OpenCodeSetEditMapping;
+  constructor(public payload: any) {}
+}
+
+export class CloseCodeSetEditMapping implements Action {
+  readonly type = EventActionTypes.CloseCodeSetEditMapping;
+  constructor(public payload: any) {}
+}
+
+export class OpenEditCodeSetMapping implements Action {
+  readonly type = EventActionTypes.OpenEditCodeSetMapping;
+  constructor(public payload: any) {}
+}
+
+export class CloseEditCodeSetMapping implements Action {
+  readonly type = EventActionTypes.CloseEditCodeSetMapping;
+  constructor(public payload: any) {}
+}
+
+export class OpenEditMixedMapping implements Action {
+  readonly type = EventActionTypes.OpenEditMixedMapping;
+  constructor(public payload: any) {}
+}
+
+export class CloseEditMixedMapping implements Action {
+  readonly type = EventActionTypes.CloseEditMixedMapping;
   constructor(public payload: any) {}
 }
 
@@ -640,6 +691,12 @@ export type EventActions =
   | CloseEditModel
   | OpenEditModel
   | CloseEditRule
+  | OpenCodeSetEditMapping
+  | CloseCodeSetEditMapping
+  | OpenEditCodeSetMapping
+  | CloseEditCodeSetMapping
+  | OpenEditMixedMapping
+  | CloseEditMixedMapping
   | OpenEditRule
   | CloseEditCode
   | OpenEditCode
@@ -695,6 +752,7 @@ export type EventActions =
   | CloseUsageImpactDrawer
   | PauseIngestion
   | DownloadSchema
+  | ExecuteCodeSetAction
   | CloseNewMappingModal
   | OpenNewMappingModal
   | CloseNewNormalizationRuleModal
@@ -705,6 +763,8 @@ export type EventActions =
   | OpenNewModelModal
   | OpenMapCodeSet
   | CloseMapCodeSet
+  | OpenEditCodeSet
+  | CloseEditCodeSet
   | OpenConfirmationModal
   | OpenNewCodeSetMappingModal
   | CloseNewCodeSetMappingModal

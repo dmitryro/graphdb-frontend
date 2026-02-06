@@ -48,10 +48,14 @@ import { ViewMappingComponent } from './view-mapping/view-mapping.component';
 import { EditMappingComponent } from './edit-mapping/edit-mapping.component';
 import { UsageImpactDrawerComponent } from './usage-impact-drawer/usage-impact-drawer.component';
 // Add these imports at the top with the other component imports:
+import { EditCodeSetMappingComponent } from './edit-code-set-mapping/edit-code-set-mapping.component';
 import { EditCodeComponent } from './edit-code/edit-code.component';
+import { EditMixedMappingComponent } from './edit-mixed-mapping/edit-mixed-mapping.component';
 import { EditModelComponent } from './edit-model/edit-model.component';
 import { EditRuleComponent } from './edit-rule/edit-rule.component';
 import { MapCodeSetComponent } from './map-code-set/map-code-set.component';
+import { ViewCodeSetMappingComponent } from './view-code-set-mapping/view-code-set-mapping.component';
+import { ViewMixedMappingComponent } from './view-mixed-mapping/view-mixed-mapping.component';
 import { ViewModelComponent } from './view-model/view-model.component';
 import { ViewRuleComponent } from './view-rule/view-rule.component';
 // Core Date Imports
@@ -101,6 +105,10 @@ import { UsersModule } from '@modules/users/users-module';
     MapCodeSetComponent,
     UsageImpactDrawerComponent,
     BreadcrumbComponent,
+    EditCodeSetMappingComponent,
+    ViewCodeSetMappingComponent,
+    ViewMixedMappingComponent,
+    EditMixedMappingComponent,
   ],
   providers: [
     { provide: MatPaginatorIntl, useClass: MatPaginatorIntl },
@@ -180,6 +188,25 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   versionSearch = '';
   public codeSearch = '';
 
+  // View Code Set Mapping Drawer (inline, same as showCodeDetail)
+  showViewCodeSetMapping = false;
+  showViewMixedMapping = false;
+  selectedCodeSetMappingDetail: any = null;
+  selectedMixedMappingDetail: any = null;
+  isLoadingMappingDetail = false;
+  mappingDetailError: string | null = null;
+  currentTabForBreadcrumb = ''; // Track tab for breadcrumb
+
+  // ─── NEW: Edit Code Set Mapping (external overlay) ─────────────
+  //showEditCodeSetMapping = false;
+  editCodeSetMappingData: any = null;
+  selectedCodeSetMappingForEdit: any = null;
+
+  // ─── NEW: Edit Code Set Mapping (external overlay) ─────────────
+  //showEditCodeSetMapping = false;
+  editMixedMappingData: any = null;
+  selectedMixedMappingForEdit: any = null;
+
   // Date Range Picker Form
   range = new FormGroup({
     start: new FormControl<Date | null>(null),
@@ -242,6 +269,18 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   // Map Code Set state
   showMapCodeSet = false;
   selectedCodeSetForMapping: any = null;
+
+  // Map Code Set state
+  showMapMixed = false;
+  selectedMixedForMapping: any = null;
+
+  // State triggers
+  showCodeSetDetail = false;
+  showMixedDetail = false;
+  showEditCodeSetMapping = false;
+  selectedCodeSetData: any = null;
+  showEditMixedMapping = false;
+  selectedMixedData: any = null;
 
   public versionColumns: string[] = ['versionTag', 'releasedBy', 'status', 'timestamp', 'actions'];
   // UPDATED: Column structure
@@ -541,14 +580,260 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   /**
+   * Listen for events from the NgRx Store via EventService.
+   * Updated to correctly extract payload data from the EventService's nested structure.
+   */
+  subscribeToEvents(): void {
+    this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
+      const lastAction = state?.lastAction;
+      const eventName = state?.items?.event;
+
+      /**
+       * FIX: EventService.publish wraps your data in a 'payload' property.
+       * Your previous code looked in 'data', which returned undefined for breadcrumb signals.
+       */
+      const eventData = state?.items?.payload;
+
+      console.log('[NormalizationComponent] Received Event:', {
+        lastAction,
+        eventName,
+        eventData,
+      });
+
+      // 1. Handle Data Refresh Events
+      if (
+        lastAction === 'record_created' ||
+        lastAction === 'graph_updated' ||
+        eventName === 'refresh_header'
+      ) {
+        this.loadAllData();
+      }
+
+      // Handle navigation to a related model
+      if (eventName === 'view_related_model' && eventData) {
+        // Pass the whole payload { modelName, modelId }
+        this.handleRelatedModelNavigation({
+          id: eventData.modelId,
+          name: eventData.modelName,
+        });
+      }
+
+      if (eventName === 'open_edit_mapping') {
+        this.isEditingMapping = true;
+        this.isExiting = false;
+      }
+
+      if (eventName === 'close_edit_mapping') {
+        this.isEditingMapping = false;
+        this.isExiting = true;
+      }
+
+      // Handle model edit events
+      if (eventName === 'open_edit_model') {
+        this.isEditingModel = true;
+        this.isExiting = false;
+      }
+
+      if (eventName === 'close_edit_model') {
+        this.isEditingModel = false;
+        this.isExiting = true;
+      }
+
+      // Handle code edit events
+      if (eventName === 'open_edit_code') {
+        this.isEditingCode = true;
+        this.showEditCode = true;
+        this.isExiting = false;
+      }
+
+      if (eventName === 'close_edit_code') {
+        this.isEditingCode = false;
+        this.showEditCode = false;
+        this.isExiting = true;
+      }
+
+      if (eventName === 'open_edit_rule') {
+        this.isEditingRule = true;
+        this.isExiting = false;
+      }
+
+      if (eventName === 'close_edit_rule') {
+        this.isEditingRule = false;
+        this.isExiting = true;
+      }
+
+      // Handle map code set events – FIXED: store data BEFORE showing component
+      if (eventName === 'open_map_code_set' && eventData?.fullData) {
+        console.log('[Normalization] Preparing to open map code set with data:', {
+          sourceCodeSet: eventData.fullData.sourceCodeSet,
+          rowCount: eventData.fullData.sourceCodeRows?.length ?? 0,
+          firstRowExample: eventData.fullData.sourceCodeRows?.[0] ?? 'no rows',
+        });
+
+        // Store the full mapping data so [mappingData] input can bind it
+        this.selectedCodeSetForMapping = eventData.fullData;
+
+        // Now reveal the component → *ngIf becomes true and input is set
+        this.showMapCodeSet = true;
+        this.isExiting = false;
+
+        // Ensure Angular sees the change immediately
+        this.cdr.detectChanges();
+      }
+
+      if (eventName === 'close_map_code_set') {
+        this.showMapCodeSet = false;
+        this.selectedCodeSetForMapping = null;
+        this.isExiting = true;
+        this.cdr.detectChanges();
+      }
+
+      if (eventName === 'code_mapping_saved') {
+        // Refresh code data after mapping is saved
+        console.log('[Normalization] Code mapping saved', eventData);
+        // In production: reload code table data
+        this.onCloseMapCodeSet();
+      }
+
+      // 2. Handle Theme Change Events
+      if (eventName === 'theme_change' || lastAction === 'theme_updated') {
+        console.log('[NormalizationComponent] Theme change detected, reapplying layout fixes...');
+        setTimeout(() => {
+          this.fixModelsDateInputLayout();
+          this.fixMappingsDateInputLayout();
+          this.fixRulesDateInputLayout();
+          this.fixDateInputLayout();
+
+          // Force change detection to ensure the UI reflects theme-specific hex colors
+          this.cdr.detectChanges();
+        }, 50);
+      }
+
+      // 3. Handle Breadcrumb Navigation Signals
+      if (eventName === 'breadcrumb_navigate' && eventData) {
+        // FIX: Change handleNavigation to handleBreadcrumbNavigation
+        this.handleBreadcrumbNavigation(eventData.target);
+      }
+
+      // Handle open mixed mapping detail (Initial Row Click)
+      if (eventName === 'open_mixed_mapping' && eventData) {
+        this.selectedMixedData = eventData;
+        this.showMixedDetail = true;
+        this.isExiting = false;
+        // FIX: Ensure the breadcrumb is explicitly set to Mixed Mapping
+        this.updateBreadcrumbPath('View Mixed Mapping');
+        this.cdr.detectChanges();
+      }
+
+      // Handle open edit code set mapping
+      if (eventName === 'open_edit_code_set_mapping' && eventData?.mappingData) {
+        this.selectedCodeSetMappingForEdit = eventData.mappingData;
+        this.showEditCodeSetMapping = true;
+        this.updateBreadcrumbPath(
+          'Edit Code Set Mapping',
+          'View Code Set Mapping',
+          'VIEW_CODE_SET_MAPPING',
+        );
+        this.cdr.detectChanges();
+
+        // Hide other views
+        this.showMapCodeSet = false;
+      }
+
+      // In event subscription
+      if (eventName === 'open_view_mixed_mapping') {
+        this.showViewMixedMapping = true;
+        this.selectedMixedMappingDetail = eventData.mappingData;
+      }
+
+      if (eventName === 'close_view_mixed_mapping') {
+        this.showViewMixedMapping = false;
+        this.selectedMixedMappingDetail = null;
+      }
+
+      if (eventName === 'open_edit_mixed_mapping') {
+        this.showEditMixedMapping = true;
+        this.selectedMixedMappingForEdit = eventData.mappingData;
+      }
+
+      if (eventName === 'close_edit_mixed_mapping') {
+        this.showEditMixedMapping = false;
+        this.selectedMixedMappingForEdit = null;
+      }
+
+      // Handle open edit mixed mapping
+      if (eventName === 'open_edit_mixed_mapping' && eventData?.mappingData) {
+        this.selectedMixedMappingForEdit = eventData.mappingData;
+        this.showEditMixedMapping = true;
+        this.updateBreadcrumbPath('Edit Mixed Mapping', 'View Mixed Mapping', 'VIEW_MIXED_MAPPING');
+        this.cdr.detectChanges();
+
+        // Hide other views
+        this.showMapCodeSet = false;
+      }
+
+      // Handle close edit mapping
+      if (eventName === 'close_edit_code_set_mapping') {
+        this.closeEditCodeSetMapping();
+      }
+
+      // Handle close edit mixed mapping
+      if (eventName === 'close_edit_mixed_mapping') {
+        this.closeEditMixedMapping();
+      }
+    });
+  }
+
+  /**
    * Processes navigation signals from the breadcrumb.
    * Ensures clickable segments for: Normalization > [Tab] > View > Edit
    */
-
   private handleBreadcrumbNavigation(target: string): void {
-    // 1. Handle "Edit" views - stay in current state but update path
-    if (target === 'EDIT_MAPPING' || target === 'EDIT_MODEL' || target === 'EDIT_RULE') {
-      this.updateBreadcrumbPath();
+    // 1. Handle "Edit" views - stay in current state but update path to 4 levels
+    if (
+      target === 'EDIT_MAPPING' ||
+      target === 'EDIT_MODEL' ||
+      target === 'EDIT_RULE' ||
+      target === 'EDIT_CODE_SET_MAPPING' ||
+      target === 'EDIT_MIXED_MAPPING' ||
+      target === 'EDIT_MODEL_MAPPING'
+    ) {
+      const editMap: Record<string, { label: string; parentLabel: string; parentTarget: string }> =
+        {
+          EDIT_MAPPING: {
+            label: 'Edit Mapping',
+            parentLabel: 'View Model Mapping',
+            parentTarget: 'VIEW_MODEL_MAPPING',
+          },
+          EDIT_MODEL: {
+            label: 'Edit Model',
+            parentLabel: 'View Model',
+            parentTarget: 'VIEW_MODEL',
+          },
+          EDIT_RULE: {
+            label: 'Edit Rule',
+            parentLabel: 'View Rule',
+            parentTarget: 'VIEW_RULE',
+          },
+          EDIT_CODE_SET_MAPPING: {
+            label: 'Edit Code Set Mapping',
+            parentLabel: 'View Code Set Mapping',
+            parentTarget: 'VIEW_CODE_SET_MAPPING',
+          },
+          EDIT_MIXED_MAPPING: {
+            label: 'Edit Mixed Mapping',
+            parentLabel: 'View Mixed Mapping',
+            parentTarget: 'VIEW_MIXED_MAPPING',
+          },
+          EDIT_MODEL_MAPPING: {
+            label: 'Edit Model Mapping',
+            parentLabel: 'View Model Mapping',
+            parentTarget: 'VIEW_MODEL_MAPPING',
+          },
+        };
+
+      const config = editMap[target];
+      this.updateBreadcrumbPath(config.label, config.parentLabel, config.parentTarget);
       this.cdr.detectChanges();
       return;
     }
@@ -576,18 +861,48 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
-    // 4. Handle navigation back to View Mapping
-    if (target === 'VIEW_MAPPING') {
+    // 4. Handle navigation back to View Mapping / View Model Mapping
+    if (target === 'VIEW_MAPPING' || target === 'VIEW_MODEL_MAPPING') {
       this.showMappingDetail = true;
       this.eventService.publish('nf', 'close_edit_mapping', {
         mappingId: this.selectedMappingData?.id,
+        action: 'close_edit_mapping',
       });
-      this.updateBreadcrumbPath('View Mapping');
+
+      const label = target === 'VIEW_MODEL_MAPPING' ? 'View Model Mapping' : 'View Mapping';
+      this.updateBreadcrumbPath(label);
       this.cdr.detectChanges();
       return;
     }
 
-    // 5. Handle navigation back to View Model
+    // 5. Handle navigation back to View Code Set Mapping
+    if (target === 'VIEW_CODE_SET_MAPPING') {
+      this.showCodeSetDetail = true;
+      this.updateBreadcrumbPath('View Code Set Mapping');
+      this.eventService.publish('nf', 'close_edit_codeset', {
+        codesetId: this.selectedCodeSetData?.id,
+        fromBreadcrumb: true,
+      });
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // 6. Handle navigation back to View Mixed Mapping
+    if (target === 'VIEW_MIXED_MAPPING') {
+      this.showMixedDetail = true;
+      // FIX: Correctly set label for Mixed Mapping back-navigation
+      this.updateBreadcrumbPath('View Mixed Mapping');
+
+      this.eventService.publish('nf', 'close_edit_mixed_mapping', {
+        codesetId: this.selectedMixedData?.id,
+        fromBreadcrumb: true,
+      });
+
+      this.cdr.detectChanges();
+      return;
+    }
+
+    // 7. Handle navigation back to View Model
     if (target === 'VIEW_MODEL') {
       this.showModelDetail = true;
       this.eventService.publish('nf', 'close_edit_model', { modelId: this.selectedModelData?.id });
@@ -596,25 +911,34 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return;
     }
 
-    // 6. Handle Root or Tab Navigation (Reset detail views)
+    // 8. Handle Root or Tab Navigation (Reset detail views)
     if (target === 'ROOT' || target.startsWith('TAB_')) {
       // Clear all detail and edit states
       this.showMappingDetail = false;
       this.showModelDetail = false;
       this.showRuleDetail = false;
       this.showCodeDetail = false;
+      this.showCodeSetDetail = false;
+      this.showMixedDetail = false;
 
       // Clear selected data
       this.selectedMappingData = null;
       this.selectedModelData = null;
       this.selectedRuleData = null;
       this.selectedCodeData = null;
+      this.selectedCodeSetData = null;
+      this.selectedMixedData = null;
 
       // Reset edit/mapping flags
       this.showEditCode = false;
       this.isEditingCode = false;
-      this.showMapCodeSet = false; // Hide map view
-      this.selectedCodeSetForMapping = null; // Clear mapping context
+      this.showMapCodeSet = false;
+      this.showEditCodeSetMapping = false;
+      this.selectedCodeSetForMapping = null;
+      this.selectedCodeSetMappingForEdit = null;
+      this.showEditMixedMapping = false;
+      this.selectedMixedForMapping = null;
+      this.selectedMixedMappingForEdit = null;
 
       let targetIndex = this.activeTabIndex;
       switch (target) {
@@ -648,43 +972,67 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         this.onCloseMappingDetail();
         this.onCloseModelDetail();
         this.onCloseRuleDetail();
+        this.onCloseCodeSetDetail();
+        this.onCloseMixedDetail();
         this.cdr.detectChanges();
       }, 0);
       return;
     }
 
-    // 7. NEW: Handle direct click on 'Map Code Set' breadcrumb (no-op)
-    // This can happen if the user manually triggers navigation to MAP_CODE_SET,
-    // but since it's always the active/last item, this is typically unreachable.
-    // Still, include for safety without disrupting other flows.
     if (target === 'MAP_CODE_SET') {
-      // Do nothing — MapCodeSetComponent manages its own lifecycle
       return;
     }
   }
+
   /**
    * Updates the breadcrumb path by publishing a signal to the EventStore.
-   * Ensures all items follow the expected type structure.
+   * @param childLabel The label for the current/deepest page
+   * @param parentLabel Optional label for the intermediate view
+   * @param parentTarget Optional target for the intermediate view
    */
-  private updateBreadcrumbPath(childLabel?: string): void {
-    const path: { label: string; target: string }[] = [{ label: 'Normalization', target: 'ROOT' }];
+  private updateBreadcrumbPath(
+    childLabel?: string,
+    parentLabel?: string,
+    parentTarget?: string,
+  ): void {
+    const path: any[] = [{ label: 'Normalization', target: 'ROOT' }];
 
-    // Use current activeTabLabel if available
+    // 1. Add Tab Level
     if (this.activeTabLabel) {
       path.push({
         label: this.activeTabLabel,
         target: `TAB_${this.activeTabLabel.toUpperCase()}`,
+        active: !childLabel && !parentLabel,
       });
     }
 
-    // Append child if we are in "View" or "Edit" mode
-    if (childLabel) {
-      // If childLabel is 'View Mapping', target should be 'VIEW_MAPPING'
-      const target = childLabel.toUpperCase().replace(' ', '_');
-      path.push({ label: childLabel, target: target });
+    // 2. Add Intermediate "View" Level (Required for 4-level navigation)
+    if (parentLabel && parentTarget) {
+      path.push({
+        label: parentLabel,
+        target: parentTarget,
+        active: false,
+      });
     }
 
-    this.eventService.publish('nf', 'update_breadcrumb', { path });
+    // 3. Add Current "Child" Level
+    if (childLabel) {
+      // Logic check: If it's a child label without a parent, it's a detail view (clickable)
+      // If it's a child label WITH a parent, it's an edit view (non-clickable tail)
+      const target = !parentLabel ? childLabel.toUpperCase().replace(/ /g, '_') : null;
+
+      path.push({
+        label: childLabel,
+        target: target,
+        active: true,
+      });
+    }
+
+    // Publish with valid payload structure
+    this.eventService.publish('nf', 'update_breadcrumb', {
+      action: 'update_breadcrumb',
+      path: path,
+    });
   }
 
   // Define a central path update method to reduce boilerplate
@@ -700,6 +1048,13 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   public onTabChange(event: MatTabChangeEvent): void {
     this.activeTabIndex = event.index;
     this.activeTabLabel = this.tabOrder[this.activeTabIndex];
+
+    // Hide code set mapping views when switching tabs
+    this.showViewCodeSetMapping = false;
+    this.showEditCodeSetMapping = false;
+
+    this.showViewMixedMapping = false;
+    this.showEditMixedMapping = false;
 
     this.cdr.detectChanges();
 
@@ -748,19 +1103,22 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   // Add this method to handle row clicks in the mapping table:
   // Add this method to handle row clicks in the mapping table:
   onMappingRowClick(mapping: any): void {
-    // Ensure 'mapping' object contains the current status from the table row
-    this.selectedMappingData = { ...mapping };
-    this.showMappingDetail = true;
+    const type = (mapping.type || '').toLowerCase();
 
-    // Update path: Normalization > Mappings > View Mapping
-    this.updateBreadcrumbPath('View Mapping');
+    if (type === 'code' || type === 'codeset' || type.includes('code')) {
+      // Code Set Mapping → open the CODE drawer
+      this.onOpenViewCodeSetMapping(mapping, 'mappings');
+    } else {
+      // Regular Model-to-Model Mapping → open the MODEL mapping view
+      this.selectedMappingData = { ...mapping };
+      this.showMappingDetail = true;
+      this.updateBreadcrumbPath('View Mapping');
 
-    setTimeout(() => {
-      const container = document.querySelector('.normalization-main-container');
-      if (container) {
-        container.classList.add('slide-out');
-      }
-    }, 0);
+      setTimeout(() => {
+        const container = document.querySelector('.normalization-main-container');
+        if (container) container.classList.add('slide-out');
+      }, 0);
+    }
   }
 
   onModelRowClick(model: any): void {
@@ -1084,142 +1442,116 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     });
   }
 
+  public closeEditCodeSetMapping(): void {
+    console.log('[Normalization] Closing edit code set mapping');
+    this.showEditCodeSetMapping = false;
+    this.editCodeSetMappingData = null;
+  }
+
+  public closeEditMixedMapping(): void {
+    console.log('[Normalization] Closing edit mixed mapping');
+    this.showEditMixedMapping = false;
+    this.editMixedMappingData = null;
+  }
+
+  public onEditMappingClick(): void {
+    const detail = this.selectedCodeSetMappingDetail;
+
+    if (!detail) {
+      console.warn('No mapping data available to edit');
+      return;
+    }
+
+    // 1. Determine the Mapping Nature
+    const isSourceCode = detail.sourceType === 'CodeSet' || !!detail.sourceCodeSetName;
+    const isTargetCode = detail.targetType === 'CodeSet' || !!detail.targetCodeSetName;
+
+    // 2. Prepare common metadata
+    const baseData = {
+      mappingId: detail.id || detail.mappingId,
+      mappingName: detail.mappingName,
+      lastUpdated: detail.lastModified || detail.lastModifiedAt,
+      lastUpdatedBy: detail.lastModifiedBy || 'Current User',
+      usedInPipelines: detail.usedInPipelines || detail.referencedByPipelines?.length || 0,
+      referencedByRules: detail.referencedByRules || 0,
+    };
+
+    // 3. Delegate based on type
+    if (isSourceCode && isTargetCode) {
+      this.handleEditCodeMapping(baseData, detail);
+    } else if (!isSourceCode && !isTargetCode) {
+      this.handleEditModelMapping(baseData, detail);
+    } else {
+      this.handleEditMixedMapping(baseData, detail);
+    }
+  }
+
   /**
-   * Listen for events from the NgRx Store via EventService.
-   * Updated to correctly extract payload data from the EventService's nested structure.
+   * Logic for Code-to-Code mappings (Terminology)
    */
-  subscribeToEvents(): void {
-    this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
-      const lastAction = state?.lastAction;
-      const eventName = state?.items?.event;
+  private handleEditCodeMapping(base: any, detail: any): void {
+    const mappingData = {
+      ...base,
+      sourceCodeSet: detail.sourceCodeSetName,
+      targetCodeSet: detail.targetCodeSetName,
+      mappingRows: this.convertPreviewToEditFormat(detail.mappings || []),
+    };
 
-      /**
-       * FIX: EventService.publish wraps your data in a 'payload' property.
-       * Your previous code looked in 'data', which returned undefined for breadcrumb signals.
-       */
-      const eventData = state?.items?.payload;
+    this.onCloseViewCodeSetMapping();
 
-      console.log('[NormalizationComponent] Received Event:', {
-        lastAction,
-        eventName,
-        eventData,
-      });
+    setTimeout(() => {
+      this.selectedCodeSetMappingForEdit = mappingData;
+      this.showEditCodeSetMapping = true;
+      this.updateBreadcrumbPath('Edit Code Set Mapping');
+      this.eventService.publish('nf', 'open_edit_code_set_mapping', { mappingData });
+    }, 350);
+  }
 
-      // 1. Handle Data Refresh Events
-      if (
-        lastAction === 'record_created' ||
-        lastAction === 'graph_updated' ||
-        eventName === 'refresh_header'
-      ) {
-        this.loadAllData();
-      }
+  /**
+   * Logic for Model-to-Model mappings (Structure)
+   */
+  private handleEditModelMapping(base: any, detail: any): void {
+    const mappingData = {
+      ...base,
+      sourceModel: detail.source,
+      targetModel: detail.target,
+      fields: detail.fields || [],
+    };
 
-      // Handle navigation to a related model
-      if (eventName === 'view_related_model' && eventData) {
-        // Pass the whole payload { modelName, modelId }
-        this.handleRelatedModelNavigation({
-          id: eventData.modelId,
-          name: eventData.modelName,
-        });
-      }
+    // Close view-mapping drawer
+    this.showMappingDetail = false;
 
-      if (eventName === 'open_edit_mapping') {
-        this.isEditingMapping = true;
-        this.isExiting = false;
-      }
+    setTimeout(() => {
+      this.selectedMappingData = mappingData;
+      this.isEditingMapping = true;
+      this.updateBreadcrumbPath('Edit Model Mapping');
+      this.eventService.publish('nf', 'open_edit_mapping', { fullData: mappingData });
+    }, 350);
+  }
 
-      if (eventName === 'close_edit_mapping') {
-        this.isEditingMapping = false;
-        this.isExiting = true;
-      }
+  /**
+   * Logic for Model-to-Code or Code-to-Model mappings
+   */
+  private handleEditMixedMapping(base: any, detail: any): void {
+    const mappingData = {
+      ...base,
+      source: detail.source || detail.sourceCodeSetName,
+      target: detail.target || detail.targetCodeSetName,
+      sourceType: detail.sourceType,
+      targetType: detail.targetType,
+      action: 'open_edit_mixed_mapping',
+      mappingRows: this.convertPreviewToEditFormat(detail.mappings || detail.fields || []),
+    };
 
-      // Handle model edit events
-      if (eventName === 'open_edit_model') {
-        this.isEditingModel = true;
-        this.isExiting = false;
-      }
+    // Close mixed view drawer
+    this.showViewMixedMapping = false;
 
-      if (eventName === 'close_edit_model') {
-        this.isEditingModel = false;
-        this.isExiting = true;
-      }
-
-      // Handle code edit events
-      if (eventName === 'open_edit_code') {
-        this.isEditingCode = true;
-        this.showEditCode = true;
-        this.isExiting = false;
-      }
-
-      if (eventName === 'close_edit_code') {
-        this.isEditingCode = false;
-        this.showEditCode = false;
-        this.isExiting = true;
-      }
-
-      if (eventName === 'open_edit_rule') {
-        this.isEditingRule = true;
-        this.isExiting = false;
-      }
-
-      if (eventName === 'close_edit_rule') {
-        this.isEditingRule = false;
-        this.isExiting = true;
-      }
-
-      // Handle map code set events – FIXED: store data BEFORE showing component
-      if (eventName === 'open_map_code_set' && eventData?.fullData) {
-        console.log('[Normalization] Preparing to open map code set with data:', {
-          sourceCodeSet: eventData.fullData.sourceCodeSet,
-          rowCount: eventData.fullData.sourceCodeRows?.length ?? 0,
-          firstRowExample: eventData.fullData.sourceCodeRows?.[0] ?? 'no rows',
-        });
-
-        // Store the full mapping data so [mappingData] input can bind it
-        this.selectedCodeSetForMapping = eventData.fullData;
-
-        // Now reveal the component → *ngIf becomes true and input is set
-        this.showMapCodeSet = true;
-        this.isExiting = false;
-
-        // Ensure Angular sees the change immediately
-        this.cdr.detectChanges();
-      }
-
-      if (eventName === 'close_map_code_set') {
-        this.showMapCodeSet = false;
-        this.selectedCodeSetForMapping = null;
-        this.isExiting = true;
-        this.cdr.detectChanges();
-      }
-
-      if (eventName === 'code_mapping_saved') {
-        // Refresh code data after mapping is saved
-        console.log('[Normalization] Code mapping saved', eventData);
-        // In production: reload code table data
-        this.onCloseMapCodeSet();
-      }
-
-      // 2. Handle Theme Change Events
-      if (eventName === 'theme_change' || lastAction === 'theme_updated') {
-        console.log('[NormalizationComponent] Theme change detected, reapplying layout fixes...');
-        setTimeout(() => {
-          this.fixModelsDateInputLayout();
-          this.fixMappingsDateInputLayout();
-          this.fixRulesDateInputLayout();
-          this.fixDateInputLayout();
-
-          // Force change detection to ensure the UI reflects theme-specific hex colors
-          this.cdr.detectChanges();
-        }, 50);
-      }
-
-      // 3. Handle Breadcrumb Navigation Signals
-      if (eventName === 'breadcrumb_navigate' && eventData) {
-        // FIX: Change handleNavigation to handleBreadcrumbNavigation
-        this.handleBreadcrumbNavigation(eventData.target);
-      }
-    });
+    setTimeout(() => {
+      this.selectedMixedMappingForEdit = mappingData;
+      this.showEditMixedMapping = true;
+      this.updateBreadcrumbPath('Edit Mixed Mapping');
+      this.eventService.publish('nf', 'open_edit_mixed_mapping', { mappingData });
+    }, 350);
   }
 
   /**
@@ -3114,14 +3446,13 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     });
 
     // 2. Enhanced Mapping Data
-    this.originalMappingData = Array.from({ length: 35 }, (_, index) => {
+    const baseMappingData = Array.from({ length: 35 }, (_, index) => {
       const sourceSystem = index % 2 === 0 ? 'Epic' : 'QuestLab';
 
-      // Fixed: Logic to explicitly set 'Code' vs 'Model' type
+      // Standard logic for 'Code' vs 'Model' type
       const isCodeType = index % 3 === 0;
       const mappingType = isCodeType ? 'Code' : 'Model';
 
-      // Sample content for Code systems vs Data Models
       const codeSystems = ['SNOMED CT', 'LOINC', 'ICD-10-CM', 'RxNorm', 'CPT'];
       const targetName = isCodeType
         ? `${codeSystems[index % codeSystems.length]} Terminology`
@@ -3142,7 +3473,7 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       return {
         id: `mapping-${index}`,
         name: `${sourceSystem} → ${targetName}`,
-        type: mappingType, // Column required for Filtering
+        type: mappingType,
         source: index % 2 === 0 ? 'Epic Health Network' : 'QuestLab Systems',
         target: targetName,
         targetId: targetId,
@@ -3165,7 +3496,60 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
       };
     });
 
-    // 3. Rules Data
+    // --- NEW: 15 Mixed Mapping Records (Model <-> Code) ---
+    const mixedMappingData = Array.from({ length: 15 }, (_, index) => {
+      const isModelToCode = index < 8; // 8 Model->Code, 7 Code->Model
+      const codeSystems = ['SNOMED CT', 'LOINC', 'ICD-10-CM', 'RxNorm', 'CPT'];
+      const selectedModel = this.originalModelData[index % 35];
+      const selectedCodeSet = `${codeSystems[index % codeSystems.length]} Terminology`;
+
+      const source = isModelToCode ? selectedModel.name : selectedCodeSet;
+      const target = isModelToCode ? selectedCodeSet : selectedModel.name;
+
+      const day = (20 + (index % 5)).toString();
+      const dateString = `2026-01-${day}`;
+
+      return {
+        id: `mixed-mapping-${index}`,
+        name: `${source} → ${target}`,
+        type: 'Mixed',
+        source: source,
+        sourceType: isModelToCode ? 'Model' : 'CodeSet',
+        sourceCodeSetName: isModelToCode ? null : source,
+        target: target,
+        targetType: isModelToCode ? 'CodeSet' : 'Model',
+        targetCodeSetName: isModelToCode ? target : null,
+        targetId: `mixed-target-${index}`,
+        fields: this.generateFieldMappings(source, target, 12, index),
+        fieldCount: 12,
+        coverage: '10 / 12',
+        status: index % 2 === 0 ? 'Active' : 'Draft',
+        lastModified: dateString,
+        version: `v1.0.${index}`,
+        lastSavedBy: 'dmitry.roitman',
+        lastSavedRelative: '2 days ago',
+        usageData: {
+          pipelines: [],
+          pipelineCount: 1,
+          rules: [],
+          ruleCount: 0,
+          targetModel: isModelToCode ? null : target,
+          normalizationActive: true,
+        },
+        mappings: [
+          {
+            sourceCode: 'SRC-001',
+            sourceLabel: 'Initial Value',
+            targetCode: 'TGT-99',
+            targetLabel: 'Normalized Value',
+            mappingType: 'Direct',
+          },
+        ],
+      };
+    });
+
+    this.originalMappingData = [...baseMappingData, ...mixedMappingData];
+
     // 3. Rules Data - ENHANCED
     this.originalRuleData = Array.from({ length: 35 }, (_, index) => {
       const severity = ruleSeverities[index % 4];
@@ -3177,7 +3561,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         .padStart(2, '0');
       const dateString = `2026-01-${day}`;
 
-      // Enhanced rule data with transformation details
       return {
         id: `rule-${index}`,
         name: index === 0 ? 'Height Unit Normalization' : `Normalization_Rule_${100 + index}`,
@@ -3194,8 +3577,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
         status: status,
         sourcesAffected: (index % 6) + 1,
         lastModified: dateString,
-
-        // Transformation details (for view-rule component)
         details: {
           mappings:
             index === 0
@@ -3213,13 +3594,9 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
           defaults: index === 0 ? [{ sourceField: 'blood_type', defaultValue: 'Unknown' }] : [],
           ignoreList: [],
         },
-
-        // Version info
         version: 'v2',
         lastSavedBy: index % 2 === 0 ? 'Dmitry Roitman' : 'admin',
         lastSavedRelative: '3 days ago',
-
-        // Usage data
         usageData: {
           pipelineCount: 2 + (index % 3),
           modelCount: 1 + (index % 2),
@@ -3540,6 +3917,42 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     }));
   }
 
+  /**
+   * Handles closing the Code Set Detail view and returning to the main list.
+   */
+  onCloseCodeSetDetail(): void {
+    // 1. Reset the UI state to hide the detail component
+    this.showViewCodeSetMapping = false;
+
+    // 2. Clear selected data (optional but recommended)
+    this.selectedCodeSetData = null;
+
+    // 3. Ensure the main container slides back into view
+    const container = document.querySelector('.normalization-main-container');
+    if (container) {
+      container.classList.remove('slide-out');
+      container.classList.add('slide-in');
+    }
+  }
+
+  /**
+   * Handles closing the Code Set Detail view and returning to the main list.
+   */
+  onCloseMixedDetail(): void {
+    // 1. Reset the UI state to hide the detail component
+    this.showViewMixedMapping = false;
+
+    // 2. Clear selected data (optional but recommended)
+    this.selectedMixedData = null;
+
+    // 3. Ensure the main container slides back into view
+    const container = document.querySelector('.normalization-main-container');
+    if (container) {
+      container.classList.remove('slide-out');
+      container.classList.add('slide-in');
+    }
+  }
+
   // Helper method to generate rule references
   private generateRuleReferences(
     sourceSystem: string,
@@ -3622,6 +4035,405 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     setTimeout(() => {
       this.isEditingModel = false;
     }, 600);
+  }
+
+  /**
+   * Edit button click inside the drawer.
+   * This CLOSES the drawer and OPENS the external edit component.
+   * Breadcrumb changes happen HERE, not on drawer open.
+   */
+  onEditCodeSetMappingFromView(): void {
+    console.log('[Normalization] Opening edit from drawer');
+
+    // Prepare edit data
+    this.selectedCodeSetMappingForEdit = {
+      ...this.selectedCodeSetMappingDetail,
+      mappingId:
+        this.selectedCodeSetMappingDetail.id || this.selectedCodeSetMappingDetail.mappingId,
+      mappingRows: this.convertPreviewToEditFormat(
+        this.selectedCodeSetMappingDetail.mappings || [],
+      ),
+      lastUpdated: this.selectedCodeSetMappingDetail.lastModified,
+      lastUpdatedBy: this.selectedCodeSetMappingDetail.lastModifiedBy || 'Current User',
+    };
+
+    // Close drawer first
+    this.onCloseViewCodeSetMapping();
+
+    // After drawer closes, open edit overlay
+    setTimeout(() => {
+      this.showEditCodeSetMapping = true;
+
+      // NOW update breadcrumb
+      const breadcrumbPath = [
+        { label: 'Normalization', target: 'ROOT' },
+        { label: this.activeTabLabel, target: `TAB_${this.activeTabLabel.toUpperCase()}` },
+        { label: `Edit: ${this.selectedCodeSetMappingForEdit.mappingName}`, active: true },
+      ];
+      this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
+
+      // Publish event for edit component
+      this.eventService.publish('nf', 'open_edit_code_set_mapping', {
+        action: 'open_edit_code_set_mapping',
+        mappingData: this.selectedCodeSetMappingForEdit,
+      });
+
+      this.cdr.detectChanges();
+    }, 350); // Wait for drawer close animation
+  }
+
+  /**
+   * Edit button click inside the Mixed Mapping drawer.
+   * This CLOSES the drawer and OPENS the external edit component.
+   * Breadcrumb changes happen HERE, not on drawer open.
+   */
+  onEditMixedMappingFromView(): void {
+    console.log('[Normalization] Opening Mixed Mapping edit from drawer');
+
+    // 1. Prepare edit data using the existing class property
+    this.selectedMixedMappingForEdit = {
+      ...this.selectedMixedMappingDetail,
+      mappingId: this.selectedMixedMappingDetail.id || this.selectedMixedMappingDetail.mappingId,
+      mappingRows: this.convertPreviewToEditFormat(this.selectedMixedMappingDetail.mappings || []),
+      lastUpdated: this.selectedMixedMappingDetail.lastModified,
+      lastUpdatedBy: this.selectedMixedMappingDetail.lastModifiedBy || 'Current User',
+    };
+
+    // 2. Close the Mixed Mapping drawer first
+    this.onCloseViewMixedMapping();
+
+    // 3. After drawer closes, open the Mixed Mapping edit overlay
+    setTimeout(() => {
+      this.showEditMixedMapping = true;
+
+      // 4. Update breadcrumb for Mixed Mapping
+      const breadcrumbPath = [
+        { label: 'Normalization', target: 'ROOT' },
+        { label: this.activeTabLabel, target: `TAB_${this.activeTabLabel.toUpperCase()}` },
+        {
+          label: `Edit Mixed: ${this.selectedMixedMappingForEdit.mappingName || this.selectedMixedMappingForEdit.name}`,
+          active: true,
+        },
+      ];
+      this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
+
+      // 5. Publish event specifically for the Mixed Mapping edit component
+      this.eventService.publish('nf', 'open_edit_mixed_mapping', {
+        action: 'open_edit_mixed_mapping',
+        mappingData: this.selectedMixedMappingForEdit,
+      });
+
+      this.cdr.detectChanges();
+    }, 350); // Wait for drawer close animation
+  }
+
+  /**
+   * Menu handler that routes to the correct edit component based on mapping type
+   */
+  onEditMappingFromMenu(item: any): void {
+    const normalizedType = (item.type || '').toLowerCase().replace(/\s+/g, '');
+
+    if (normalizedType.includes('mix')) {
+      // Mixed mapping
+      this.selectedMixedMappingForEdit = { ...(this.selectedMixedMappingDetail || item) };
+      this.onEditMixedMappingFromView();
+    } else if (normalizedType.includes('code')) {
+      // Code mapping
+      this.selectedCodeSetMappingForEdit = { ...(this.selectedCodeSetMappingDetail || item) };
+      this.onEditCodeSetMappingFromView();
+    } else {
+      // Model mapping
+      this.onEditMapping(item);
+    }
+  }
+
+  /**
+   * Closes the edit code set mapping overlay.
+   * Called from edit component's @Output closeEdit event.
+   */
+  onCloseEditCodeSetMapping(): void {
+    console.log('[Normalization] Closing edit code set mapping');
+
+    this.showEditCodeSetMapping = false;
+    this.selectedCodeSetMappingForEdit = null;
+
+    // Reset breadcrumb back to tab
+    const breadcrumbPath = [
+      { label: 'Normalization', target: 'ROOT' },
+      {
+        label: this.activeTabLabel,
+        target: `TAB_${this.activeTabLabel.toUpperCase()}`,
+        active: true,
+      },
+    ];
+    this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Closes the edit code set mapping overlay.
+   * Called from edit component's @Output closeEdit event.
+   */
+  onCloseEditMixedMapping(): void {
+    console.log('[Normalization] Closing edit mixed mapping');
+
+    this.showEditMixedMapping = false;
+    this.selectedMixedMappingForEdit = null;
+
+    // Reset breadcrumb back to tab
+    const breadcrumbPath = [
+      { label: 'Normalization', target: 'ROOT' },
+      {
+        label: this.activeTabLabel,
+        target: `TAB_${this.activeTabLabel.toUpperCase()}`,
+        active: true,
+      },
+    ];
+    this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Helper: Convert preview format to editable row format
+   */
+  private convertPreviewToEditFormat(preview: any[]): any[] {
+    if (!preview) return [];
+
+    return preview.map((row: any) => ({
+      id: row.id || `row-${Math.random().toString(36).substr(2, 9)}`,
+      sourceCode: row.sourceCodeValue || row.code || '',
+      sourceLabel: row.sourceCodeLabel || row.name || '',
+      targetCode: row.targetCodeValue || row.target || '',
+      targetLabel: row.targetCodeLabel || '',
+      mappingType: row.mappingType || 'Direct',
+      notes: row.notes || '',
+      required: row.required || false,
+    }));
+  }
+
+  /**
+   * Menu item click handler for Codes tab
+   */
+  onViewCodeSetMappingFromCodes(row: any): void {
+    this.onOpenViewCodeSetMapping(row, 'codes');
+  }
+
+  /**
+   * Menu item click handler for Mappings tab
+   */
+  onViewCodeSetMappingFromMappings(row: any): void {
+    this.onMappingsTableRowClick(row); // Route through segregation method
+  }
+
+  // 3. CORRECTED: Handles BOTH Model and Code mappings with proper segregation
+  onMappingsTableRowClick(mapping: any): void {
+    this.closeAllMappingDrawers();
+
+    // 🔑 CRITICAL FIX: Handle ALL mapping type variations from your data
+    const normalizedType = (mapping.type || '').toLowerCase().replace(/\s+/g, '');
+    const isCodeMapping = normalizedType.includes('code') && !normalizedType.includes('mix');
+    const isMixedMapping = normalizedType.includes('mix');
+
+    if (isMixedMapping) {
+      // MIXED MAPPING route
+      this.showViewMixedMapping = true;
+      this.selectedMixedMappingDetail = { ...mapping };
+      this.isLoadingMappingDetail = false;
+      this.mappingDetailError = null;
+
+      // UI Triggers
+      this.showMixedDetail = true;
+      this.showCodeSetDetail = false;
+      this.showMappingDetail = false; // Prevents container slide
+    } else if (isCodeMapping) {
+      // CODE MAPPING route
+      this.showViewCodeSetMapping = true;
+      this.selectedCodeSetMappingDetail = { ...mapping };
+      this.isLoadingMappingDetail = false;
+      this.mappingDetailError = null;
+
+      // UI Triggers
+      this.showCodeSetDetail = true;
+      this.showMixedDetail = false;
+      this.showMappingDetail = false; // Prevents container slide
+    } else {
+      // MODEL MAPPING route
+      this.selectedMappingData = mapping;
+
+      // UI Triggers
+      this.showMappingDetail = true; // Triggers container slide
+      this.showCodeSetDetail = false;
+      this.showMixedDetail = false;
+    }
+  }
+
+  // 2. Helper to prevent state conflicts (Exact as requested)
+  private closeAllMappingDrawers(): void {
+    this.showMappingDetail = false;
+    this.showViewCodeSetMapping = false;
+    this.isEditingMapping = false;
+    this.selectedMappingData = null;
+    this.selectedCodeSetMappingDetail = null;
+    this.mappingDetailError = null;
+    this.isLoadingMappingDetail = false; // Critical reset
+  }
+
+  onOpenEditCodeSetMapping(data: any) {
+    this.selectedCodeSetMappingForEdit = data;
+    // Setting this to true triggers [isEditing] in the view component,
+    // which adds the .slide-out-to-left class.
+    this.showEditCodeSetMapping = true;
+  }
+
+  onOpenEditMixedMapping(data: any) {
+    this.selectedMixedMappingForEdit = data;
+    // Setting this to true triggers [isEditing] in the view component,
+    // which adds the .slide-out-to-left class.
+    this.showEditMixedMapping = true;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // VIEW CODE SET MAPPING DRAWER - Side Panel Logic
+  // ═══════════════════════════════════════════════════════════════
+
+  /**
+   * Opens the code set mapping drawer from either Codes tab or Mappings tab.
+   * This drawer slides in from the right as a side panel, NOT a full overlay.
+   *
+   * @param context - The row data (either from Codes or Mappings table)
+   * @param fromTab - 'codes' or 'mappings' to determine data enrichment
+   */
+  onOpenViewCodeSetMapping(context: any, fromTab: 'codes' | 'mappings'): void {
+    console.log('[Normalization] Opening code set mapping drawer', { context, fromTab });
+
+    this.isLoadingMappingDetail = true;
+    this.mappingDetailError = null;
+
+    // Enrich mapping data based on source
+    this.selectedCodeSetMappingDetail = {
+      ...context,
+      // Construct mapping name
+      mappingName:
+        fromTab === 'codes'
+          ? `${context.codeSetName || context.name || 'Unnamed'} → SNOMED CT`
+          : context.name,
+
+      // Source code set info
+      sourceCodeSetName: context.codeSetName || context.name,
+      sourceSystem: context.system || 'Unknown',
+
+      // Target code set info (default to SNOMED CT for codes, or use existing target)
+      targetCodeSetName: fromTab === 'codes' ? 'SNOMED CT' : context.target || 'Unknown',
+      targetSystem: fromTab === 'codes' ? 'SNOMED CT' : context.targetSystem || 'Unknown',
+
+      // Metadata
+      lastModified: context.lastModified || 'Feb 2, 2026',
+      createdBy: context.createdBy || 'System',
+      status: context.status || 'Active',
+      version: context.version || '1.0',
+      codeType: context.codeType || 'Standard',
+
+      // Relations
+      mappings: context.mappings || [
+        { name: 'Dx to Billing Map', target: 'A18.3' },
+        { name: 'Encounter Mapping', target: 'E11.65' },
+        { name: 'Lab Results Mapping', target: '250.00' },
+      ],
+      crosswalks: context.crosswalks || [
+        { from: 'ICD-9', to: 'ICD-10', code: '250.00', target: 'E11.9' },
+      ],
+
+      // Usage stats
+      referencedIn: {
+        mappings: context.mappings?.length || 3,
+        rules: 2,
+        pipelines: 1,
+      },
+      usedInPipelines: context.usedInPipelines || 6,
+      referencedByRules: context.referencedByRules || 8,
+    };
+
+    // Show drawer
+    this.showViewCodeSetMapping = true;
+    this.isLoadingMappingDetail = false;
+
+    // CRITICAL: Add .open class AFTER Angular renders the element
+    setTimeout(() => {
+      const container = document.querySelector('.normalization-main-container');
+      const drawer = document.querySelector('.code-set-mapping-detail-panel');
+
+      if (container) {
+        container.classList.add('slide-out-to-left');
+      }
+      if (drawer) {
+        drawer.classList.add('open');
+      }
+    }, 10);
+
+    this.cdr.detectChanges();
+  }
+
+  // Add this to your NormalizationComponent class
+  // 1. Resolve TS2339: Add the missing method
+  viewAuditLogs(): void {
+    console.log('Opening Mapping Audit Logs...');
+    // implementation logic here
+  }
+
+  /**
+   * Closes the code set mapping drawer.
+   * NO breadcrumb changes - this is just a drawer close.
+   */
+  onCloseViewCodeSetMapping(): void {
+    console.log('[Normalization] Closing code set mapping drawer');
+
+    const container = document.querySelector('.normalization-main-container');
+    const drawer = document.querySelector('.code-set-mapping-detail-panel');
+
+    // Remove animation classes
+    if (container) {
+      container.classList.remove('slide-out-to-left');
+    }
+    if (drawer) {
+      drawer.classList.remove('open');
+    }
+
+    // Clean up state after animation completes
+    setTimeout(() => {
+      this.showViewCodeSetMapping = false;
+      this.selectedCodeSetMappingDetail = null;
+      this.mappingDetailError = null;
+      this.cdr.detectChanges();
+    }, 350); // Match CSS transition duration
+  }
+
+  /**
+   * Closes the mixed mapping drawer.
+   * NO breadcrumb changes - this is just a drawer close.
+   */
+  onCloseViewMixedMapping(): void {
+    console.log('[Normalization] Closing code set mapping drawer');
+
+    const container = document.querySelector('.normalization-main-container');
+    const drawer = document.querySelector('.mixed-mapping-detail-panel');
+
+    // Remove animation classes
+    if (container) {
+      container.classList.remove('slide-out-to-left');
+    }
+    if (drawer) {
+      drawer.classList.remove('open');
+    }
+
+    // Clean up state after animation completes
+    setTimeout(() => {
+      this.showViewMixedMapping = false;
+      this.selectedMixedMappingDetail = null;
+      this.mappingDetailError = null;
+      this.cdr.detectChanges();
+    }, 350); // Match CSS transition duration
   }
 
   ngOnDestroy(): void {

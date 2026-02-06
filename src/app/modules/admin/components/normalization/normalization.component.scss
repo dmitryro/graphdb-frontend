@@ -3356,3 +3356,890 @@ $z-overlay: 2000;
   height: 100%;
   min-height: 100%;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   CODE SET MAPPING DRAWER - CORRECT APPROACH
+   
+   This should work like code-detail-panel in Codes tab:
+   - NOT position: fixed
+   - Part of a split-view within the Mappings tab
+   - Slides in from right within the tab container
+   - Does NOT overlay the entire viewport
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Wrapper for the Mappings tab to enable split view */
+.mappings-split-view {
+  display: flex;
+  width: 100%;
+  min-height: 600px;
+  background: var(--surface-color);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Table section - shrinks when detail is open */
+  .mappings-table-section {
+    flex: 1 1 100%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .table-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+    }
+  }
+
+  /* When detail panel is open, shrink table */
+  &.detail-open {
+    .mappings-table-section {
+      flex: 0 0 60%;
+      max-width: 60%;
+    }
+  }
+
+  /* Code set mapping detail panel - slides in from right WITHIN the tab */
+  .code-set-mapping-detail-panel {
+    /* RELATIVE positioning - stays within parent container */
+    position: relative;
+    flex: 0 0 40%;
+    max-width: 40%;
+    min-width: 450px;
+    border-left: 1px solid var(--border-color);
+    background: var(--surface-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    /* Animation - slides in from right */
+    animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Header - exact match to code-detail-panel */
+    .detail-panel-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-color);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+
+        h3 {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--text-main);
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          /* Edit button - primary blue like code-detail-panel */
+          .edit-btn {
+            height: 38px !important;
+            background-color: #436d9d !important;
+            color: white !important;
+            border-radius: 6px;
+            font-weight: 500;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+
+            mat-icon {
+              font-size: 18px;
+              width: 18px;
+              height: 18px;
+              margin: 0;
+              color: inherit !important;
+            }
+
+            span {
+              font-size: 13px;
+              line-height: 1;
+              color: inherit;
+            }
+
+            &:hover {
+              filter: brightness(1.1);
+            }
+          }
+
+          .close-btn {
+            flex-shrink: 0;
+          }
+        }
+      }
+    }
+
+    .detail-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* All detail sections - exact match to code-detail-panel */
+    .code-title-section {
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 24px;
+
+      h2 {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-main);
+        line-height: 1.4;
+      }
+
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        .info-badge {
+          padding: 4px 10px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-weight: 600;
+          background: var(--bg-color);
+          border: 1px solid var(--border-color);
+          color: var(--text-main);
+          opacity: 0.8;
+        }
+      }
+    }
+
+    .detail-section {
+      margin-bottom: 28px;
+
+      .section-title {
+        margin: 0 0 16px 0;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-main);
+        opacity: 0.5;
+      }
+
+      &.half-width {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+
+    .two-column-section {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 28px;
+
+      @media (max-width: 1200px) {
+        flex-direction: column;
+      }
+    }
+
+    .detail-row-layout {
+      display: flex;
+      gap: 32px;
+
+      .detail-column {
+        flex: 1;
+
+        &:first-child {
+          flex: 1.5;
+        }
+      }
+
+      .subsection-title {
+        margin: 0 0 12px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-main);
+        opacity: 0.7;
+      }
+    }
+
+    .detail-item {
+      margin-bottom: 16px;
+
+      label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-main);
+        opacity: 0.6;
+        margin-bottom: 6px;
+      }
+
+      .detail-value {
+        font-size: 14px;
+        color: var(--text-main);
+        font-weight: 500;
+      }
+    }
+
+    .reference-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .reference-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-main);
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          opacity: 0.5;
+        }
+
+        span {
+          flex: 1;
+        }
+
+        strong {
+          color: #5469d4;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .mapping-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+
+      .mapping-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 12px;
+        color: var(--text-main);
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(84, 105, 212, 0.05);
+          border-color: #5469d4;
+          cursor: pointer;
+        }
+
+        .mapping-name {
+          font-weight: 600;
+          flex: 1;
+        }
+
+        .arrow-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          opacity: 0.4;
+        }
+
+        .mapping-target {
+          font-family: 'Roboto Mono', monospace;
+          color: #5469d4;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .crosswalk-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .crosswalk-item {
+        padding: 10px 12px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 12px;
+
+        .crosswalk-header {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-weight: 600;
+          color: var(--text-main);
+          margin-bottom: 4px;
+
+          mat-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+            opacity: 0.5;
+          }
+        }
+
+        .crosswalk-codes {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-family: 'Roboto Mono', monospace;
+          color: var(--text-main);
+          opacity: 0.7;
+          font-size: 11px;
+          padding-left: 20px;
+
+          mat-icon {
+            font-size: 12px;
+            width: 12px;
+            height: 12px;
+            opacity: 0.4;
+          }
+        }
+      }
+    }
+
+    .attribution-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+
+      .attribution-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        label {
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: var(--text-main);
+          opacity: 0.6;
+        }
+
+        span {
+          font-size: 13px;
+          color: var(--text-main);
+        }
+      }
+    }
+
+    .view-all-link {
+      width: 100%;
+      justify-content: flex-start;
+      color: #5469d4 !important;
+      font-weight: 500;
+      font-size: 13px;
+      height: 36px;
+      margin-top: 4px;
+
+      mat-icon {
+        margin-left: auto;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      &:hover {
+        background: rgba(84, 105, 212, 0.05) !important;
+      }
+    }
+
+    .error-message {
+      color: #d32f2f;
+      padding: 16px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .loading-message {
+      padding: 16px;
+      text-align: center;
+      color: var(--text-main);
+      opacity: 0.6;
+    }
+  }
+}
+
+/* Slide-in animation */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1600px) {
+  .mappings-split-view.detail-open {
+    .mappings-table-section {
+      flex: 0 0 55%;
+      max-width: 55%;
+    }
+
+    .code-set-mapping-detail-panel {
+      flex: 0 0 45%;
+      max-width: 45%;
+    }
+  }
+}
+
+@media (max-width: 1400px) {
+  .mappings-split-view.detail-open {
+    .mappings-table-section {
+      flex: 0 0 50%;
+      max-width: 50%;
+    }
+
+    .code-set-mapping-detail-panel {
+      flex: 0 0 50%;
+      max-width: 50%;
+      min-width: 400px;
+    }
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .code-set-mapping-detail-panel {
+    .detail-panel-header {
+      h3 {
+        color: #e8eaed;
+      }
+    }
+
+    .code-title-section {
+      h2 {
+        color: #e8eaed;
+      }
+      .info-badge {
+        background: #2e2e2e;
+        border-color: rgba(255, 255, 255, 0.12);
+        color: #e8eaed;
+      }
+    }
+
+    .mapping-item,
+    .crosswalk-item {
+      background: #2e2e2e;
+      border-color: rgba(255, 255, 255, 0.12);
+
+      &:hover {
+        background: rgba(84, 105, 212, 0.1);
+      }
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   MAPPINGS SPLIT-VIEW & DETAIL DRAWER
+   ════════════════════════════════════════════════════════════════════════ */
+
+.mappings-split-view {
+  display: flex;
+  width: 100%;
+  min-height: 600px;
+  background: var(--surface-color);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .mappings-table-section {
+    flex: 1 1 100%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .table-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+    }
+  }
+
+  /* Shrink table when detail panel is open */
+  &.detail-open {
+    .mappings-table-section {
+      flex: 0 0 55%;
+      max-width: 55%;
+    }
+  }
+
+  .code-detail-panel {
+    position: relative;
+    flex: 0 0 45%;
+    max-width: 45%;
+    min-width: 450px;
+    border-left: 1px solid var(--border-color);
+    background: var(--surface-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.05);
+    animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .detail-panel-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-color);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h3 {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--text-main);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .edit-btn {
+            height: 36px !important;
+            background-color: #436d9d !important; // Correct blue
+            color: white !important;
+            border-radius: 6px;
+            padding: 0 16px;
+            font-size: 13px;
+
+            mat-icon {
+              font-size: 18px;
+              width: 18px;
+              height: 18px;
+              margin-right: 4px;
+            }
+          }
+        }
+      }
+    }
+
+    .detail-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .detail-section {
+      margin-bottom: 32px;
+      .section-title {
+        margin: 0 0 16px 0;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-main);
+        opacity: 0.5;
+        letter-spacing: 1px;
+      }
+    }
+
+    .detail-row-layout {
+      display: flex;
+      gap: 32px;
+      .detail-column {
+        flex: 1;
+      }
+    }
+
+    .detail-item {
+      margin-bottom: 16px;
+      label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-main);
+        opacity: 0.5;
+        margin-bottom: 4px;
+      }
+      .detail-value {
+        font-size: 14px;
+        font-weight: 500;
+      }
+    }
+
+    .mapping-item,
+    .crosswalk-item {
+      padding: 12px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+
+      .mapping-name {
+        font-weight: 600;
+        flex: 1;
+      }
+      .mapping-target {
+        color: #436d9d;
+        font-family: monospace;
+      }
+      .arrow-icon {
+        opacity: 0.3;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    .attribution-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      .attribution-item {
+        display: flex;
+        gap: 8px;
+        font-size: 13px;
+        label {
+          font-weight: 600;
+          opacity: 0.6;
+        }
+      }
+    }
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ────────────────────────────────────────────────
+   VIEW CODE SET & MIXED MAPPING – EXACT PATTERN
+   Parent slides left, view appears full-screen contained
+   ──────────────────────────────────────────────── */
+
+.normalization-wrapper {
+  position: relative;
+  overflow: hidden; // critical: contains fixed children + prevents scrollbar leaks
+  width: 100%;
+  min-height: 100vh;
+  background: var(--detail-bg);
+}
+
+.normalization-main-container {
+  transition:
+    transform 0.5s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.5s ease;
+  will-change: transform, opacity;
+
+  /* When ANY detail view opens (CodeSet, Mixed, or others) */
+  &.detail-open {
+    transform: translateX(-100%);
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  /* When returning from detail/edit */
+  &.detail-return {
+    animation: slideBackIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  }
+}
+
+/* Fixed views contained by wrapper */
+.view-code-set-mapping-view,
+.view-mixed-mapping-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000; // same level as model-detail-view
+  background: var(--detail-bg);
+  overflow: hidden; // host overflow hidden, scroll inside child
+}
+
+/* Scroll container inside mapping views */
+.mapping-detail-scroll-container {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+}
+
+/* Reinforce shared keyframes */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideBackIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Edit views opening from detail views */
+.edit-code-set-mapping-view,
+.edit-mixed-mapping-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000; // above view
+  background: var(--detail-bg);
+  overflow: hidden;
+  animation: slideInRight 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* ────────────────────────────────────────────────
+   SLIDE BEHAVIOR FOR ALL DETAIL / EDIT VIEWS
+   ──────────────────────────────────────────────── */
+
+.normalization-main-container {
+  /* Base transition – must be smooth for slide */
+  transition:
+    transform 0.55s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.55s ease;
+  will-change: transform, opacity;
+
+  /* When ANY detail or edit view is shown → slide FULLY left */
+  &.slide-out-to-left {
+    transform: translateX(-100%) !important;
+    opacity: 1;
+    pointer-events: none !important;
+  }
+}
+
+/* View containers – slides in from right when shown */
+.view-code-set-mapping-view,
+.view-mixed-mapping-view,
+.model-detail-view,
+.rule-detail-view,
+.mapping-detail-view,
+.code-set-detail-view,
+.mixed-detail-view,
+.map-code-set-view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1100;
+  background: var(--bg-color);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Entrance animation */
+  animation: slideInFromRight 0.55s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Edit views – higher z-index, same slide-in */
+.edit-code-set-mapping-view,
+.edit-mixed-mapping-view,
+.model-edit-view,
+.rule-edit-view,
+.mapping-edit-view,
+.code-edit-view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  background: var(--bg-color);
+  overflow-y: auto;
+  animation: slideInFromRight 0.55s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* Closing animation – slide out to right */
+.slide-out-to-right {
+  animation: slideOutToRight 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}

@@ -140,19 +140,20 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private eventStore: Store<{ nf: EventState }>,
     private eventService: EventService,
-  ) {}
+  ) {
+    console.log('Constructing...');
+  }
 
   ngOnInit(): void {
     this.setupFilterLogic();
-
-    // Check if we already have mapping data from @Input
     if (this.mappingData) {
       this.loadMappingData(this.mappingData);
       this.initializeAvailableFields();
     }
-
-    // Subscribe to events for dynamic updates
     this.subscribeToEditEvents();
+
+    // FIX: Ensure breadcrumb is correct on init if opened directly
+    this.updateBreadcrumb();
   }
 
   ngAfterViewInit() {
@@ -200,8 +201,8 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
         this.executeActualReset();
       }
 
-      // Navigation & Loading
-      if (eventName === 'breadcrumb_navigate' && payload?.target === 'VIEW_MAPPING') {
+      // IMPORTANT: Handle breadcrumb click on "View Model Mapping"
+      if (eventName === 'breadcrumb_navigate' && payload?.target === 'VIEW_MODEL_MAPPING') {
         this.onCancel();
       }
 
@@ -221,15 +222,18 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Updates the breadcrumb to show the Edit Mapping path
+   * Updates the breadcrumb to show the full 4-level path:
+   * Normalization > Mappings > View Model Mapping > Edit Model Mapping
+   * "View Model Mapping" is clickable (has target), "Edit Model Mapping" is active tail (no target)
    */
   private updateBreadcrumb(): void {
     const breadcrumbPath = [
       { label: 'Normalization', target: 'ROOT' },
       { label: 'Mappings', target: 'TAB_MAPPINGS' },
-      { label: 'View Mapping', target: 'VIEW_MAPPING' }, // Added target here
-      { label: 'Edit Mapping', active: true },
+      { label: 'View Model Mapping', target: 'VIEW_MODEL_MAPPING' },
+      { label: 'Edit Model Mapping', active: true },
     ];
+
     this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
   }
 
@@ -539,7 +543,7 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
       row.status = original.status;
 
       // Remove all pending changes for this row
-      this.pendingChanges = this.pendingChanges.filter(c => !c.id.startsWith(row.id));
+      this.pendingChanges = this.pendingChanges.filter(c => c.rowId !== row.id);
       this.pendingCount = this.pendingChanges.length;
     }
   }
@@ -613,50 +617,69 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * UPDATED: Cancel method - triggers reverse animation back to View
-   * Edit slides out RIGHT, View slides in FROM LEFT
+   * Cancel method - checks for unsaved changes, shows confirmation if needed,
+   * then triggers exit animation and breadcrumb reset to View Model Mapping
    */
   onCancel(): void {
-    // 1. Trigger the slide-out animation for Edit component (to the right)
+    if (this.pendingChanges.length > 0) {
+      this.eventService.publish('nf', 'open_confirmation_modal', {
+        title: 'Discard Changes?',
+        message: `You have ${this.pendingChanges.length} unsaved change(s). Discard them?`,
+        command: 'reset',
+        itemName: this.mappingData?.source || 'Mapping',
+        theme: this.getActiveTheme(),
+        action: 'open_confirmation_modal',
+      });
+    } else {
+      this.exitAndReturnToView();
+    }
+  }
+
+  private exitAndReturnToView(): void {
     this.isExiting = true;
 
-    // 2. Ensure separate drawer is also closed
+    // Close any side panels immediately
     this.eventService.publish('nf', 'close_usage_impact_drawer', {
       action: 'close_usage_impact_drawer',
     });
 
-    // 3. Update breadcrumb back to View Mapping
-    const breadcrumbPath = [
+    /**
+     * Silent update of breadcrumb to return to View Model Mapping (clickable active)
+     */
+    const backToViewPath = [
       { label: 'Normalization', target: 'ROOT' },
       { label: 'Mappings', target: 'TAB_MAPPINGS' },
-      { label: 'View Mapping', active: true },
+      { label: 'View Model Mapping', target: 'VIEW_MODEL_MAPPING', active: true },
     ];
-    this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
 
-    // 4. Notify parent (ViewMappingComponent) to trigger its slide-in animation
+    this.eventService.publish('nf', 'update_breadcrumb', { path: backToViewPath });
+
+    // Notify the View component to slide back in
     this.eventService.publish('nf', 'close_edit_mapping', {
       action: 'close_edit_mapping',
     });
 
-    // 5. Wait for animation to complete before destroying component
     setTimeout(() => {
       this.closeEdit.emit();
-    }, 500); // Match animation duration
+    }, 500);
   }
 
-  // 1. Trigger the Modal (WITHOUT calling onCancel)
+  // Trigger confirmation modal for save (does NOT call onCancel directly)
   onSave(): void {
-    // 1. Close auxiliary drawers
+    // Close auxiliary drawers
     this.eventService.publish('nf', 'close_usage_impact_drawer', {
       action: 'close_usage_impact_drawer',
     });
 
-    // 2. Open confirmation modal
-    // DO NOT call this.onCancel() here, or the screen will slide away!
+    if (this.pendingChanges.length === 0) {
+      this.exitAndReturnToView();
+      return;
+    }
+
     this.eventService.publish('nf', 'open_confirmation_modal', {
-      title: 'Confirm Mapping Changes',
+      title: 'Save Changes',
       theme: this.getActiveTheme(),
-      message: `You have ${this.pendingChanges.length} pending changes. Are you sure you want to save these updates?`,
+      message: `You have ${this.pendingChanges.length} pending change(s). Would you like to apply these updates?`,
       command: 'save',
       action: 'open_confirmation_modal',
       itemName: `${this.mappingData?.source || 'Source'} → ${this.mappingData?.target || 'Target'}`,
@@ -677,7 +700,7 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private executeActualDelete(): void {
     console.log('Mapping deleted successfully');
-    this.onCancel();
+    this.exitAndReturnToView();
   }
 
   private executeActualSave(): void {
@@ -698,8 +721,12 @@ export class EditMappingComponent implements OnInit, AfterViewInit, OnDestroy {
       action: 'close_usage_impact_drawer',
     });
 
+    // Clear pending state
+    this.pendingChanges = [];
+    this.pendingCount = 0;
+
     // Proceed with exit animation and cleanup
-    this.onCancel();
+    this.exitAndReturnToView();
   }
 
   /**

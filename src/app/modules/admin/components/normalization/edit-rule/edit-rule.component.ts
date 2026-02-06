@@ -193,10 +193,13 @@ export class EditRuleComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.showUsagePanel) {
       this.eventService.publish('nf', 'open_usage_impact_drawer', {
+        action: 'open_usage_impact_drawer',
         fullData: this.ruleData,
       });
     } else {
-      this.eventService.publish('nf', 'close_usage_impact_drawer', {});
+      this.eventService.publish('nf', 'close_usage_impact_drawer', {
+        action: 'close_usage_impact_drawer',
+      });
     }
   }
 
