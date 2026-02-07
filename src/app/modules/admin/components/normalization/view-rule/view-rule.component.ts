@@ -143,13 +143,13 @@ export class ViewRuleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Updates the breadcrumb to show the View Rule path
+   * Updates the breadcrumb to show the View Model Rule path
    */
   private updateBreadcrumb(): void {
     const breadcrumbPath = [
       { label: 'Normalization', target: 'ROOT' },
       { label: 'Rules', target: 'TAB_RULES' },
-      { label: 'View Rule', active: true },
+      { label: 'View Model Rule', active: true },
     ];
     this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
   }
@@ -275,7 +275,7 @@ export class ViewRuleComponent implements OnInit, AfterViewInit, OnDestroy {
     this.versions = [
       {
         version: 'v2',
-        editor: 'Dmitry Roitman',
+        editor: 'Dmitry',
         timestamp: '3 days ago',
         action: 'Edited',
       },
@@ -379,7 +379,7 @@ export class ViewRuleComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isExitedToLeft = false;
     // 2. Trigger slide-in animation from left
     this.isReturningFromLeft = true;
-    // 3. Restore breadcrumb to "View Rule" state
+    // 3. Restore breadcrumb to "View Model Rule" state
     this.updateBreadcrumb();
     // 4. Clean up the Edit component AFTER its slide-out animation finishes
     setTimeout(() => {

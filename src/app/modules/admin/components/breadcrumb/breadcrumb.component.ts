@@ -82,8 +82,8 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     }
 
     // 6. Handle navigation back to View Rule
-    if (item.target === 'VIEW_MIXED_RULE') {
-      this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'VIEW_MIXED_RULE' });
+    if (item.target === 'VIEW_MAPPING_RULE') {
+      this.eventService.publish('nf', 'breadcrumb_navigate', { target: 'VIEW_MAPPING_RULE' });
       return;
     }
 

@@ -257,6 +257,30 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.OpenEditCodeSetRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseEditCodeSetRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.OpenEditMappingRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.CloseEditMappingRule: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     case EventActionTypes.AddNormalizationMapping: {
       return {
         ...state,

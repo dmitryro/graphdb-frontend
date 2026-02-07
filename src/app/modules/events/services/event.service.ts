@@ -59,6 +59,10 @@ export class EventService {
     m.set('open_edit_mixed_mapping', EventActionTypes.OpenEditMixedMapping);
     m.set('close_edit_rule', EventActionTypes.CloseEditRule);
     m.set('open_edit_rule', EventActionTypes.OpenEditRule);
+    m.set('close_edit_code_set_rule', EventActionTypes.CloseEditCodeSetRule);
+    m.set('open_edit_code_set_rule', EventActionTypes.OpenEditCodeSetRule);
+    m.set('close_edit_mapping_rule', EventActionTypes.CloseEditMappingRule);
+    m.set('open_edit_mapping_rule', EventActionTypes.OpenEditMappingRule);
     m.set('close_edit_model', EventActionTypes.CloseEditModel);
     m.set('open_edit_model', EventActionTypes.OpenEditModel);
     m.set('view_related_model', EventActionTypes.ViewRelatedModel);

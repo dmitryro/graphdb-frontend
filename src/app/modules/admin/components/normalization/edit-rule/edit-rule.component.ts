@@ -227,8 +227,8 @@ export class EditRuleComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       // Navigation & Loading
-      // Fix: Specifically listen for navigation targeting the previous VIEW_RULE step
-      if (eventName === 'breadcrumb_navigate' && payload?.target === 'VIEW_RULE') {
+      // Fix: Specifically listen for navigation targeting the previous VIEW_MODEL_RULE step
+      if (eventName === 'breadcrumb_navigate' && payload?.target === 'VIEW_MODEL_RULE') {
         this.onCancel();
       }
 
@@ -254,8 +254,8 @@ export class EditRuleComponent implements OnInit, AfterViewInit, OnDestroy {
     const breadcrumbPath = [
       { label: 'Normalization', target: 'ROOT' },
       { label: 'Rules', target: 'TAB_RULES' },
-      { label: 'View Rule', target: 'VIEW_RULE' },
-      { label: 'Edit Rule', active: true },
+      { label: 'View Model Rule', target: 'VIEW_MODEL_RULE' },
+      { label: 'Edit Model Rule', active: true },
     ];
     this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
   }
@@ -631,11 +631,11 @@ export class EditRuleComponent implements OnInit, AfterViewInit, OnDestroy {
       action: 'close_usage_impact_drawer',
     });
 
-    // 3. Update breadcrumb back to View Rule (Fixed logic)
+    // 3. Update breadcrumb back to View Model Rule (Fixed logic)
     const breadcrumbPath = [
       { label: 'Normalization', target: 'ROOT' },
       { label: 'Rules', target: 'TAB_RULES' },
-      { label: 'View Rule', active: true },
+      { label: 'View Model Rule', active: true },
     ];
     this.eventService.publish('nf', 'update_breadcrumb', { path: breadcrumbPath });
 

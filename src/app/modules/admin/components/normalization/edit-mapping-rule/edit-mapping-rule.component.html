@@ -1,1 +1,294 @@
-<p>edit-mapping-rule.component works!</p>
+<div class="edit-rule-wrapper">
+  <header class="main-header">
+    <h1 class="edit-title">Editing Rule: {{ ruleData?.name || 'Height Unit Normalization' }}</h1>
+
+    <div class="header-actions">
+      <button mat-stroked-button class="btn-cancel" (click)="onCancel()">Cancel</button>
+      <button
+        mat-flat-button
+        color="primary"
+        [disabled]="pendingChanges.length === 0"
+        (click)="onSave()">
+        Save Changes
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="moreMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #moreMenu="matMenu">
+        <button mat-menu-item>
+          <mat-icon>published_with_changes</mat-icon>
+          <span>Change Status</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item class="danger-action" (click)="onDelete()">
+          <mat-icon>delete</mat-icon>
+          <span>Delete Rule</span>
+        </button>
+      </mat-menu>
+    </div>
+  </header>
+
+  <section class="context-info header-spacer">
+    <div class="source-target-line">
+      <span
+        >Target Model: <strong>{{ ruleData?.model || 'Patient' }}</strong></span
+      >
+      <span
+        >Scope: <strong>{{ ruleData?.scope || 'Field-level' }}</strong></span
+      >
+      <span
+        >Trigger: <strong>{{ ruleData?.trigger || 'Pre-Write' }}</strong></span
+      >
+      <span class="version-info">
+        Based on version {{ ruleData?.version || 'v2' }} · Last saved
+        {{ ruleData?.lastSavedRelative || '3 days ago' }}
+        by {{ ruleData?.lastSavedBy || 'Dmitry Roitman' }}
+      </span>
+    </div>
+
+    <div class="usage-banner">
+      <mat-icon>info_outline</mat-icon>
+      <span>
+        Used in {{ ruleData?.usageData?.pipelineCount || 3 }} pipelines · Affects
+        {{ ruleData?.usageData?.modelCount || 2 }} models ·
+        <button mat-button class="link-like" (click)="toggleUsageAndImpact()">
+          View usage & impact
+        </button>
+      </span>
+    </div>
+  </section>
+
+  <div class="edit-content-grid">
+    <section class="transformations-section">
+      <h2 class="section-title">Edit Transformation Logic</h2>
+
+      <div class="table-controls">
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            placeholder="Search transformations..."
+            [(ngModel)]="searchTerm"
+            (input)="applySearch()" />
+        </mat-form-field>
+
+        <button
+          mat-stroked-button
+          [matMenuTriggerFor]="filterMenu"
+          class="filter-btn"
+          [class.active-filter]="getActiveFilterLabel() !== 'All'">
+          <span
+            >Filter: {{ getActiveFilterLabel() }} ·
+            {{ dataSource.filteredData.length }} transformations</span
+          >
+          <mat-icon>arrow_drop_down</mat-icon>
+        </button>
+      </div>
+
+      <mat-menu #filterMenu="matMenu" class="custom-filter-menu">
+        <div class="filter-menu-container" (click)="$event.stopPropagation()">
+          <div class="filter-group">
+            <label>Logic Type</label>
+            <mat-radio-group [(ngModel)]="filters.logicType" (change)="applySearch()">
+              <mat-radio-button value="All">All</mat-radio-button>
+              <mat-radio-button value="Value Mapping">Value Mapping</mat-radio-button>
+              <mat-radio-button value="Unit Conversion">Unit Conversion</mat-radio-button>
+              <mat-radio-button value="Rename / Alias">Rename / Alias</mat-radio-button>
+              <mat-radio-button value="Derived Value">Derived Value</mat-radio-button>
+              <mat-radio-button value="Default Value">Default Value</mat-radio-button>
+              <mat-radio-button value="Null / Ignore">Null / Ignore</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <div class="filter-divider"></div>
+
+          <div class="filter-group">
+            <label>Status</label>
+            <mat-radio-group [(ngModel)]="filters.action" (change)="applySearch()">
+              <mat-radio-button value="All">All</mat-radio-button>
+              <mat-radio-button value="Active">Active</mat-radio-button>
+              <mat-radio-button value="Inactive">Inactive</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <button mat-button class="clear-btn" (click)="clearFilters()">Clear Filters</button>
+        </div>
+      </mat-menu>
+
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="dataSource" matSort class="transformation-table">
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Type</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="isFieldModified(row, 'type')">
+                <mat-select
+                  [(ngModel)]="row.type"
+                  (selectionChange)="onLogicTypeChange(row, $event.value)">
+                  <mat-option *ngFor="let type of logicTypeOptions" [value]="type">
+                    {{ type }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="sourceField">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Source Field</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="isFieldModified(row, 'sourceField')">
+                <mat-select
+                  [(ngModel)]="row.sourceField"
+                  (selectionChange)="onSourceFieldChange(row, $event.value)">
+                  <mat-option *ngFor="let field of availableFields" [value]="field">
+                    {{ field }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="targetField">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Target Field</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-form-field
+                appearance="outline"
+                class="compact-select"
+                [class.modified-field]="isFieldModified(row, 'targetField')">
+                <mat-select
+                  [(ngModel)]="row.targetField"
+                  (selectionChange)="onTargetFieldChange(row, $event.value)">
+                  <mat-option *ngFor="let field of availableFields" [value]="field">
+                    {{ field }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="details">
+            <th mat-header-cell *matHeaderCellDef>Transformation Details</th>
+            <td mat-cell *matCellDef="let row" class="details-cell">
+              {{ getTransformationDetails(row) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="status-badge" [ngClass]="row.action?.toLowerCase()">
+                {{ row.action }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-header"></th>
+            <td mat-cell *matCellDef="let row" class="actions-cell">
+              @if (row.action === 'Modified') {
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="resetRow(row)"
+                  matTooltip="Reset transformation">
+                  <mat-icon>settings_backup_restore</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <button mat-stroked-button class="add-transformation-btn" (click)="addNewTransformation()">
+        <mat-icon>add</mat-icon>
+        <span>Add Transformation</span>
+      </button>
+
+      <div class="table-footer">
+        <mat-paginator
+          [pageSizeOptions]="[5, 10, 20]"
+          showFirstLastButtons
+          aria-label="Select page">
+        </mat-paginator>
+      </div>
+    </section>
+
+    <aside class="pending-changes-sidebar">
+      <div class="sidebar-header">
+        <h3>Pending Changes ({{ pendingChanges.length }})</h3>
+        <button
+          mat-button
+          color="warn"
+          [disabled]="pendingChanges.length === 0"
+          (click)="resetAllChanges()">
+          Reset All
+        </button>
+      </div>
+
+      @if (pendingChanges.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon-container">
+            <mat-icon>edit_note</mat-icon>
+          </div>
+          <p><strong>No changes yet</strong></p>
+          <p>Modifications will appear here before saving</p>
+        </div>
+      } @else {
+        <div class="changes-list">
+          @for (change of pendingChanges; track change.id) {
+            <div class="change-item" [ngClass]="change.type.toLowerCase().split(' ').join('-')">
+              <div class="change-title">
+                <span class="field">{{ change.field }}</span>
+
+                <mat-form-field subscriptSizing="dynamic" class="sidebar-compact-select">
+                  <mat-select
+                    [(ngModel)]="change.newValue"
+                    (selectionChange)="onSidebarUpdate(change)">
+                    @if (change.type === 'Logic Type') {
+                      @for (opt of logicTypeOptions; track opt) {
+                        <mat-option [value]="opt">{{ opt }}</mat-option>
+                      }
+                    } @else if (change.type === 'Source Field') {
+                      @for (opt of availableFields; track opt) {
+                        <mat-option [value]="opt">{{ opt }}</mat-option>
+                      }
+                    } @else if (change.type === 'Target Field') {
+                      @for (opt of availableFields; track opt) {
+                        <mat-option [value]="opt">{{ opt }}</mat-option>
+                      }
+                    } @else if (change.type === 'From Unit' || change.type === 'To Unit') {
+                      @for (opt of unitOptions; track opt) {
+                        <mat-option [value]="opt">{{ opt }}</mat-option>
+                      }
+                    } @else if (change.type === 'Status') {
+                      <mat-option value="Active">Active</mat-option>
+                      <mat-option value="Inactive">Inactive</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <p class="change-desc">{{ change.description }}</p>
+
+              @if (change.originalValue !== undefined) {
+                <div class="diff">
+                  <span class="old">{{ change.originalValue }}</span>
+                  <span class="arrow">→</span>
+                  <span class="new">{{ change.newValue }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </aside>
+  </div>
+</div>

@@ -44,6 +44,10 @@ export enum EventActionTypes {
   CloseEditModel = '[Event] Close Edit Model',
   OpenEditRule = '[Event] Oppen Edit Rule',
   CloseEditRule = '[Event] Close Edit Rule',
+  OpenEditCodeSetRule = '[Event] Open Edit Code Set Rule',
+  CloseEditCodeSetRule = '[Event] Close Edit Code Set Rule',
+  OpenEditMappingRule = '[Event] Open Edit Mapping Rule',
+  CloseEditMappingRule = '[Event] Close Edit Mapping Rule',
   OpenNewModelModal = '[Event] Open New Model Modal',
   CloseNewModelModal = '[Event] Close New Model Modal',
   OpenNewMappingModal = '[Event] Open New Mapping Modal',
@@ -318,6 +322,26 @@ export class OpenEditRule implements Action {
 
 export class CloseEditRule implements Action {
   readonly type = EventActionTypes.CloseEditRule;
+  constructor(public payload: any) {}
+}
+
+export class OpenEditCodeSetRule implements Action {
+  readonly type = EventActionTypes.OpenEditCodeSetRule;
+  constructor(public payload: any) {}
+}
+
+export class CloseEditCodeSetRule implements Action {
+  readonly type = EventActionTypes.CloseEditCodeSetRule;
+  constructor(public payload: any) {}
+}
+
+export class OpenEditMappingRule implements Action {
+  readonly type = EventActionTypes.OpenEditMappingRule;
+  constructor(public payload: any) {}
+}
+
+export class CloseEditMappingRule implements Action {
+  readonly type = EventActionTypes.CloseEditMappingRule;
   constructor(public payload: any) {}
 }
 
@@ -698,6 +722,10 @@ export type EventActions =
   | OpenEditMixedMapping
   | CloseEditMixedMapping
   | OpenEditRule
+  | OpenEditCodeSetRule
+  | CloseEditCodeSetRule
+  | OpenEditMappingRule
+  | CloseEditMappingRule
   | CloseEditCode
   | OpenEditCode
   | CloseSearch

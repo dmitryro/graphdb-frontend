@@ -6,14 +6,18 @@
     [class.slide-out-to-left]="
       showMappingDetail ||
       showModelDetail ||
-      showRuleDetail ||
+      showModelRuleDetail ||
+      showCodeSetRuleDetail ||
+      showMappingRuleDetail ||
       showViewCodeSetMapping ||
       showViewMixedMapping ||
       showEditCode ||
       showMapCodeSet ||
       isEditingMapping ||
       isEditingModel ||
-      isEditingRule ||
+      isEditingModelRule ||
+      isEditingMappingRule ||
+      isEditingCodeSetRule ||
       showEditCodeSetMapping ||
       showEditMixedMapping
     ">
@@ -450,7 +454,22 @@
               </button>
             </div>
           </div>
+
           <div class="filter-actions">
+            <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleCategoryMenu">
+              <mat-icon>category</mat-icon>
+              Category: <strong>{{ selectedRuleCategory || 'All' }}</strong>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </button>
+            <mat-menu #ruleCategoryMenu="matMenu" class="governance-menu">
+              <button mat-menu-item (click)="setRuleCategoryFilter('All Categories')">
+                All Categories
+              </button>
+              <button mat-menu-item (click)="setRuleCategoryFilter('Model')">Model</button>
+              <button mat-menu-item (click)="setRuleCategoryFilter('Code Set')">Code Set</button>
+              <button mat-menu-item (click)="setRuleCategoryFilter('Mapping')">Mapping</button>
+            </mat-menu>
+
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleStatusMenu">
               <mat-icon>list</mat-icon>
               Status: <strong>{{ selectedRuleStatus }}</strong>
@@ -464,6 +483,7 @@
               <button mat-menu-item (click)="setRuleStatusFilter('Draft')">Draft</button>
               <button mat-menu-item (click)="setRuleStatusFilter('Archived')">Archived</button>
             </mat-menu>
+
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleSeverityMenu">
               <mat-icon>priority_high</mat-icon>
               Severity: <strong>{{ selectedRuleSeverity }}</strong>
@@ -478,6 +498,7 @@
               <button mat-menu-item (click)="setRuleSeverityFilter('Medium')">Medium</button>
               <button mat-menu-item (click)="setRuleSeverityFilter('Source')">Source</button>
             </mat-menu>
+
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleScopeMenu">
               <mat-icon>adjust</mat-icon>
               Scope: <strong>{{ selectedRuleScope }}</strong>
@@ -489,6 +510,7 @@
               <button mat-menu-item (click)="setRuleScopeFilter('System')">System</button>
               <button mat-menu-item (click)="setRuleScopeFilter('Source')">Source</button>
             </mat-menu>
+
             <button mat-button class="filter-dropdown" [matMenuTriggerFor]="ruleTriggerMenu">
               <mat-icon>bolt</mat-icon>
               Trigger: <strong>{{ selectedRuleTrigger }}</strong>
@@ -502,6 +524,7 @@
               <button mat-menu-item (click)="setRuleTriggerFilter('Aggregate')">Aggregate</button>
               <button mat-menu-item (click)="setRuleTriggerFilter('Scheduled')">Scheduled</button>
             </mat-menu>
+
             <div class="filter-date-range">
               <mat-form-field appearance="outline" class="custom-pill-date">
                 <mat-date-range-input [formGroup]="ruleDateRange" [rangePicker]="rulePicker">
@@ -518,6 +541,7 @@
               }
             </div>
           </div>
+
           <table
             mat-table
             [dataSource]="ruleDataSource"
@@ -533,6 +557,12 @@
                 </span>
               </td>
             </ng-container>
+
+            <ng-container matColumnDef="category">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+              <td mat-cell *matCellDef="let element">{{ element.category }}</td>
+            </ng-container>
+
             <ng-container matColumnDef="severity">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Severity</th>
               <td mat-cell *matCellDef="let element">
@@ -541,20 +571,24 @@
                 </div>
               </td>
             </ng-container>
+
             <ng-container matColumnDef="scope">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Scope</th>
               <td mat-cell *matCellDef="let element">{{ element.scope }}</td>
             </ng-container>
+
             <ng-container matColumnDef="trigger">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Trigger</th>
               <td mat-cell *matCellDef="let element">{{ element.trigger }}</td>
             </ng-container>
+
             <ng-container matColumnDef="sourcesAffected">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Sources Affected</th>
               <td mat-cell *matCellDef="let element" style="text-align: center">
                 {{ element.sourcesAffected }}
               </td>
             </ng-container>
+
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
               <td mat-cell *matCellDef="let element">
@@ -563,10 +597,12 @@
                 </div>
               </td>
             </ng-container>
+
             <ng-container matColumnDef="lastModified">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
               <td mat-cell *matCellDef="let element">{{ element.lastModified }}</td>
             </ng-container>
+
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let element">
@@ -578,6 +614,7 @@
                 </button>
               </td>
             </ng-container>
+
             <tr mat-header-row *matHeaderRowDef="ruleColumns"></tr>
             <tr
               mat-row
@@ -586,6 +623,7 @@
               [class.selected-row]="selectedRuleData?.id === row.id"
               (click)="onRuleRowClick(row)"></tr>
           </table>
+
           <mat-paginator
             #rulePaginator
             [pageSize]="10"
@@ -1304,16 +1342,47 @@
     </div>
   }
 
-  @if (showRuleDetail) {
+  @if (showModelRuleDetail) {
     <div class="rule-detail-view">
-      <app-view-rule [ruleData]="selectedRuleData" (closeView)="onCloseRuleDetail()">
+      <app-view-rule [ruleData]="selectedRuleData" (closeView)="onCloseModelRuleDetail()">
       </app-view-rule>
     </div>
   }
 
-  @if (isEditingRule) {
+  @if (showMappingRuleDetail) {
+    <div class="rule-detail-view">
+      <app-view-mapping-rule [ruleData]="selectedRuleData" (closeView)="onCloseMappingRuleDetail()">
+      </app-view-mapping-rule>
+    </div>
+  }
+
+  @if (showCodeSetRuleDetail) {
+    <div class="rule-detail-view">
+      <app-view-code-set-rule
+        [ruleData]="selectedRuleData"
+        (closeView)="onCloseCodeSetRuleDetail()">
+      </app-view-code-set-rule>
+    </div>
+  }
+
+  @if (isEditingModelRule) {
     <div class="rule-edit-view">
-      <app-edit-rule [ruleData]="selectedRuleData" (closeEdit)="onCloseEditRule()"> </app-edit-rule>
+      <app-edit-rule [ruleData]="selectedRuleData" (closeEdit)="onCloseEditModelRule()">
+      </app-edit-rule>
+    </div>
+  }
+
+  @if (isEditingMappingRule) {
+    <div class="rule-edit-view">
+      <app-edit-mapping-rule [ruleData]="selectedRuleData" (closeEdit)="onCloseEditMappingRule()">
+      </app-edit-mapping-rule>
+    </div>
+  }
+
+  @if (isEditingCodeSetRule) {
+    <div class="rule-edit-view">
+      <app-edit-code-set-rule [ruleData]="selectedRuleData" (closeEdit)="onCloseEditCodeSetRule()">
+      </app-edit-code-set-rule>
     </div>
   }
 
