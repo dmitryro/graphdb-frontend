@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   MAT_FORM_FIELD_DEFAULT_OPTIONS,
@@ -7,7 +7,17 @@ import {
 import { EventService } from '@modules/events/services/event.service';
 import { EventState } from '@modules/events/states/event.state';
 import { Store } from '@ngrx/store';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+
+// --- IMPORTS (Add to top of file) ---
+import {
+  ImpactPreview,
+  JsonLogicRule,
+  LogicToken,
+} from '@shared/components/rule-assembler/rule-assembler.component';
+
+type RuleCategory = 'code' | 'model' | 'mapping';
 
 @Component({
   selector: 'app-new-normalization-rule-modal',
@@ -27,8 +37,9 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
   public isOpen = signal<boolean>(false);
   public theme = signal<'light' | 'dark'>('dark');
   public activeStep = signal<number>(0);
+  public ruleCategory = signal<RuleCategory | null>(null);
 
-  // Snapshot signal to hold data specifically for Step 4 review
+  // Snapshot signal to hold data specifically for Step 5 review
   public reviewSnapshot = signal<any>(null);
 
   // Store all transformation type configurations as user switches between them
@@ -43,7 +54,57 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
   public targetModel = signal<string>('');
   public availableModels = signal<string[]>([]);
 
-  // Severity descriptions for Step 1
+  // NEW: Signal for dynamically updated model fields
+  public currentModelFields = signal<string[]>([]);
+
+  // NEW: Signal for selected code systems (replaces FormArray approach)
+  public selectedCodeSystems = signal<string[]>([]);
+
+  // Step 1 Governance Fields
+  public ruleIntents = signal<string[]>([]);
+  public owningTeamsRoles = signal<string[]>([]);
+  public intendedAudiences = signal<string[]>([]);
+  public lifecycleIntents = signal<string[]>([]);
+
+  // Code Rule specific signals
+  public codeRuleOperands = signal<string[]>([]);
+  public codeRuleOperators = signal<string[]>([]);
+  public codeRuleVariables = signal<string[]>([]);
+
+  // Mapping Rule specific signals
+  public mappingRuleOperands = signal<string[]>([]);
+  public mappingRuleVariables = signal<string[]>([]);
+  public codeSystemsAvailable = signal<string[]>([]);
+  public modelFieldsMap = signal<Record<string, string[]>>({});
+  public modelKeys = computed(() => Object.keys(this.modelFieldsMap()));
+
+  // Rule Assembler State
+  public useAdvancedLogicBuilder = signal<boolean>(false);
+  public assemblerLogicTokens = signal<LogicToken[]>([]);
+  public assemblerJsonLogic = signal<JsonLogicRule>({});
+  public ruleImpactPreview = signal<ImpactPreview>({
+    status: 'unavailable',
+    affectedMappings: 0,
+    affectedCodes: 0,
+    recordCount: 0,
+    conflictEvents: 0,
+  });
+
+  // Pretty-printed version for display + fallback
+  public displayJsonLogic = computed(() => {
+    const json = this.assemblerJsonLogic();
+    if (!json || Object.keys(json).length === 0) {
+      return '// No logic defined yet';
+    }
+    try {
+      return JSON.stringify(json, null, 2);
+    } catch (e) {
+      console.log(`Error: ${e}`);
+      return '// Invalid JSON Logic structure';
+    }
+  });
+
+  // Severity descriptions for Step 2
   public severityDescriptions: Record<string, string> = {
     Critical: 'Breaks canonical integrity if incorrect',
     High: 'Significant downstream impact',
@@ -51,7 +112,24 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     Low: 'Informational or minor adjustment',
   };
 
+  // Code Rule severity descriptions
+  public codeRuleSeverityDescriptions: Record<string, string> = {
+    Error: 'Breaks canonical integrity if incorrect',
+    Warn: 'Significant downstream impact',
+    Info: 'Informational or minor adjustment',
+  };
+
+  public mappingRuleSeverityDescriptions: Record<string, string> = {
+    Critical: 'Breaks canonical integrity if incorrect',
+    High: 'Significant downstream impact',
+    Medium: 'Moderate normalization impact',
+    Low: 'Informational or minor adjustment',
+  };
+
   private eventSubs?: Subscription;
+  private impactRequest$ = new Subject<JsonLogicRule>();
+
+  categoryForm!: FormGroup;
   basicsForm!: FormGroup;
   scopeForm!: FormGroup;
   logicForm!: FormGroup;
@@ -60,14 +138,50 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     private _fb: FormBuilder,
     protected eventService: EventService,
     private eventStore: Store<{ nf: EventState }>,
-  ) {}
+  ) {
+    // Debounce impact requests to prevent excessive calls
+    this.impactRequest$
+      .pipe(debounceTime(600))
+      .subscribe(jsonLogic => this._performImpactCalculation(jsonLogic));
+  }
 
   ngOnInit(): void {
     this.initForms();
     this.subscribeToEvents();
+
+    // When model rule is active, drive currentModelFields from Basics.model
+    this.basicsForm.get('model')?.valueChanges.subscribe(modelName => {
+      if (this.ruleCategory() === 'model' && modelName) {
+        this.onTargetModelChange(modelName);
+      }
+      if (this.ruleCategory() === 'model' && !modelName) {
+        this.currentModelFields.set([]);
+        this.scopeForm.get('targetField')?.reset('');
+      }
+    });
+
+    // When mapping rule is active, drive currentModelFields from Scope.targetModel
+    this.scopeForm.get('targetModel')?.valueChanges.subscribe(modelName => {
+      if (this.ruleCategory() === 'mapping' && modelName) {
+        this.onTargetModelChange(modelName);
+      }
+      if (this.ruleCategory() === 'mapping' && !modelName) {
+        this.currentModelFields.set([]);
+      }
+    });
   }
 
   private initForms() {
+    // Step 0 - Category Selection
+    this.categoryForm = this._fb.group({
+      category: ['', Validators.required],
+      ruleIntent: ['', Validators.required],
+      owningTeamRole: ['', Validators.required],
+      intendedAudience: this._fb.array([], Validators.required),
+      lifecycleIntent: ['', Validators.required],
+    });
+
+    // Step 1 - Basics
     this.basicsForm = this._fb.group({
       model: ['', Validators.required],
       name: ['', Validators.required],
@@ -77,33 +191,57 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
       severity: ['Medium', Validators.required],
     });
 
+    // Step 2 - Scope
     this.scopeForm = this._fb.group({
       scope: ['', Validators.required],
       targetField: [''],
       trigger: ['', Validators.required],
+      // Code Rule specific
+      appliesTo: [''],
+      runTiming: [''],
+      // Mapping Rule specific
+      targetModel: [''],
+      // REMOVED: sourceCodeSystems FormArray - now using signal
+      targetCodeSystem: [''],
+      mappingId: [''],
+      filters: this._fb.array([]),
     });
 
+    // Step 3 - Logic
     this.logicForm = this._fb.group({
-      // Only the type selection is strictly required to move forward
-      logicType: ['', Validators.required],
-
-      // These fields are temporary "buffers" for the Add buttons.
-      // We keep them optional so they don't block the Next button if left empty.
+      // Model Rule fields
+      logicType: [''],
       sourceField: [''],
       fromUnit: [''],
       toUnit: [''],
       newName: [''],
       formula: [''],
-      resultType: ['Integer'], // Defaulting helps consistency
+      resultType: ['Integer'],
       defaultValue: [''],
-
-      // These arrays hold the actual data that matters
       mappings: this._fb.array([]),
       aliases: this._fb.array([]),
       conversions: this._fb.array([]),
       formulas: this._fb.array([]),
       defaults: this._fb.array([]),
       nullify: this._fb.array([]),
+
+      // Code Rule specific fields
+      leftOperand: [''],
+      operator: [''],
+      rightOperand: [''],
+      attributeKey: [''],
+      message: [''],
+
+      // Mapping Rule specific fields
+      mappingLeftOperand: [''],
+      mappingOperator: [''],
+      mappingRightOperand: [''],
+      mappingAttributeKey: [''],
+      mappingMessage: [''],
+
+      // Rule Assembler fields
+      assemblerTokens: [''],
+      assemblerJsonLogic: [''],
     });
 
     // Watch for scope changes
@@ -116,14 +254,326 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
       }
       targetField?.updateValueAndValidity({ emitEvent: false });
     });
+
+    // Watch for category changes
+    this.categoryForm.get('category')?.valueChanges.subscribe(category => {
+      this.ruleCategory.set(category as RuleCategory);
+      this.resetFormsForCategory(category);
+    });
+  }
+
+  private resetFormsForCategory(category: RuleCategory) {
+    const defaultDesc =
+      category === 'model'
+        ? 'Describe what this transformation does, any assumptions, or when it should be used.'
+        : 'Describe why this rule exists and when it should be used.';
+
+    this.basicsForm.reset({
+      description: defaultDesc,
+      severity: category === 'code' ? 'Error' : 'Medium',
+    });
+    this.scopeForm.reset();
+    this.logicForm.reset({ resultType: 'Integer' });
+    this.transformationConfigs.clear();
+
+    // Reset assembler state
+    this.useAdvancedLogicBuilder.set(false);
+    this.assemblerLogicTokens.set([]);
+    this.assemblerJsonLogic.set({});
+    this.ruleImpactPreview.set({
+      status: 'unavailable',
+      affectedMappings: 0,
+      affectedCodes: 0,
+      recordCount: 0,
+      conflictEvents: 0,
+    });
+
+    // Clear arrays
+    this.mappingRows.clear();
+    this.aliasRows.clear();
+    this.conversionRows.clear();
+    this.formulaRows.clear();
+    this.defaultRows.clear();
+    this.nullifyRows.clear();
+    this.filterRows.clear();
+
+    // Clear signals
+    this.selectedCodeSystems.set([]);
+    this.currentModelFields.set([]);
+  }
+
+  /**
+   * Toggle between simple and advanced logic builders
+   */
+  toggleLogicBuilder(useAdvanced: boolean): void {
+    this.useAdvancedLogicBuilder.set(useAdvanced);
+
+    if (useAdvanced) {
+      // Transitioning TO advanced: try to convert simple logic to tokens
+      this.convertSimpleLogicToTokens();
+    } else {
+      // Transitioning TO simple: try to convert tokens back to simple logic
+      this.convertTokensToSimpleLogic();
+    }
+
+    console.log('[Logic Builder] Mode:', useAdvanced ? 'Advanced' : 'Simple');
+  }
+
+  /**
+   * Convert simple logic form to initial tokens for assembler
+   */
+  private convertSimpleLogicToTokens(): void {
+    const leftOperand = this.logicForm.get('mappingLeftOperand')?.value;
+    const operator = this.logicForm.get('mappingOperator')?.value;
+    const rightOperand = this.logicForm.get('mappingRightOperand')?.value;
+    const attributeKey = this.logicForm.get('mappingAttributeKey')?.value;
+
+    if (!leftOperand || !operator) {
+      console.log('[Conversion] Insufficient simple logic to convert');
+      return;
+    }
+
+    // Publish to rule assembler via EventService
+    this.eventService.publish('nf', 'rule_assembler_update', {
+      action: 'rule_assembler_update',
+      theme: this.theme(),
+      tokens: [
+        {
+          id: `token_${Date.now()}`,
+          type: 'if' as const,
+          value: 'IF',
+          depth: 0,
+          children: [
+            {
+              id: `token_${Date.now()}_1`,
+              type: 'field' as const,
+              value: attributeKey || leftOperand,
+              depth: 1,
+              metadata: {
+                dataPath: attributeKey || leftOperand,
+                fieldType: 'string',
+              },
+            },
+            {
+              id: `token_${Date.now()}_2`,
+              type: 'operator' as const,
+              value: operator,
+              depth: 1,
+            },
+            ...(rightOperand
+              ? [
+                  {
+                    id: `token_${Date.now()}_3`,
+                    type: 'value' as const,
+                    value: rightOperand,
+                    depth: 1,
+                  },
+                ]
+              : []),
+          ],
+        },
+      ],
+    });
+
+    console.log('[Conversion] Simple logic converted to tokens');
+  }
+
+  /**
+   * Convert assembler tokens back to simple logic form
+   */
+  private convertTokensToSimpleLogic(): void {
+    const tokens = this.assemblerLogicTokens();
+
+    if (!tokens || tokens.length === 0) {
+      console.log('[Conversion] No tokens to convert');
+      return;
+    }
+
+    // Try to extract simple IF condition
+    const ifToken = tokens.find(t => t.type === 'if');
+    if (!ifToken || !ifToken.children || ifToken.children.length < 2) {
+      console.log('[Conversion] Complex logic cannot be simplified');
+      return;
+    }
+
+    const field = ifToken.children.find(c => c.type === 'field');
+    const operator = ifToken.children.find(c => c.type === 'operator');
+    const value = ifToken.children.find(c => c.type === 'value');
+
+    this.logicForm.patchValue({
+      mappingLeftOperand: field?.metadata?.dataPath || field?.value || '',
+      mappingOperator: operator?.value || '',
+      mappingRightOperand: value?.value || '',
+      mappingAttributeKey: field?.metadata?.dataPath || '',
+    });
+
+    console.log('[Conversion] Tokens converted back to simple logic');
+  }
+
+  /**
+   * Handle logic tokens changed from assembler
+   */
+  onLogicTokensChanged(tokens: LogicToken[]): void {
+    this.assemblerLogicTokens.set(tokens);
+    console.log('[Rule Assembler] Logic tokens updated:', tokens);
+
+    // Store in a hidden form field for persistence
+    this.logicForm.patchValue(
+      {
+        assemblerTokens: JSON.stringify(tokens),
+      },
+      { emitEvent: false },
+    );
+  }
+
+  /**
+   * Handle JSON Logic export from assembler
+   */
+  onJsonLogicExported(jsonLogic: JsonLogicRule): void {
+    this.assemblerJsonLogic.set(jsonLogic);
+    console.log('[Rule Assembler] JSON Logic exported in parent:', JSON.stringify(jsonLogic));
+
+    // Store for later use
+    this.logicForm.patchValue(
+      {
+        assemblerJsonLogic: JSON.stringify(jsonLogic),
+      },
+      { emitEvent: false },
+    );
+
+    // Automatically trigger impact calculation (debounced)
+    this.calculateRuleImpact(jsonLogic);
+  }
+
+  /**
+   * Calculate rule impact based on JSON Logic (debounced via Subject)
+   */
+  calculateRuleImpact(jsonLogic: JsonLogicRule): void {
+    this.impactRequest$.next(jsonLogic);
+  }
+
+  private _performImpactCalculation(jsonLogic: JsonLogicRule): void {
+    // Set loading state
+    this.ruleImpactPreview.update(prev => ({
+      ...prev,
+      status: 'loading',
+    }));
+
+    const scopeId = this.scopeForm.get('mappingId')?.value;
+    const targetModel = this.scopeForm.get('targetModel')?.value;
+
+    console.log('[Impact] Calculating for:', { jsonLogic, scopeId, targetModel });
+
+    // Publish to backend service via EventService
+    this.eventService.publish('nf', 'calculate_rule_impact', {
+      action: 'calculate_rule_impact',
+      context: 'mapping_rule_impact_calculation',
+      theme: this.theme(),
+      payload: {
+        jsonLogic: jsonLogic,
+        scopeId: scopeId,
+        targetModel: targetModel,
+        ruleCategory: 'mapping',
+      },
+      timestamp: new Date().toISOString(),
+    });
+
+    // Simulate API call (replace with actual API call in production)
+    setTimeout(() => {
+      this.ruleImpactPreview.set({
+        status: 'success',
+        affectedMappings: 6,
+        affectedCodes: 2,
+        recordCount: 240,
+        conflictEvents: 0,
+        message: 'Rule impact calculated successfully',
+      });
+    }, 1200);
+  }
+
+  /**
+   * Get available fields for rule assembler based on selected target model
+   */
+  getAvailableFieldsForAssembler(): string[] {
+    const targetModel = this.scopeForm.get('targetModel')?.value;
+
+    if (!targetModel) {
+      return this.availableFields();
+    }
+
+    // Get fields specific to the selected model
+    const modelFields = this.modelFieldsMap()[targetModel];
+
+    if (modelFields && modelFields.length > 0) {
+      return modelFields;
+    }
+
+    // Fallback to general available fields
+    return this.availableFields();
+  }
+
+  /**
+   * Get available models for rule assembler
+   */
+  getAvailableModelsForAssembler(): string[] {
+    // Return all models that have field mappings
+    const modelsWithFields = Object.keys(this.modelFieldsMap());
+
+    if (modelsWithFields.length > 0) {
+      return modelsWithFields;
+    }
+
+    // Fallback to general available models
+    return this.availableModels();
+  }
+
+  /**
+   * Copy assembler JSON Logic to clipboard
+   */
+  copyAssemblerLogic(): void {
+    const jsonLogic = this.assemblerJsonLogic();
+    const jsonString = JSON.stringify(jsonLogic, null, 2);
+
+    navigator.clipboard
+      .writeText(jsonString)
+      .then(() => {
+        console.log('[Clipboard] JSON Logic copied');
+
+        // Optionally show a toast notification
+        this.eventService.publish('nf', 'show_toast', {
+          action: 'show_toast',
+          message: 'JSON Logic copied to clipboard',
+          type: 'success',
+          theme: this.theme(),
+        });
+      })
+      .catch(err => {
+        console.error('[Clipboard] Failed to copy:', err);
+      });
+  }
+
+  /**
+   * Clear simple logic builder
+   */
+  clearSimpleLogic(): void {
+    this.logicForm.patchValue({
+      mappingLeftOperand: '',
+      mappingOperator: '',
+      mappingRightOperand: '',
+      mappingAttributeKey: '',
+    });
+
+    console.log('[Simple Logic] Cleared');
   }
 
   private subscribeToEvents() {
     this.eventSubs = this.eventStore.select('nf').subscribe((state: any) => {
       if (!state?.items) return;
+
+      // These variables must be in scope for the checks below to work
       const { event, payload } = state.items;
 
-      // --- MODAL OPEN LOGIC ---
+      // 1. OPEN MODAL & INITIALIZE METADATA
       if (
         event === 'open_normalization_rule_modal' ||
         payload?.action === 'open_new_normalization_rule_modal'
@@ -135,6 +585,44 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
           this.logicTypes.set(payload.metadataOptions.logicTypes || []);
           this.availableFields.set(payload.metadataOptions.availableFields || []);
           this.availableModels.set(payload.metadataOptions.availableModels || []);
+
+          this.ruleIntents.set(
+            payload.metadataOptions.ruleIntents || [
+              'Validate',
+              'Normalize',
+              'Detect',
+              'Enrich',
+              'Protect',
+            ],
+          );
+          this.owningTeamsRoles.set(payload.metadataOptions.owningTeamsRoles || []);
+          this.intendedAudiences.set(
+            payload.metadataOptions.intendedAudiences || [
+              'Engineering',
+              'Clinical',
+              'Compliance / Audit',
+              'System (Internal)',
+            ],
+          );
+          this.lifecycleIntents.set(
+            payload.metadataOptions.lifecycleIntents || [
+              'Transient',
+              'Long-lived',
+              'Infrastructure-critical',
+            ],
+          );
+
+          this.codeRuleOperands.set(payload.metadataOptions.codeRuleOperands || []);
+          this.codeRuleOperators.set(payload.metadataOptions.codeRuleOperators || []);
+          this.codeRuleVariables.set(payload.metadataOptions.codeRuleVariables || []);
+          this.mappingRuleOperands.set(payload.metadataOptions.mappingRuleOperands || []);
+          this.mappingRuleVariables.set(payload.metadataOptions.mappingRuleVariables || []);
+          this.codeSystemsAvailable.set(payload.metadataOptions.codeSystemsAvailable || []);
+          this.modelFieldsMap.set(payload.metadataOptions.modelFieldsMap || {});
+
+          console.log(
+            `==========> modelFieldsMap SO FAR ${JSON.stringify(payload.metadataOptions.modelFieldsMap)}`,
+          );
         }
 
         this.targetModel.set(payload.targetModel || 'Unknown Model');
@@ -148,19 +636,51 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
 
         if (payload.targetModel) {
           this.basicsForm.get('model')?.setValue(payload.targetModel, { emitEvent: false });
+          this.onTargetModelChange(payload.targetModel);
+        }
+
+        if (payload.ruleCategory) {
+          this.categoryForm.get('category')?.setValue(payload.ruleCategory, { emitEvent: false });
+          this.ruleCategory.set(payload.ruleCategory);
         }
 
         this.activeStep.set(0);
         this.isOpen.set(true);
       }
 
-      // --- TRANSACTIONAL CONFIRMATION LOGIC ---
-      // Listen for the specific confirmation from the ConfirmationModalComponent
-      if (event === 'confirmation_save_confirmed' && payload?.confirmed) {
-        this.finalizeNormalizationRule();
+      // 2. RULE IMPACT CALCULATION (SUCCESS)
+      if (event === 'rule_impact_calculated' || payload?.action === 'rule_impact_calculated') {
+        const result = payload?.result;
+        if (result) {
+          this.ruleImpactPreview.set({
+            status: 'success',
+            affectedMappings: result.affectedMappings || 0,
+            affectedCodes: result.affectedCodes || 0,
+            recordCount: result.recordCount || 0,
+            conflictEvents: result.conflictEvents || 0,
+            message: result.message || 'Impact calculated',
+          });
+        }
       }
 
-      // --- CLOSE LOGIC ---
+      // 3. RULE IMPACT CALCULATION (ERROR)
+      if (event === 'rule_impact_error' || payload?.action === 'rule_impact_error') {
+        this.ruleImpactPreview.set({
+          status: 'error',
+          affectedMappings: 0,
+          affectedCodes: 0,
+          recordCount: 0,
+          conflictEvents: 0,
+          message: payload?.error || 'Failed to calculate impact',
+        });
+      }
+
+      // 4. CONFIRM SAVE
+      if (event === 'confirmation_save_confirmed' && payload?.confirmed) {
+        this.finalizeRule();
+      }
+
+      // 5. CLOSE MODAL
       if (
         event === 'close_new_normalization_rule_modal' ||
         payload?.action === 'close_new_normalization_rule_modal'
@@ -170,32 +690,82 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  private finalizeNormalizationRule() {
+  // ============================================================================
+  // NEW: DYNAMIC FIELD UPDATES WHEN MODEL CHANGES
+  // ============================================================================
+
+  onTargetModelChange(modelName: string): void {
+    if (!modelName) {
+      this.currentModelFields.set([]);
+      this.scopeForm.patchValue({ targetModel: '' }, { emitEvent: false });
+      return;
+    }
+
+    const fieldsMap = this.modelFieldsMap();
+    const fields: string[] = fieldsMap[modelName] ?? this.availableFields();
+
+    this.currentModelFields.set(fields);
+    this.scopeForm.patchValue({ targetModel: modelName }, { emitEvent: false });
+
+    // Strong debug logging — keep this until the issue is resolved
+    console.group('onTargetModelChange');
+    console.log('Selected model          :', modelName);
+    console.log('Available model keys    :', Object.keys(fieldsMap));
+    console.log('Exact key match?        :', modelName in fieldsMap);
+    console.log('Fields found for model  :', fields);
+    console.log('Fields now in signal    :', this.currentModelFields());
+    console.log('Full modelFieldsMap     :', fieldsMap);
+    console.groupEnd();
+  }
+
+  // ============================================================================
+  // NEW: CODE SYSTEMS SELECTION (NO DUPLICATE CHECKBOXES)
+  // ============================================================================
+
+  onCodeSystemsChange(selectedSystems: string[]): void {
+    this.selectedCodeSystems.set(selectedSystems);
+    console.log('Code systems selected:', selectedSystems);
+  }
+
+  removeCodeSystem(system: string): void {
+    const current = this.selectedCodeSystems();
+    this.selectedCodeSystems.set(current.filter(s => s !== system));
+  }
+
+  // ============================================================================
+  // EXISTING METHODS (PRESERVED)
+  // ============================================================================
+
+  private finalizeRule() {
     const snapshot = this.reviewSnapshot();
     if (!snapshot) return;
 
+    const category = this.ruleCategory();
+
     const finalPayload = {
+      ruleCategory: category,
+      categoryDetails: snapshot.categoryDetails,
       basics: snapshot.basics,
-      scope: snapshot.scope,
-      // Including the arrays specifically for the backend parser
-      details: {
+      scope: {
+        ...snapshot.scope,
+        sourceCodeSystems: this.selectedCodeSystems(), // Include selected code systems
+      },
+      logic: snapshot.logic,
+      targetModel: snapshot.basics.model,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (category === 'model') {
+      finalPayload['details'] = {
         mappings: snapshot.mappings,
         aliases: snapshot.aliases,
         conversions: snapshot.conversions,
         formulas: snapshot.formulas,
         defaults: snapshot.defaults,
         ignoreList: snapshot.ignoreList,
-      },
-      targetModel: snapshot.basics.model,
-      summary: {
-        identity: snapshot.basics,
-        application: snapshot.scope,
-        transformation: this.getLogicSummary(),
-      },
-      timestamp: new Date().toISOString(),
-    };
+      };
+    }
 
-    // Final event to the system/store
     this.eventService.publish('nf', 'normalization_rule_creation_complete', {
       action: 'normalization_rule_creation_complete',
       payload: finalPayload,
@@ -204,17 +774,38 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     this.handleInternalClose();
   }
 
-  // 2. Getter for the nullify array
+  get intendedAudienceArray() {
+    return this.categoryForm.get('intendedAudience') as FormArray;
+  }
+
+  toggleAudience(audience: string) {
+    const arr = this.intendedAudienceArray;
+    const index = arr.value.indexOf(audience);
+    if (index >= 0) {
+      arr.removeAt(index);
+    } else {
+      arr.push(this._fb.control(audience));
+    }
+  }
+
+  isAudienceSelected(audience: string): boolean {
+    return this.intendedAudienceArray.value.includes(audience);
+  }
+
+  get filterRows() {
+    return this.scopeForm.get('filters') as FormArray;
+  }
+
+  // REMOVED: sourceCodeSystemsArray getter (now using signal)
+  // REMOVED: toggleCodeSystem, isCodeSystemSelected, removeCodeSystemChip (replaced with signal methods)
+
   get nullifyRows() {
     return this.logicForm.get('nullify') as FormArray;
   }
 
-  // 3. Method to add a field to the null/ignore list
   addNullifyEntry() {
     const source = this.logicForm.get('sourceField')?.value;
-
     if (source) {
-      // Check if already exists to prevent duplicates
       const exists = this.nullifyRows.getRawValue().some(r => r.sourceField === source);
       if (!exists) {
         const row = this._fb.group({
@@ -222,7 +813,6 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
         });
         this.nullifyRows.push(row);
       }
-      // Clear input for next selection
       this.logicForm.patchValue({ sourceField: '' });
     }
   }
@@ -231,14 +821,12 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     this.nullifyRows.removeAt(index);
   }
 
-  // 2. Getter for the formulas array
   get formulaRows() {
     return this.logicForm.get('formulas') as FormArray;
   }
 
-  // 3. Method to add a formula entry to the list
   addFormulaEntry() {
-    const name = this.logicForm.get('newName')?.value; // Using newName as the Result Field name
+    const name = this.logicForm.get('newName')?.value;
     const formula = this.logicForm.get('formula')?.value;
     const type = this.logicForm.get('resultType')?.value;
 
@@ -249,8 +837,6 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
         resultType: [type, Validators.required],
       });
       this.formulaRows.push(row);
-
-      // Clear inputs for next entry
       this.logicForm.patchValue({ newName: '', formula: '' });
     }
   }
@@ -263,12 +849,10 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     return this.logicForm.get('mappings') as FormArray;
   }
 
-  // 2. Getter for the defaults array
   get defaultRows() {
     return this.logicForm.get('defaults') as FormArray;
   }
 
-  // 3. Method to add a default entry
   addDefaultEntry() {
     const source = this.logicForm.get('sourceField')?.value;
     const value = this.logicForm.get('defaultValue')?.value;
@@ -279,8 +863,6 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
         defaultValue: [value, Validators.required],
       });
       this.defaultRows.push(row);
-
-      // Clear inputs for next entry
       this.logicForm.patchValue({ sourceField: '', defaultValue: '' });
     }
   }
@@ -289,12 +871,10 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     this.defaultRows.removeAt(index);
   }
 
-  // 2. Helper Getters
   get aliasRows() {
     return this.logicForm.get('aliases') as FormArray;
   }
 
-  // 3. Methods to handle logic
   createAliasRow(source = '', alias = ''): FormGroup {
     return this._fb.group({
       sourceField: [source, Validators.required],
@@ -302,13 +882,11 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  // This method captures the current dropdown + input and adds it to the table
   addAliasEntry() {
     const source = this.logicForm.get('sourceField')?.value;
     const alias = this.logicForm.get('newName')?.value;
 
     if (source && alias) {
-      // Check if alias already exists for this field to prevent duplicates
       const exists = this.aliasRows.controls.some(
         control =>
           control.get('sourceField')?.value === source && control.get('aliasName')?.value === alias,
@@ -316,7 +894,6 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
 
       if (!exists) {
         this.aliasRows.push(this.createAliasRow(source, alias));
-        // Optionally clear the input after adding
         this.logicForm.get('newName')?.setValue('');
       }
     }
@@ -326,12 +903,10 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     this.aliasRows.removeAt(index);
   }
 
-  // 2. Getter for the conversions array
   get conversionRows() {
     return this.logicForm.get('conversions') as FormArray;
   }
 
-  // 3. Method to add a conversion entry
   addConversionEntry() {
     const source = this.logicForm.get('sourceField')?.value;
     const from = this.logicForm.get('fromUnit')?.value;
@@ -370,22 +945,13 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
 
   onLogicTypeChange() {
     const logicType = this.logicForm.get('logicType')?.value;
-
-    // 1. Clear all validators from the "scratchpad" fields.
-    // This ensures that an empty "Source Field" box doesn't make the form invalid.
     this.clearLogicValidators();
 
-    // 2. Specialized handling for Value Mapping only (if you want an initial row)
     if (logicType === 'Value Mapping' && this.mappingRows.length === 0) {
       this.addRow();
     }
 
-    // 3. Finalize the state
     this.logicForm.updateValueAndValidity();
-  }
-
-  private setFieldsRequired(fields: string[]) {
-    fields.forEach(f => this.logicForm.get(f)?.setValidators(Validators.required));
   }
 
   selectLogicType(type: string) {
@@ -395,18 +961,13 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     }
 
     this.logicForm.get('logicType')?.setValue(type);
-    this.onLogicTypeChange(); // This now clears validators
-
+    this.onLogicTypeChange();
     this.restoreTransformationConfig(type);
   }
 
   private saveCurrentTransformationConfig(logicType: string) {
-    // Save all field values for the current transformation type
-    const config: any = {
-      logicType: logicType,
-    };
+    const config: any = { logicType: logicType };
 
-    // Save all standalone fields regardless of type
     config.sourceField = this.logicForm.get('sourceField')?.value || '';
     config.fromUnit = this.logicForm.get('fromUnit')?.value || '';
     config.toUnit = this.logicForm.get('toUnit')?.value || '';
@@ -415,30 +976,23 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     config.resultType = this.logicForm.get('resultType')?.value || '';
     config.defaultValue = this.logicForm.get('defaultValue')?.value || '';
 
-    // Save specific FormArray data based on the logic type
     if (logicType === 'Value Mapping') {
       config.mappings = this.mappingRows.getRawValue();
     }
-
-    // NEW: Save the table of aliases for Rename / Alias type
     if (logicType === 'Rename / Alias') {
       config.aliases = this.aliasRows.getRawValue();
     }
-
     if (logicType === 'Unit Conversion') {
-      config.conversions = this.conversionRows.getRawValue(); // NEW
+      config.conversions = this.conversionRows.getRawValue();
     }
-
     if (logicType === 'Derived Value') {
-      config.derivedValues = this.formulaRows.getRawValue(); // NEW
+      config.derivedValues = this.formulaRows.getRawValue();
     }
-
     if (logicType === 'Default Value') {
-      config.defaultList = this.defaultRows.getRawValue(); // NEW
+      config.defaultList = this.defaultRows.getRawValue();
     }
-
     if (logicType === 'Null / Ignore') {
-      config.ignoreList = this.nullifyRows.getRawValue(); // NEW
+      config.ignoreList = this.nullifyRows.getRawValue();
     }
 
     this.transformationConfigs.set(logicType, config);
@@ -447,7 +1001,6 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
   private restoreTransformationConfig(logicType: string) {
     const savedConfig = this.transformationConfigs.get(logicType);
 
-    // Always clear all fields first
     this.logicForm.patchValue(
       {
         sourceField: '',
@@ -461,11 +1014,9 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
       { emitEvent: false },
     );
 
-    // Clear mappings
     this.mappingRows.clear();
 
     if (savedConfig) {
-      // Restore all saved field values
       this.logicForm.patchValue(
         {
           sourceField: savedConfig.sourceField || '',
@@ -479,7 +1030,6 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
         { emitEvent: false },
       );
 
-      // Restore mappings if this is Value Mapping
       if (logicType === 'Value Mapping' && savedConfig.mappings) {
         savedConfig.mappings.forEach((mapping: any) => {
           const row = this.createMappingRow();
@@ -487,18 +1037,14 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
           this.mappingRows.push(row);
         });
       } else if (logicType === 'Value Mapping' && this.mappingRows.length === 0) {
-        // Add one empty row for Value Mapping if none exist
         this.addRow();
       }
     } else if (logicType === 'Value Mapping') {
-      // No saved config for Value Mapping, add one empty row
       this.addRow();
     }
   }
 
   private clearLogicValidators() {
-    // IMPORTANT: We do not use .reset() or .setValue('') here.
-    // This allows the form to remember your alias even if you click 'Unit Conversion' and back.
     const fields = [
       'sourceField',
       'fromUnit',
@@ -507,6 +1053,14 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
       'formula',
       'resultType',
       'defaultValue',
+      'leftOperand',
+      'operator',
+      'rightOperand',
+      'message',
+      'mappingLeftOperand',
+      'mappingOperator',
+      'mappingRightOperand',
+      'mappingMessage',
     ];
     fields.forEach(field => {
       this.logicForm.get(field)?.clearValidators();
@@ -538,29 +1092,173 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     return ['Integer', 'Float', 'String', 'Boolean', 'Date'];
   }
 
+  getAvailableOperators(): string[] {
+    const leftOperand = this.logicForm.get('leftOperand')?.value;
+    if (!leftOperand) return [];
+
+    if (['Unmapped code count', 'Coverage %'].includes(leftOperand)) {
+      return ['=', '≠', '>', '≥', '<', '≤'];
+    }
+
+    if (
+      ['Has multiple target codes', 'Has conflicting code system', 'Crosswalk missing'].includes(
+        leftOperand,
+      )
+    ) {
+      return ['=', '≠'];
+    }
+
+    if (leftOperand === 'Attribute is empty') {
+      return ['missing', 'present'];
+    }
+
+    return this.codeRuleOperators();
+  }
+
+  needsRightOperand(): boolean {
+    const operator = this.logicForm.get('operator')?.value;
+    return operator && !['missing', 'present'].includes(operator);
+  }
+
+  needsAttributeSelector(): boolean {
+    const leftOperand = this.logicForm.get('leftOperand')?.value;
+    return leftOperand === 'Attribute is empty';
+  }
+
+  insertVariable(variable: string) {
+    const messageControl = this.logicForm.get('message');
+    const currentValue = messageControl?.value || '';
+    const newValue = currentValue + variable;
+    messageControl?.setValue(newValue);
+  }
+
+  getMappingAvailableOperators(): string[] {
+    const leftOperand = this.logicForm.get('mappingLeftOperand')?.value;
+    if (!leftOperand) return [];
+
+    if (['Coverage %', 'Unmapped source code count'].includes(leftOperand)) {
+      return ['=', '≠', '>', '≥', '<', '≤'];
+    }
+
+    if (
+      [
+        'Unmapped mapping',
+        'Has multiple target codes',
+        'Has conflicting target code system',
+        'Mapping overridden',
+        'Crosswalk missing',
+      ].includes(leftOperand)
+    ) {
+      return ['=', '≠'];
+    }
+
+    if (['Model field', 'Target model field missing'].includes(leftOperand)) {
+      return ['missing', 'present', '=', '≠'];
+    }
+
+    return ['=', '≠', '>', '≥', '<', '≤'];
+  }
+
+  mappingNeedsRightOperand(): boolean {
+    const operator = this.logicForm.get('mappingOperator')?.value;
+    return operator && !['missing', 'present'].includes(operator);
+  }
+
+  mappingNeedsAttributeSelector(): boolean {
+    const leftOperand = this.logicForm.get('mappingLeftOperand')?.value;
+    return ['Model field', 'Target model field missing', 'Code / code system'].includes(
+      leftOperand,
+    );
+  }
+
+  insertMappingVariable(variable: string) {
+    const messageControl = this.logicForm.get('mappingMessage');
+    const currentValue = messageControl?.value || '';
+    const newValue = currentValue + variable;
+    messageControl?.setValue(newValue);
+  }
+
   nextStep() {
-    if (this.activeStep() < 3) {
-      if (this.activeStep() === 2) {
+    const currentStep = this.activeStep();
+    const category = this.ruleCategory();
+
+    if (currentStep === 0 && !category) {
+      return;
+    }
+
+    const maxSteps = 5;
+
+    if (currentStep < maxSteps - 1) {
+      if (currentStep === 3 && category === 'model') {
         const currentType = this.logicForm.get('logicType')?.value;
         if (currentType) {
           this.saveCurrentTransformationConfig(currentType);
         }
 
         this.reviewSnapshot.set({
+          categoryDetails: this.categoryForm.getRawValue(),
           basics: this.basicsForm.getRawValue(),
           scope: this.scopeForm.getRawValue(),
-          // Capture everything currently in the UI
+          logic: this.getLogicSnapshotForCategory(),
           mappings: this.mappingRows.getRawValue(),
           aliases: this.aliasRows.getRawValue(),
           conversions: this.conversionRows.getRawValue(),
           formulas: this.formulaRows.getRawValue(),
           defaults: this.defaultRows.getRawValue(),
           ignoreList: this.nullifyRows.getRawValue(),
-          // Capture the "saved" states from other tabs
           allTransformations: Array.from(this.transformationConfigs.values()),
         });
+      } else if (currentStep === 3) {
+        this.reviewSnapshot.set({
+          categoryDetails: this.categoryForm.getRawValue(),
+          basics: this.basicsForm.getRawValue(),
+          scope: {
+            ...this.scopeForm.getRawValue(),
+            sourceCodeSystems: this.selectedCodeSystems(),
+          },
+          logic: this.getLogicSnapshotForCategory(),
+        });
       }
+
       this.activeStep.update(v => v + 1);
+    }
+  }
+
+  private getLogicSnapshotForCategory(): any {
+    const category = this.ruleCategory();
+
+    if (category === 'code') {
+      return {
+        leftOperand: this.logicForm.get('leftOperand')?.value,
+        operator: this.logicForm.get('operator')?.value,
+        rightOperand: this.logicForm.get('rightOperand')?.value,
+        attributeKey: this.logicForm.get('attributeKey')?.value,
+        message: this.logicForm.get('message')?.value,
+      };
+    } else if (category === 'mapping') {
+      if (this.useAdvancedLogicBuilder()) {
+        // For advanced builder: return assembler data
+        return {
+          mode: 'advanced',
+          tokens: this.assemblerLogicTokens(),
+          jsonLogic: this.assemblerJsonLogic(),
+          message: this.logicForm.get('mappingMessage')?.value,
+        };
+      } else {
+        // For simple builder: return form data
+        return {
+          mode: 'simple',
+          leftOperand: this.logicForm.get('mappingLeftOperand')?.value,
+          operator: this.logicForm.get('mappingOperator')?.value,
+          rightOperand: this.logicForm.get('mappingRightOperand')?.value,
+          attributeKey: this.logicForm.get('mappingAttributeKey')?.value,
+          message: this.logicForm.get('mappingMessage')?.value,
+        };
+      }
+    } else {
+      return {
+        logicType: this.logicForm.get('logicType')?.value,
+      };
     }
   }
 
@@ -579,13 +1277,18 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
 
   public confirmAction() {
     const snapshot = this.reviewSnapshot();
+    const category = this.ruleCategory();
 
-    // Trigger the confirmation modal instead of finishing directly
+    let categoryLabel = 'Rule';
+    if (category === 'code') categoryLabel = 'Code Rule';
+    else if (category === 'model') categoryLabel = 'Model Rule';
+    else if (category === 'mapping') categoryLabel = 'Mapping Rule';
+
     this.eventService.publish('nf', 'open_confirmation_modal', {
-      title: 'Finalize Normalization Rule',
+      title: `Finalize ${categoryLabel}`,
       action: 'open_confirmation_modal',
-      message: `Are you sure you want to save the rule "${snapshot.basics.name}"? This will apply the defined transformations to the ${snapshot.basics.model} model.`,
-      command: 'save', // This dictates the name of the confirmation event we listen for
+      message: `Are you sure you want to save the ${categoryLabel.toLowerCase()} "${snapshot.basics.name}"?`,
+      command: 'save',
       itemName: snapshot.basics.name,
       theme: this.theme(),
     });
@@ -594,8 +1297,10 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
   private handleInternalClose() {
     this.isOpen.set(false);
     this.activeStep.set(0);
+    this.ruleCategory.set(null);
     this.reviewSnapshot.set(null);
-    this.transformationConfigs.clear(); // Clear saved configs
+    this.transformationConfigs.clear();
+    this.categoryForm.reset();
     this.basicsForm.reset({
       description:
         'Describe what this transformation does, any assumptions, or when it should be used.',
@@ -604,20 +1309,129 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
     this.scopeForm.reset();
     this.logicForm.reset();
     this.mappingRows.clear();
+    this.aliasRows.clear();
+    this.conversionRows.clear();
+    this.formulaRows.clear();
+    this.defaultRows.clear();
+    this.nullifyRows.clear();
+    this.filterRows.clear();
+    this.intendedAudienceArray.clear();
+
+    // Clear signals
+    this.selectedCodeSystems.set([]);
+    this.currentModelFields.set([]);
+
+    // Clear assembler state
+    this.useAdvancedLogicBuilder.set(false);
+    this.assemblerLogicTokens.set([]);
+    this.assemblerJsonLogic.set({});
+    this.ruleImpactPreview.set({
+      status: 'unavailable',
+      affectedMappings: 0,
+      affectedCodes: 0,
+      recordCount: 0,
+      conflictEvents: 0,
+    });
+
+    // Publish clear event to rule assembler
+    this.eventService.publish('nf', 'rule_assembler_clear', {
+      action: 'rule_assembler_clear',
+      theme: this.theme(),
+    });
   }
 
   isStepValid(step: number): boolean {
+    const category = this.ruleCategory();
+
     switch (step) {
-      case 0:
-        return this.basicsForm.valid;
+      case 0: {
+        const audiences = this.categoryForm.get('intendedAudience') as FormArray;
+        return this.categoryForm.valid && audiences?.length > 0;
+      }
+
       case 1:
-        return this.scopeForm.valid;
-      case 2:
-        // Just ensure a type is selected.
-        // The arrays are valid by default even if empty.
+        return this.basicsForm.valid;
+
+      case 2: {
+        if (category === 'code') {
+          return !!(
+            this.scopeForm.get('appliesTo')?.value && this.scopeForm.get('runTiming')?.value
+          );
+        }
+
+        if (category === 'model') {
+          const hasBase = !!(
+            this.scopeForm.get('scope')?.value && this.scopeForm.get('trigger')?.value
+          );
+
+          if (this.scopeForm.get('scope')?.value === 'Field-level') {
+            return hasBase && !!this.scopeForm.get('targetField')?.value;
+          }
+          return hasBase;
+        }
+
+        if (category === 'mapping') {
+          return !!(
+            this.scopeForm.get('appliesTo')?.value &&
+            this.scopeForm.get('targetModel')?.value &&
+            this.scopeForm.get('runTiming')?.value
+          );
+        }
+
+        return false;
+      }
+
+      case 3: {
+        if (category === 'code') {
+          const leftOperand = this.logicForm.get('leftOperand')?.value;
+          const operator = this.logicForm.get('operator')?.value;
+          const message = this.logicForm.get('message')?.value;
+          const needsRight = this.needsRightOperand();
+          const rightOperand = this.logicForm.get('rightOperand')?.value;
+          const needsAttr = this.needsAttributeSelector();
+          const attributeKey = this.logicForm.get('attributeKey')?.value;
+
+          return !!(
+            leftOperand &&
+            operator &&
+            message &&
+            (!needsRight || rightOperand) &&
+            (!needsAttr || attributeKey)
+          );
+        }
+
+        if (category === 'mapping') {
+          if (this.useAdvancedLogicBuilder()) {
+            const hasTokens = this.assemblerLogicTokens().length > 0;
+            const message = this.logicForm.get('mappingMessage')?.value;
+            return !!(hasTokens && message);
+          }
+
+          // simple builder
+          const leftOperand = this.logicForm.get('mappingLeftOperand')?.value;
+          const operator = this.logicForm.get('mappingOperator')?.value;
+          const message = this.logicForm.get('mappingMessage')?.value;
+          const needsRight = this.mappingNeedsRightOperand();
+          const rightOperand = this.logicForm.get('mappingRightOperand')?.value;
+          const needsAttr = this.mappingNeedsAttributeSelector();
+          const attributeKey = this.logicForm.get('mappingAttributeKey')?.value;
+
+          return !!(
+            leftOperand &&
+            operator &&
+            message &&
+            (!needsRight || rightOperand) &&
+            (!needsAttr || attributeKey)
+          );
+        }
+
+        // fallback (model, others)
         return !!this.logicForm.get('logicType')?.value;
-      case 3:
+      }
+
+      case 4:
         return true;
+
       default:
         return false;
     }
@@ -625,66 +1439,139 @@ export class NewNormalizationRuleModalComponent implements OnInit, OnDestroy {
 
   getLogicSummary(): string {
     const snapshot = this.reviewSnapshot();
+    const category = this.ruleCategory();
+
     if (!snapshot) return '';
 
-    const { scope, targetField, trigger } = snapshot.scope;
-    const { name, model } = snapshot.basics;
-    const allTransformations = snapshot.allTransformations || [];
+    if (category === 'code') {
+      const { leftOperand, operator, rightOperand, attributeKey } = snapshot.logic;
+      let summary = `IF ${leftOperand}`;
+      if (attributeKey) summary += ` (${attributeKey})`;
+      summary += ` ${operator}`;
+      if (rightOperand) summary += ` ${rightOperand}`;
+      return summary;
+    } else if (category === 'mapping') {
+      if (snapshot.logic.mode === 'advanced') {
+        // For advanced logic: show JSON Logic summary
+        const tokens = snapshot.logic.tokens || [];
+        const tokenCount = tokens.length;
+        return `Advanced logic with ${tokenCount} tokens. JSON Logic: ${JSON.stringify(snapshot.logic.jsonLogic).substring(0, 100)}...`;
+      } else {
+        // For simple logic: existing summary
+        const { leftOperand, operator, rightOperand, attributeKey } = snapshot.logic;
+        let summary = `IF ${leftOperand}`;
+        if (attributeKey) summary += ` (${attributeKey})`;
+        summary += ` ${operator}`;
+        if (rightOperand) summary += ` ${rightOperand}`;
+        return summary;
+      }
+    } else {
+      const { scope, targetField, trigger } = snapshot.scope;
+      const { name, model } = snapshot.basics;
+      const allTransformations = snapshot.allTransformations || [];
 
-    if (allTransformations.length === 0) {
-      return `Rule "${name}" for ${model} triggers on ${trigger} at a ${scope} level. No transformations configured.`;
-    }
-
-    const summaryParts: string[] = [];
-
-    allTransformations.forEach((config: any) => {
-      const {
-        logicType,
-        sourceField,
-        fromUnit,
-        toUnit,
-        newName,
-        formula,
-        resultType,
-        defaultValue,
-        mappings,
-      } = config;
-
-      let text = `${logicType}: `;
-
-      switch (logicType) {
-        case 'Value Mapping':
-          if (mappings && mappings.length > 0) {
-            const maps = mappings.map((m: any) => `${m.sourceValue} → ${m.targetValue}`).join(', ');
-            text += `Mapping [${maps}]`;
-          } else {
-            text += 'No mappings defined';
-          }
-          break;
-        case 'Unit Conversion':
-          text += `converting ${sourceField} from ${fromUnit} to ${toUnit}`;
-          break;
-        case 'Rename / Alias':
-          text += `aliasing ${sourceField} as ${newName}`;
-          break;
-        case 'Derived Value':
-          text += `calculating ${resultType} via formula: ${formula}`;
-          break;
-        case 'Default Value':
-          text += `providing "${defaultValue}" when ${sourceField} is missing`;
-          break;
-        case 'Null / Ignore':
-          text += `explicitly ignoring values for ${sourceField}`;
-          break;
+      if (allTransformations.length === 0) {
+        return `Rule "${name}" for ${model} triggers on ${trigger} at a ${scope} level. No transformations configured.`;
       }
 
-      summaryParts.push(text);
+      const summaryParts: string[] = [];
+
+      allTransformations.forEach((config: any) => {
+        const {
+          logicType,
+          sourceField,
+          fromUnit,
+          toUnit,
+          newName,
+          formula,
+          resultType,
+          defaultValue,
+          mappings,
+        } = config;
+
+        let text = `${logicType}: `;
+
+        switch (logicType) {
+          case 'Value Mapping':
+            if (mappings && mappings.length > 0) {
+              const maps = mappings
+                .map((m: any) => `${m.sourceValue} → ${m.targetValue}`)
+                .join(', ');
+              text += `Mapping [${maps}]`;
+            } else {
+              text += 'No mappings defined';
+            }
+            break;
+          case 'Unit Conversion':
+            text += `converting ${sourceField} from ${fromUnit} to ${toUnit}`;
+            break;
+          case 'Rename / Alias':
+            text += `aliasing ${sourceField} as ${newName}`;
+            break;
+          case 'Derived Value':
+            text += `calculating ${resultType} via formula: ${formula}`;
+            break;
+          case 'Default Value':
+            text += `providing "${defaultValue}" when ${sourceField} is missing`;
+            break;
+          case 'Null / Ignore':
+            text += `explicitly ignoring values for ${sourceField}`;
+            break;
+        }
+
+        summaryParts.push(text);
+      });
+
+      return `Rule "${name}" for ${model} triggers on ${trigger} at a ${scope} level${scope === 'Field-level' ? ` (Target: ${targetField})` : ''}. Transformations: ${summaryParts.join(' | ')}`;
+    }
+  }
+
+  clearDefaultDescription() {
+    const control = this.basicsForm.get('description');
+    if (!control) return;
+
+    const category = this.ruleCategory();
+    let defaultText = '';
+    if (category === 'model') {
+      defaultText =
+        'Describe what this transformation does, any assumptions, or when it should be used.';
+    } else {
+      defaultText = 'Describe why this rule exists and when it should be used.';
+    }
+
+    if (control.value === defaultText) {
+      control.setValue('');
+    }
+  }
+
+  // DEPRECATED: Replaced with dynamic signal
+  getModelFields(modelName: string | null): string[] {
+    if (!modelName) return [];
+    return this.modelFieldsMap()[modelName] || this.availableFields();
+  }
+
+  get subsetFilters() {
+    return this.scopeForm.get('filters') as FormArray;
+  }
+
+  addSubsetFilter() {
+    if (this.subsetFilters.length >= 3) return;
+
+    const filter = this._fb.group({
+      key: ['', Validators.required],
+      operator: ['=', Validators.required],
+      value: ['', Validators.required],
     });
 
-    return `Rule "${name}" for ${model} triggers on ${trigger} at a ${scope} level${scope === 'Field-level' ? ` (Target: ${targetField})` : ''}. Transformations: ${summaryParts.join(' | ')}`;
+    this.subsetFilters.push(filter);
+  }
+
+  removeSubsetFilter(index: number) {
+    this.subsetFilters.removeAt(index);
   }
 
   ngOnDestroy(): void {
     this.eventSubs?.unsubscribe();
+    this.impactRequest$.complete();
   }
 }

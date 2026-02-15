@@ -1,0 +1,484 @@
+<div
+  class="rule-assembler-container"
+  [class.dark]="theme() === 'dark'"
+  [class.light]="theme() === 'light'"
+  (keydown)="handleKeyboardShortcut($event)">
+  <!-- SPLIT LAYOUT: ngx-split for resizable panels -->
+  <as-split direction="horizontal" [gutterSize]="6" [restrictMove]="true" class="assembler-split">
+    <!-- LEFT PANEL: MODEL EXPLORER -->
+    <as-split-area [size]="explorerWidth()" [minSize]="200" [maxSize]="400">
+      <div class="model-explorer">
+        <!-- Explorer Header -->
+        <div class="explorer-header">
+          <mat-icon class="explorer-icon">account_tree</mat-icon>
+          <span class="explorer-title">Model Explorer</span>
+          <span class="scope-badge">Scope {{ scopeId || '3' }}</span>
+        </div>
+
+        <!-- Fuzzy Search Bar -->
+        <div class="explorer-search">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input
+            type="text"
+            [formControl]="searchControl"
+            placeholder="Search"
+            class="search-input" />
+          @if (searchControl.value) {
+            <button mat-icon-button class="clear-search-btn" (click)="searchControl.setValue('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+
+        <!-- Tree -->
+        <div class="explorer-tree-container">
+          <mat-tree [dataSource]="dataSource" [treeControl]="treeControl" class="model-tree">
+            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+              <div class="tree-node-wrapper" (click)="selectField(node)">
+                <mat-icon class="node-icon" [style.color]="getNodeIconColor(node)">
+                  {{ node.icon || 'label' }}
+                </mat-icon>
+                <span class="node-label">{{ node.name }}</span>
+                @if (node.dataType) {
+                  <span class="node-type-badge">{{ node.dataType }}</span>
+                }
+              </div>
+            </mat-tree-node>
+
+            <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild">
+              <div class="mat-tree-node">
+                <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.name">
+                  <mat-icon class="mat-icon-rtl-mirror">
+                    {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+                  </mat-icon>
+                </button>
+                <div class="tree-node-wrapper" (click)="selectField(node)">
+                  <mat-icon class="node-icon" [style.color]="getNodeIconColor(node)">
+                    {{ node.icon || 'folder' }}
+                  </mat-icon>
+                  <span class="node-label">{{ node.name }}</span>
+                </div>
+              </div>
+              <div [class.tree-invisible]="!treeControl.isExpanded(node)" role="group">
+                <ng-container matTreeNodeOutlet></ng-container>
+              </div>
+            </mat-nested-tree-node>
+          </mat-tree>
+        </div>
+
+        <!-- Explorer Footer -->
+        <div class="explorer-footer">
+          <span class="footer-text">{{ flattenTreeNodes(treeNodes).length }} fields</span>
+        </div>
+      </div>
+    </as-split-area>
+
+    <!-- RIGHT PANEL: BEHAVIOR CANVAS -->
+    <as-split-area [size]="100 - explorerWidth()">
+      <div class="behavior-canvas">
+        <!-- TIERED RIBBON -->
+        <div class="behavior-ribbon">
+          <!-- Row 1: Structural (Blue) -->
+          <div class="ribbon-row">
+            <div class="row-label">1 - STRUCTURAL</div>
+            @for (op of ribbonOperators.structural; track op.value) {
+              <button
+                mat-stroked-button
+                class="ribbon-btn structural-btn"
+                (click)="addToken(op)"
+                [matTooltip]="
+                  (op.description || op.label) + (op.shortcut ? ' [' + op.shortcut + ']' : '')
+                ">
+                @if (op.icon) {
+                  <mat-icon class="btn-icon">{{ op.icon }}</mat-icon>
+                }
+                <span class="btn-label">{{ op.label }}</span>
+                @if (op.shortcut) {
+                  <span class="btn-shortcut">{{ op.shortcut }}</span>
+                }
+              </button>
+            }
+          </div>
+
+          <!-- Row 2: Logic / Flow (Gray) -->
+          <div class="ribbon-row">
+            <div class="row-label">2 - LOGIC / FLOW</div>
+            @for (op of ribbonOperators.logic; track op.value) {
+              <button
+                mat-stroked-button
+                class="ribbon-btn logic-btn"
+                (click)="addToken(op)"
+                [matTooltip]="
+                  (op.description || op.label) + (op.shortcut ? ' [' + op.shortcut + ']' : '')
+                ">
+                @if (op.icon) {
+                  <mat-icon class="btn-icon">{{ op.icon }}</mat-icon>
+                }
+                <span class="btn-label">{{ op.label }}</span>
+                @if (op.shortcut) {
+                  <span class="btn-shortcut">{{ op.shortcut }}</span>
+                }
+              </button>
+            }
+          </div>
+
+          <!-- Row 3: Relational (Purple) -->
+          <div class="ribbon-row">
+            <div class="row-label">3 - RELATIONAL</div>
+            @for (op of ribbonOperators.relational; track op.value) {
+              <button
+                mat-stroked-button
+                class="ribbon-btn relational-btn"
+                (click)="addToken(op)"
+                [matTooltip]="op.description || op.label">
+                @if (op.icon) {
+                  <mat-icon class="btn-icon">{{ op.icon }}</mat-icon>
+                }
+                <span class="btn-label">{{ op.label }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Row 4: Modifiers (Teal) -->
+          <div class="ribbon-row">
+            <div class="row-label">4 - MODIFIERS</div>
+            @for (op of ribbonOperators.modifiers; track op.value) {
+              <button
+                mat-stroked-button
+                class="ribbon-btn modifiers-btn"
+                (click)="addToken(op)"
+                [matTooltip]="op.description || op.label">
+                @if (op.icon) {
+                  <mat-icon class="btn-icon">{{ op.icon }}</mat-icon>
+                }
+                <span class="btn-label">{{ op.label }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- VIEW TOGGLES -->
+        <div class="view-toggles">
+          <button
+            class="toggle-btn"
+            [class.active]="showExpressionBuilder()"
+            (click)="toggleExpressionBuilder()">
+            Expression Builder
+          </button>
+          <button
+            class="toggle-btn"
+            [class.active]="showJsonContract()"
+            (click)="toggleJsonContract()">
+            JSON Data Contract
+          </button>
+        </div>
+
+        <!-- SCROLLABLE CONTENT AREA -->
+        <div class="logic-canvas-wrapper">
+          <!-- Expression Builder View -->
+          @if (showExpressionBuilder()) {
+            <div class="canvas-header">
+              <div class="canvas-title">
+                <mat-icon>build</mat-icon>
+                <span>Logic Structure</span>
+                <span class="token-count"
+                  >{{ flattenLogicTokens(logicTokens()).length }} tokens</span
+                >
+              </div>
+              <div class="canvas-actions">
+                <button mat-stroked-button class="action-btn" [matMenuTriggerFor]="jsonMenu">
+                  <mat-icon>code</mat-icon>
+                  View JSON
+                </button>
+                <button
+                  mat-stroked-button
+                  class="action-btn clear-all-btn"
+                  (click)="clearLogic()"
+                  [disabled]="logicTokens().length === 0">
+                  <mat-icon>delete_sweep</mat-icon>
+                  Clear All
+                </button>
+              </div>
+            </div>
+
+            <!-- JSON Logic Menu -->
+            <mat-menu #jsonMenu="matMenu">
+              <div class="json-preview-panel" (click)="$event.stopPropagation()">
+                <div class="json-header">
+                  <strong>JSON Logic Output</strong>
+                  <button mat-icon-button (click)="copyJsonLogic()">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                </div>
+                <pre class="json-code">{{ jsonLogicOutput() | json }}</pre>
+              </div>
+            </mat-menu>
+
+            <!-- Draggable Token Canvas -->
+            <!-- Draggable Token Canvas -->
+            <div
+              class="logic-canvas"
+              cdkDropList
+              [cdkDropListData]="logicTokens()"
+              (cdkDropListDropped)="onTokenDrop($event)">
+              @if (logicTokens().length === 0) {
+                <div class="empty-state">
+                  <mat-icon class="empty-icon">auto_awesome</mat-icon>
+                  <p class="empty-text">Build your logic using the ribbon above</p>
+                  <p class="empty-hint">Or drag fields from the Model Explorer</p>
+                </div>
+              } @else {
+                <!-- FLATTENED RENDERING - Works at ANY depth -->
+                @for (token of flattenLogicTokens(logicTokens()); track token.id) {
+                  <div
+                    class="token-wrapper"
+                    [style]="getIndentStyle(token.depth)"
+                    cdkDrag
+                    [cdkDragData]="token">
+                    @if (token.depth > 0) {
+                      <div class="connection-line" [style.left.px]="token.depth * 24 - 16"></div>
+                    }
+
+                    <div
+                      [class]="getTokenClass(token)"
+                      (click)="selectToken(token.id)"
+                      (dblclick)="startEditing(token.id)">
+                      <mat-icon class="drag-handle" cdkDragHandle>drag_indicator</mat-icon>
+
+                      <div class="token-content">
+                        <mat-icon class="token-type-icon">
+                          @switch (token.type) {
+                            @case ('if') {
+                              filter_alt
+                            }
+                            @case ('then') {
+                              call_made
+                            }
+                            @case ('else') {
+                              alt_route
+                            }
+                            @case ('and') {
+                              add_circle
+                            }
+                            @case ('or') {
+                              change_circle
+                            }
+                            @case ('field') {
+                              text_fields
+                            }
+                            @case ('operator') {
+                              functions
+                            }
+                            @case ('value') {
+                              data_object
+                            }
+                            @default {
+                              label
+                            }
+                          }
+                        </mat-icon>
+
+                        @if (editingTokenId() === token.id) {
+                          <input
+                            type="text"
+                            [value]="token.value"
+                            #editInput
+                            (blur)="saveEdit(token.id, editInput.value)"
+                            (keydown.enter)="
+                              saveEdit(token.id, editInput.value); $event.preventDefault()
+                            "
+                            (keydown.escape)="editingTokenId.set(null); $event.preventDefault()"
+                            autofocus />
+                        } @else {
+                          <span class="token-value">{{ token.value }}</span>
+                        }
+
+                        @if (token.metadata?.fieldType) {
+                          <span class="token-metadata type-badge">{{
+                            token.metadata.fieldType
+                          }}</span>
+                        }
+                        @if (token.metadata?.unit) {
+                          <span class="token-metadata unit-badge">{{ token.metadata.unit }}</span>
+                        }
+                      </div>
+
+                      <div class="token-actions">
+                        <button
+                          mat-icon-button
+                          class="token-action-btn add-child"
+                          (click)="
+                            addToken(ribbonOperators.logic[0], token.id); $event.stopPropagation()
+                          "
+                          matTooltip="Add child">
+                          <mat-icon>add</mat-icon>
+                        </button>
+                        <button
+                          mat-icon-button
+                          class="token-action-btn delete"
+                          (click)="deleteToken(token.id); $event.stopPropagation()"
+                          matTooltip="Delete">
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+
+            <!-- ADD VALUE INPUT - ALWAYS VISIBLE -->
+
+            <div class="value-input-container">
+              <mat-icon>edit_note</mat-icon>
+              <input
+                #valueInput
+                type="text"
+                [formControl]="valueInputControl"
+                placeholder="Add Value (Male, Unknown, etc.)"
+                (keydown.enter)="$event.preventDefault(); handleAddValue()" />
+              <button
+                type="button"
+                class="add-value-btn"
+                (click)="handleAddValue()"
+                [disabled]="!valueInputControl.value?.trim()">
+                Add Value
+              </button>
+            </div>
+
+            <!-- Expression Preview -->
+            <!-- Expression Preview – Always visible, prominent, collapsible -->
+            <!-- Expression Preview – Prominent, always starts visible, min height, scrollable -->
+            <!-- Expression Preview – Always visible, min height, scrollable -->>
+
+            <!-- Expression Preview – Always visible, expandable -->
+            <div class="expression-display prominent-preview effective-query">
+              <div class="expression-header">
+                <mat-icon>preview</mat-icon>
+                <span>Live Expression Preview</span>
+                <button
+                  class="toggle-preview-btn"
+                  mat-icon-button
+                  (click)="toggleExpressionExpanded()">
+                  <mat-icon>{{ expressionExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+                </button>
+              </div>
+              <div class="preview-content-wrapper" [class.collapsed]="!expressionExpanded()">
+                <pre class="expression-code">{{ expressionString() }}</pre>
+              </div>
+            </div>
+          }
+
+          <!-- JSON Contract View -->
+          @if (showJsonContract()) {
+            <div class="expression-display" style="min-height: 400px; max-height: none">
+              <div class="expression-header">
+                <mat-icon>code</mat-icon>
+                <span>JSON Data Contract</span>
+                <button mat-icon-button (click)="copyJsonLogic()" style="margin-left: auto">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+              </div>
+              <pre class="expression-code">{{ jsonLogicOutput() | json }}</pre>
+            </div>
+          }
+
+          <!-- IMPACT PREVIEW -->
+          <div class="impact-preview-section">
+            <div class="impact-header">
+              <mat-icon class="impact-icon">analytics</mat-icon>
+              <h3 class="impact-title">Impact Preview & Testing Console</h3>
+              <span class="impact-status-badge" [class]="impactPreview().status">
+                {{ impactPreview().status }}
+              </span>
+              <button mat-stroked-button class="test-rule-btn" (click)="requestImpactPreview()">
+                Test Rule
+              </button>
+            </div>
+
+            <p class="impact-help">Conflict Mappings: Affected Mappings: First Match Wins</p>
+
+            @switch (impactPreview().status) {
+              @case ('loading') {
+                <div class="impact-box loading">
+                  <mat-spinner diameter="20" class="loading-spinner"></mat-spinner>
+                  <span>Calculating impact...</span>
+                </div>
+              }
+              @case ('success') {
+                <div class="impact-box success">
+                  <div class="preview-content">
+                    <mat-icon class="success-icon">check_circle</mat-icon>
+                    <div class="impact-details">
+                      <strong>{{ impactPreview().message }}</strong>
+                      <div class="impact-stats">
+                        <div class="stat-item">
+                          <span class="stat-label">Matched</span>
+                          <span class="stat-value" style="color: #2ecc71">{{
+                            impactPreview().affectedMappings
+                          }}</span>
+                        </div>
+                        <div class="stat-item">
+                          <span class="stat-label">Not Matched</span>
+                          <span class="stat-value" style="color: #e74c3c">{{
+                            impactPreview().affectedCodes
+                          }}</span>
+                        </div>
+                        <div class="stat-item">
+                          <span class="stat-label">Errors</span>
+                          <span class="stat-value" style="color: #f39c12">{{
+                            impactPreview().conflictEvents
+                          }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="syntax-valid">
+                    Syntax Valid <mat-icon style="color: #2ecc71">check_circle</mat-icon>
+                  </div>
+                </div>
+              }
+              @case ('unavailable') {
+                <div class="impact-box unavailable">
+                  <mat-icon>info</mat-icon>
+                  <span>Complete the logic structure to calculate impact.</span>
+                </div>
+              }
+              @case ('idle') {
+                <div class="impact-box unavailable">
+                  <mat-icon>info</mat-icon>
+                  <span>Click "Test Rule" to calculate impact.</span>
+                </div>
+              }
+              @case ('error') {
+                <div class="impact-box error">
+                  <mat-icon>error</mat-icon>
+                  <span>Error: {{ impactPreview().message || 'Failed to calculate impact' }}</span>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    </as-split-area>
+  </as-split>
+
+  <!-- STICKY VALUE INPUT AT BOTTOM -->
+  <!--
+  <div class="value-input-container">
+    <mat-icon>edit_note</mat-icon>
+    <input
+      #valueInput
+      type="text"
+      [formControl]="valueInputControl"
+      placeholder="Add Value (Male, Unknown, etc.)"
+      (keydown.enter)="$event.preventDefault(); handleAddValue()" />
+    <button
+      type="button"
+      class="add-value-btn"
+      (click)="handleAddValue()"
+      [disabled]="!valueInputControl.value?.trim()">
+      Add Value
+    </button>
+  </div>-->
+</div>

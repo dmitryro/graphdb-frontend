@@ -30,6 +30,11 @@ export class EventService {
       'close_new_code_set_validation_rule_modal',
       EventActionTypes.CloseNewCodeSetValidationRuleModal,
     );
+    m.set('rule_assembler_logic_updated', EventActionTypes.RuleAssemblerLogicUpdated);
+    m.set('rule_assembler_impact_requested', EventActionTypes.RuleAssemblerImpactRequested);
+    m.set('rule_assembler_update', EventActionTypes.RuleAssemblerUpdate);
+    m.set('rule_assembler_clear', EventActionTypes.RuleAssemblerClear);
+    m.set('rule_assembler_calculate_impact', EventActionTypes.RuleAssemblerCalculateImpact);
     m.set('close_edit_codeset', EventActionTypes.CloseEditCodeSet);
     m.set('open_edit_codeset', EventActionTypes.OpenEditCodeSet);
     m.set('execute_codeset_action', EventActionTypes.ExecuteCodeSetAction);

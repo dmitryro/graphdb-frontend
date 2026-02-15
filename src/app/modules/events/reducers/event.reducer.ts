@@ -533,6 +533,36 @@ export function eventReducer(
         items: (action as any).payload,
       };
     }
+    case EventActionTypes.RuleAssemblerImpactRequested: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.RuleAssemblerLogicUpdated: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.RuleAssemblerUpdate: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.RuleAssemblerClear: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
+    case EventActionTypes.RuleAssemblerCalculateImpact: {
+      return {
+        ...state,
+        items: (action as any).payload,
+      };
+    }
     default:
       return state;
   }

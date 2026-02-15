@@ -1,0 +1,781 @@
+@use 'src/scss/variables' as *;
+
+// ============================================================================
+// ADVANCED SETTINGS - SOURCES & INGEST CONFIGURATION
+// ============================================================================
+
+// Z-INDEX MANAGEMENT
+$z-header: 100;
+$z-modal: 2000;
+
+// ============================================================================
+// MAIN CONTAINER
+// ============================================================================
+.advanced-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+// ============================================================================
+// PAGE HEADER
+// ============================================================================
+.advanced-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 40px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  position: sticky;
+  top: 0;
+  z-index: $z-header;
+
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    h1 {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-main);
+      opacity: 0.5;
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-main);
+      opacity: 0.6;
+      margin: 4px 0 0 0;
+    }
+  }
+
+  .header-right {
+    .environment-selector {
+      width: 180px;
+
+      ::ng-deep {
+        .mat-mdc-text-field-wrapper {
+          background-color: #e18840 !important;
+          border-radius: 6px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+        }
+
+        .mat-mdc-form-field-flex,
+        .mat-mdc-form-field-infix,
+        .mat-mdc-select,
+        .mat-mdc-select-trigger,
+        .mat-mdc-select-value {
+          background-color: transparent !important;
+        }
+
+        .mat-mdc-form-field-infix {
+          padding: 12px 0;
+          border: none !important;
+        }
+
+        .mat-mdc-select-value-text,
+        .mat-mdc-select-arrow {
+          color: white !important;
+          font-weight: 600;
+        }
+
+        .mat-mdc-select-arrow svg {
+          fill: white !important;
+        }
+
+        .mdc-notched-outline,
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          display: none !important;
+          border: none !important;
+        }
+
+        &:hover .mat-mdc-text-field-wrapper {
+          background-color: #c97637 !important;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// MAIN CONTENT AREA
+// ============================================================================
+.advanced-content {
+  padding: 24px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+// ============================================================================
+// CONFIG SECTION LAYOUT
+// ============================================================================
+.config-section {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+
+    .section-title-block {
+      flex: 1;
+
+      h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin: 0 0 6px 0;
+      }
+
+      .section-description {
+        font-size: 13px;
+        color: var(--text-main);
+        opacity: 0.6;
+        margin: 0;
+        line-height: 1.5;
+      }
+    }
+
+    .section-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+  }
+
+  .section-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--text-main);
+      opacity: 0.6;
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 12px;
+    }
+  }
+}
+
+// Simplified section headers for two-column layout
+.section-header-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+  }
+
+  .section-description {
+    font-size: 13px;
+    color: var(--text-main);
+    opacity: 0.6;
+    margin: 0;
+  }
+
+  .header-actions-inline {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+}
+
+.section-footer-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border-color);
+
+  .footer-text {
+    font-size: 13px;
+    color: var(--text-main);
+    opacity: 0.6;
+  }
+
+  .footer-actions {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+// ============================================================================
+// STATUS BADGES
+// ============================================================================
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.active,
+  &.enabled {
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+  }
+
+  &.disabled {
+    background: rgba(149, 165, 166, 0.15);
+    color: #95a5a6;
+  }
+}
+
+// ============================================================================
+// PRIMARY BUTTON STYLING
+// ============================================================================
+.primary-btn {
+  background-color: #436d9d !important;
+  color: white !important;
+  height: 40px !important;
+  padding: 0 20px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+
+  &:hover {
+    background-color: #3a5d85 !important;
+  }
+}
+
+// ============================================================================
+// STORAGE BACKEND OPTIONS - INLINE RADIOS, NO PANELS
+// ============================================================================
+.storage-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.storage-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.storage-radio-row {
+  display: flex;
+  align-items: center;
+
+  ::ng-deep .mat-mdc-radio-button {
+    .mdc-label {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      font-size: 15px;
+    }
+
+    .radio-label {
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .radio-sublabel {
+      font-size: 14px;
+      color: var(--text-main);
+      opacity: 0.6;
+    }
+  }
+}
+
+.storage-details {
+  margin-left: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.detail-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+
+  .detail-label {
+    color: var(--text-main);
+    opacity: 0.6;
+    min-width: 120px;
+  }
+
+  .detail-value {
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+
+    &.password {
+      font-family: monospace;
+      letter-spacing: 2px;
+    }
+
+    .detail-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      opacity: 0.5;
+    }
+  }
+}
+
+// ============================================================================
+// REPLICATION CONFIG - INLINE LAYOUT
+// ============================================================================
+.replication-config {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.replication-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .replication-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-main);
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .label-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+    }
+  }
+
+  .replication-radios {
+    display: flex;
+    gap: 24px;
+
+    .replication-radio {
+      ::ng-deep .mdc-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .radio-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        opacity: 0.7;
+      }
+    }
+  }
+
+  .region-value {
+    font-size: 14px;
+    color: var(--text-main);
+  }
+}
+
+// ============================================================================
+// TWO COLUMN LAYOUT
+// ============================================================================
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ============================================================================
+// MIGRATION TABLE
+// ============================================================================
+.migration-table {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+
+  .table-header,
+  .table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.2fr;
+    gap: 12px;
+    padding: 10px 16px;
+    align-items: center;
+  }
+
+  .table-header {
+    background: var(--bg-color);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-main);
+    opacity: 0.7;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .table-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .table-row {
+    font-size: 13px;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border-color);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .col-source {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .source-name,
+      .target-name {
+        font-weight: 400;
+      }
+
+      .arrow-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        opacity: 0.4;
+      }
+    }
+
+    .col-mode,
+    .col-scope,
+    .col-last {
+      font-size: 13px;
+      font-weight: 400;
+    }
+  }
+}
+
+// ============================================================================
+// BACKUP CONFIG - SIMPLIFIED ROWS
+// ============================================================================
+.backup-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.backup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+
+  .backup-row-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .backup-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+    }
+
+    .backup-label {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-main);
+    }
+  }
+
+  .backup-value {
+    font-size: 13px;
+    color: var(--text-main);
+    opacity: 0.8;
+  }
+
+  .backup-row-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  &.restore-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    .restore-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-left: 26px;
+      width: 100%;
+
+      .date-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        .date-input {
+          padding: 8px 40px 8px 12px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          background: var(--surface-color);
+          color: var(--text-main);
+          font-size: 13px;
+          width: 200px;
+          cursor: pointer;
+          outline: none;
+
+          &:focus {
+            border-color: #436d9d;
+          }
+        }
+
+        .calendar-icon {
+          position: absolute;
+          right: 10px;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+          opacity: 0.6;
+          cursor: pointer;
+
+          &:hover {
+            opacity: 1;
+          }
+        }
+      }
+
+      .dry-run-wrapper {
+        ::ng-deep .mat-mdc-checkbox {
+          .mdc-checkbox__background {
+            border-color: var(--border-color) !important;
+          }
+
+          &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+            background-color: #436d9d !important;
+            border-color: #436d9d !important;
+          }
+
+          .mdc-label {
+            color: var(--text-main) !important;
+            font-size: 13px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.secondary-btn {
+  height: 36px !important;
+  font-size: 13px !important;
+  color: #436d9d !important;
+  border-color: #436d9d !important;
+
+  &:hover {
+    background: rgba(67, 109, 157, 0.05) !important;
+  }
+}
+
+.backup-actions {
+  gap: 8px;
+
+  button {
+    height: 36px !important;
+    font-size: 13px !important;
+  }
+}
+
+// ============================================================================
+// RADIO BUTTON THEMING
+// ============================================================================
+::ng-deep {
+  .advanced-container {
+    .mat-mdc-radio-button {
+      .mdc-radio__outer-circle {
+        border-color: #666 !important;
+      }
+
+      &.mat-mdc-radio-checked .mdc-radio__outer-circle {
+        border-color: #436d9d !important;
+      }
+
+      .mdc-radio__inner-circle {
+        background-color: #436d9d !important;
+      }
+
+      .mdc-label {
+        color: var(--text-main) !important;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// DARK MODE OVERRIDES
+// ============================================================================
+[data-theme='dark'] {
+  .advanced-container {
+    .backend-option {
+      &:hover {
+        background: rgba(91, 155, 213, 0.05);
+      }
+
+      &.selected {
+        background: rgba(91, 155, 213, 0.12);
+      }
+    }
+
+    .migration-table .table-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+  }
+
+  ::ng-deep {
+    .advanced-container {
+      .mat-mdc-radio-button {
+        .mdc-radio__outer-circle {
+          border-color: #888 !important;
+        }
+
+        &.mat-mdc-radio-checked .mdc-radio__outer-circle {
+          border-color: #5b9bd5 !important;
+        }
+
+        .mdc-radio__inner-circle {
+          background-color: #5b9bd5 !important;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// RESPONSIVE ADJUSTMENTS
+// ============================================================================
+@media (max-width: 768px) {
+  .advanced-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+
+    .header-right {
+      .environment-selector {
+        width: 100%;
+      }
+    }
+  }
+
+  .advanced-content {
+    padding: 16px 20px;
+  }
+
+  .config-section {
+    padding: 16px;
+
+    .section-header {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+    }
+  }
+
+  .migration-table {
+    .table-header,
+    .table-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 12px 16px;
+    }
+
+    .col-source .migration-flow {
+      flex-wrap: wrap;
+    }
+  }
+
+  .backup-config .config-item.restore-item .restore-controls {
+    flex-direction: column;
+    align-items: stretch;
+
+    .date-picker {
+      max-width: 100%;
+    }
+  }
+}
+
+// ============================================================================
+// ANIMATIONS
+// ============================================================================
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.config-section {
+  animation: fadeIn 0.3s ease-out;
+}

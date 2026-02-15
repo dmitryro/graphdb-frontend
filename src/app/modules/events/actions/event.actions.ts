@@ -1,6 +1,11 @@
 import { Action } from '@modules/events/interfaces/action.interface';
 
 export enum EventActionTypes {
+  RuleAssemblerImpactRequested = '[Event] Rule Assembler Impact Requested',
+  RuleAssemblerLogicUpdated = '[Event] Rule Assembler Logic Updated',
+  RuleAssemblerUpdate = '[Event] Rule Assembler Update',
+  RuleAssemblerClear = '[Event] Rule Assembler Clear',
+  RuleAssemblerCalculateImpact = '[Event] Rule Assembler Calculate Impact',
   ExecuteCodeSetAction = '[Event] Execute Code Set Action',
   OpenEditCodeSet = '[Event] Open Edit Code Set',
   CloseEditCodeSet = '[Event] Close Edit code Set',
@@ -116,6 +121,26 @@ export enum EventActionTypes {
   UpdateBreadcrumb = '[Event] Update Breadcrumb',
   BreadcrumbNavigate = '[Event] Breadcrumb Navigate',
   ViewRelatedModel = '[Event] View Related Model',
+}
+
+export class RuleAssemblerImpactRequested implements Action {
+  readonly type = EventActionTypes.RuleAssemblerImpactRequested;
+}
+
+export class RuleAssemblerLogicUpdated implements Action {
+  readonly type = EventActionTypes.RuleAssemblerLogicUpdated;
+}
+
+export class RuleAssemblerUpdate implements Action {
+  readonly type = EventActionTypes.RuleAssemblerUpdate;
+}
+
+export class RuleAssemblerClear implements Action {
+  readonly type = EventActionTypes.RuleAssemblerClear;
+}
+
+export class RuleAssemblerCalculateImpact implements Action {
+  readonly type = EventActionTypes.RuleAssemblerCalculateImpact;
 }
 
 export class ExecuteCodeSetAction implements Action {
@@ -768,6 +793,11 @@ export type EventActions =
   | AddRule
   | DeleteRule
   | EditRule
+  | RuleAssemblerImpactRequested
+  | RuleAssemblerLogicUpdated
+  | RuleAssemblerUpdate
+  | RuleAssemblerClear
+  | RuleAssemblerCalculateImpact
   | InspectSource
   | SyncSource
   | CodeAddedToSet

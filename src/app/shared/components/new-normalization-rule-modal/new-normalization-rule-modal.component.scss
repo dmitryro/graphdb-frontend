@@ -1496,3 +1496,2217 @@ code {
     font-size: 20px;
   }
 }
+
+// ============================================================================
+// ADDITIONS TO EXISTING SCSS FILE
+// Add these styles to the existing new-normalization-rule-modal.component.scss
+// ============================================================================
+
+// ============================================================================
+// STEP 0 - CATEGORY SELECTION
+// ============================================================================
+.category-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.category-option {
+  padding: 20px 24px;
+  border-radius: 8px;
+  border: 2px solid;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+
+  .category-title {
+    font-weight: 600;
+    font-size: 16px;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .category-desc {
+    display: block;
+    font-size: 13px;
+    margin-left: 32px;
+    line-height: 1.5;
+    opacity: 0.8;
+  }
+
+  ::ng-deep .mat-mdc-radio-button {
+    width: 100%;
+  }
+
+  ::ng-deep .mdc-label {
+    width: 100%;
+  }
+}
+
+// Dark theme category options
+.dark .category-option {
+  border-color: #333;
+  background: #252525;
+
+  &:hover {
+    border-color: #5b9bd5;
+    background: rgba(91, 155, 213, 0.05);
+  }
+
+  .category-desc {
+    color: #999;
+  }
+
+  &.selected {
+    border-color: #5b9bd5;
+    background: rgba(91, 155, 213, 0.1);
+  }
+}
+
+// Light theme category options
+.light .category-option {
+  border-color: #ddd;
+  background: #fff;
+
+  &:hover {
+    border-color: #1976d2;
+    background: rgba(25, 118, 210, 0.03);
+  }
+
+  .category-desc {
+    color: #666;
+  }
+
+  &.selected {
+    border-color: #1976d2;
+    background: rgba(25, 118, 210, 0.05);
+  }
+}
+
+// ============================================================================
+// CODE RULE LOGIC BUILDER
+// ============================================================================
+.logic-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 24px 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid;
+
+  .dark & {
+    color: #e0e0e0;
+    border-color: #444;
+  }
+
+  .light & {
+    color: #333;
+    border-color: #ddd;
+  }
+}
+
+.logic-builder {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+
+  .dark & {
+    background: #252525;
+    border-color: #444;
+  }
+
+  .light & {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+}
+
+.logic-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.logic-label {
+  font-weight: 700;
+  font-size: 14px;
+  padding: 0 8px;
+  min-width: 30px;
+
+  .dark & {
+    color: #5b9bd5;
+  }
+
+  .light & {
+    color: #1976d2;
+  }
+}
+
+.logic-field {
+  flex: 1;
+  min-width: 150px;
+
+  ::ng-deep .mat-mdc-form-field {
+    width: 100%;
+  }
+}
+
+.message-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+
+  button {
+    align-self: flex-start;
+  }
+}
+
+// ============================================================================
+// FOOTER BUTTON UPDATES
+// ============================================================================
+.step-footer-actions {
+  .cancel-btn {
+    background-color: transparent !important;
+    color: #666 !important;
+    border: 1px solid #999 !important;
+
+    &:hover:not(:disabled) {
+      background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+  }
+
+  &.dark .cancel-btn {
+    color: #aaa !important;
+    border-color: #555 !important;
+
+    &:hover:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+  }
+}
+
+// ============================================================================
+// STEPPER NAVIGATION UPDATE FOR 5 STEPS
+// ============================================================================
+.stepper-nav {
+  .step-item {
+    &:nth-child(n + 5) {
+      .step-label {
+        font-size: 13px;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// REVIEW SECTION ENHANCEMENTS
+// ============================================================================
+.logic-summary-box {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 12px;
+
+  .dark & {
+    background: #252525;
+    border-color: #444;
+  }
+
+  .light & {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+
+  p {
+    margin: 8px 0;
+    font-size: 14px;
+    line-height: 1.6;
+
+    strong {
+      font-weight: 600;
+      margin-right: 8px;
+    }
+  }
+}
+
+.no-config-message {
+  font-style: italic;
+  opacity: 0.6;
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+}
+
+// ============================================================================
+// RESPONSIVE ADJUSTMENTS
+// ============================================================================
+@media (max-width: 768px) {
+  .logic-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .logic-field {
+    width: 100%;
+  }
+
+  .category-option {
+    .category-desc {
+      margin-left: 0;
+      margin-top: 8px;
+    }
+  }
+
+  .stepper-nav {
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .step-item {
+      .step-label {
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+.category-option {
+  &:focus-within {
+    outline: 2px solid;
+    outline-offset: 2px;
+
+    .dark & {
+      outline-color: #5b9bd5;
+    }
+
+    .light & {
+      outline-color: #1976d2;
+    }
+  }
+}
+
+// ============================================================================
+// EMPTY PANEL STYLING (for when no logic type selected)
+// ============================================================================
+.empty-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  opacity: 0.5;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  p {
+    font-size: 14px;
+    margin: 0;
+  }
+}
+
+// ============================================================================
+// APPEND THESE STYLES TO YOUR EXISTING SCSS FILE
+// New controls for Step 0 governance fields and complete Mapping Rule workflow
+// ============================================================================
+
+// ============================================================================
+// STEP 0 - CATEGORY SELECTION & GOVERNANCE FIELDS
+// ============================================================================
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 24px 0 16px 0;
+  display: block;
+
+  .dark & {
+    color: #e0e0e0;
+  }
+
+  .light & {
+    color: #333;
+  }
+}
+
+// CATEGORY SELECTION (NO ROUNDED PANELS - FLAT DESIGN)
+.category-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.category-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+
+  ::ng-deep .mat-mdc-radio-button {
+    width: 100%;
+  }
+
+  .category-title {
+    font-weight: 600;
+    font-size: 15px;
+    display: block;
+  }
+
+  .category-desc {
+    font-size: 13px;
+    margin-left: 32px; // Align under text, not radio circle
+    line-height: 1.5;
+    display: block;
+  }
+
+  .dark & .category-desc {
+    color: #999;
+  }
+
+  .light & .category-desc {
+    color: #666;
+  }
+}
+
+// INTENDED AUDIENCE CHECKBOXES
+.checkbox-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.checkbox-label {
+  font-size: 14px;
+  font-weight: 500;
+  display: block;
+
+  .dark & {
+    color: #bbb;
+  }
+
+  .light & {
+    color: #666;
+  }
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+
+  .dark & {
+    &:hover {
+      background: rgba(91, 155, 213, 0.08);
+    }
+  }
+
+  .light & {
+    &:hover {
+      background: rgba(25, 118, 210, 0.06);
+    }
+  }
+}
+
+// CHECKBOX STYLING (matching map-code-set.component.scss)
+.dark ::ng-deep {
+  .mdc-checkbox__background {
+    border-color: #979797 !important;
+  }
+
+  .mat-mdc-checkbox.mat-mdc-checkbox-checked .mdc-checkbox__background {
+    background-color: var(--primary) !important;
+    border-color: #979797 !important;
+  }
+
+  .mdc-checkbox__checkmark-path {
+    stroke: #979797 !important;
+  }
+
+  .mdc-checkbox__mixedmark {
+    border-color: #979797 !important;
+  }
+}
+
+.light ::ng-deep {
+  .mdc-checkbox__background {
+    border-color: #777a7c !important;
+  }
+
+  .mat-mdc-checkbox.mat-mdc-checkbox-checked .mdc-checkbox__background {
+    background-color: var(--primary) !important;
+    border-color: #777a7c !important;
+  }
+
+  .mdc-checkbox__checkmark-path {
+    stroke: #777a7c !important;
+  }
+
+  .mdc-checkbox__mixedmark {
+    border-color: #777a7c !important;
+  }
+}
+
+// ============================================================================
+// MAPPING RULE - STEP 3 (SCOPE) - MODEL FIELDS TREE VIEW
+// ============================================================================
+
+.subsection-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 24px 0 8px 0;
+
+  .dark & {
+    color: #e0e0e0;
+  }
+
+  .light & {
+    color: #333;
+  }
+}
+
+.subsection-help {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .dark & {
+    color: #999;
+  }
+
+  .light & {
+    color: #666;
+  }
+
+  .help-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+  }
+}
+
+.fields-tree-section {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+
+  &.dark {
+    background: #252525;
+    border-color: #444;
+  }
+
+  &.light {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+}
+
+.fields-tree-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .dark & {
+    color: #5b9bd5;
+  }
+
+  .light & {
+    color: #1976d2;
+  }
+}
+
+.tree-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 4px 0;
+
+  .tree-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+  }
+
+  .dark & {
+    color: #ccc;
+  }
+
+  .light & {
+    color: #555;
+  }
+}
+
+// ============================================================================
+// SOURCE CODE SYSTEMS (MULTI-SELECT WITH CHIPS)
+// ============================================================================
+
+.code-systems-section {
+  margin: 16px 0;
+
+  .field-label {
+    font-size: 14px;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 8px;
+
+    .dark & {
+      color: #bbb;
+    }
+
+    .light & {
+      color: #666;
+    }
+  }
+}
+
+.selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  &.dark {
+    .chip {
+      background: #3d3d3d;
+      color: #fff;
+      border: 1px solid #555;
+    }
+  }
+
+  &.light {
+    .chip {
+      background: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #90caf9;
+    }
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+
+  .chip-close {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    opacity: 0.7;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+// ============================================================================
+// SUBSET FILTERS SECTION
+// ============================================================================
+
+.subset-filters-section {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+
+  &.dark {
+    background: #252525;
+    border-color: #444;
+  }
+
+  &.light {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+
+  h4 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+
+    .dark & {
+      color: #e0e0e0;
+    }
+
+    .light & {
+      color: #333;
+    }
+  }
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filter-constraints {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+
+  .dark & {
+    background: rgba(91, 155, 213, 0.1);
+    color: #aaa;
+  }
+
+  .light & {
+    background: rgba(25, 118, 210, 0.05);
+    color: #666;
+  }
+}
+
+.filter-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .filter-field {
+    flex: 1;
+  }
+
+  button[mat-icon-button] {
+    margin-top: 8px;
+  }
+}
+
+// ============================================================================
+// MAPPING RULE LOGIC BUILDER (STEP 4)
+// ============================================================================
+
+.logic-builder-mapping {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 16px 0;
+
+  .dark & {
+    background: #252525;
+    border-color: #444;
+  }
+
+  .light & {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+}
+
+.logic-row-mapping {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .operand-select,
+  .attribute-select {
+    flex: 2;
+    min-width: 180px;
+  }
+
+  .operator-select {
+    flex: 0.8;
+    min-width: 100px;
+  }
+
+  .value-input {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .clear-btn {
+    flex-shrink: 0;
+  }
+
+  .field-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+}
+
+.help-text {
+  font-size: 13px;
+  margin: 12px 0 4px 0;
+
+  .dark & {
+    color: #999;
+  }
+
+  .light & {
+    color: #666;
+  }
+}
+
+.help-text-secondary {
+  font-size: 12px;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .dark & {
+    color: #777;
+  }
+
+  .light & {
+    color: #888;
+  }
+
+  .inline-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+  }
+}
+
+.message-container-mapping {
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .insert-var-btn {
+    align-self: flex-start;
+  }
+
+  .character-count {
+    font-size: 12px;
+    text-align: right;
+
+    .dark & {
+      color: #777;
+    }
+
+    .light & {
+      color: #888;
+    }
+  }
+}
+
+// ============================================================================
+// IMPACT PREVIEW SECTION (STEP 4 LOGIC)
+// ============================================================================
+
+.impact-preview-section {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 24px 0;
+
+  &.dark {
+    background: #252525;
+    border-color: #444;
+  }
+
+  &.light {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+
+  .impact-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    font-weight: 600;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    .dark & {
+      color: #e0e0e0;
+    }
+
+    .light & {
+      color: #333;
+    }
+  }
+
+  .impact-help {
+    font-size: 13px;
+    margin: 0 0 16px 0;
+
+    em {
+      font-style: italic;
+    }
+
+    .dark & {
+      color: #999;
+    }
+
+    .light & {
+      color: #666;
+    }
+  }
+}
+
+.impact-preview-box {
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &.success {
+    .dark & {
+      background: rgba(76, 175, 80, 0.1);
+      border-color: #4caf50;
+      color: #81c784;
+    }
+
+    .light & {
+      background: rgba(76, 175, 80, 0.08);
+      border-color: #4caf50;
+      color: #2e7d32;
+    }
+  }
+
+  &.loading {
+    .dark & {
+      background: rgba(91, 155, 213, 0.1);
+      border-color: #5b9bd5;
+      color: #90caf9;
+    }
+
+    .light & {
+      background: rgba(25, 118, 210, 0.08);
+      border-color: #1976d2;
+      color: #1565c0;
+    }
+  }
+
+  &.unavailable {
+    .dark & {
+      background: rgba(255, 152, 0, 0.1);
+      border-color: #ff9800;
+      color: #ffb74d;
+    }
+
+    .light & {
+      background: rgba(255, 152, 0, 0.08);
+      border-color: #ff9800;
+      color: #e65100;
+    }
+  }
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+
+    &.spinning {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+.preview-success {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .impact-numbers {
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================================================
+// REVIEW STEP (STEP 5) - TWO-COLUMN LAYOUT
+// ============================================================================
+
+.review-layout {
+  display: flex;
+  gap: 24px;
+
+  .review-main {
+    flex: 1;
+  }
+
+  .review-sidebar {
+    flex: 0 0 300px;
+  }
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+
+  .dark & {
+    color: #ccc;
+  }
+
+  .light & {
+    color: #555;
+  }
+}
+
+.message-box {
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+
+  .error-label {
+    color: #f44336;
+    margin-right: 4px;
+  }
+
+  .dark & {
+    background: #2a2a2a;
+    border: 1px solid #444;
+  }
+
+  .light & {
+    background: #fff;
+    border: 1px solid #ddd;
+  }
+}
+
+.severity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+
+  &.error {
+    background: #fee2e2;
+    color: #ef4444;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &.warning {
+    background: #fef3c7;
+    color: #f59e0b;
+  }
+
+  &.info {
+    background: #dbeafe;
+    color: #3b82f6;
+  }
+}
+
+// ============================================================================
+// IMPACT PREVIEW CARD (REVIEW SIDEBAR)
+// ============================================================================
+
+.impact-preview-card {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 20px;
+
+  &.dark {
+    background: #252525;
+    border-color: #444;
+  }
+
+  &.light {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+
+  .impact-card-title {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    font-weight: 600;
+
+    .dark & {
+      color: #e0e0e0;
+    }
+
+    .light & {
+      color: #333;
+    }
+  }
+
+  .impact-card-help {
+    font-size: 13px;
+    margin: 0 0 16px 0;
+
+    .dark & {
+      color: #999;
+    }
+
+    .light & {
+      color: #666;
+    }
+  }
+}
+
+.impact-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+
+  .stat-item {
+    text-align: center;
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+
+      .dark & {
+        color: #5b9bd5;
+      }
+
+      .light & {
+        color: #1976d2;
+      }
+    }
+
+    .stat-label {
+      font-size: 13px;
+
+      .dark & {
+        color: #999;
+      }
+
+      .light & {
+        color: #666;
+      }
+    }
+  }
+}
+
+.impact-stats-alt {
+  font-size: 14px;
+  line-height: 2;
+  margin-bottom: 16px;
+
+  .dark & {
+    color: #ccc;
+  }
+
+  .light & {
+    color: #555;
+  }
+}
+
+.last-calculated {
+  font-size: 12px;
+  font-style: italic;
+  text-align: center;
+
+  .dark & {
+    color: #777;
+  }
+
+  .light & {
+    color: #888;
+  }
+}
+
+// ============================================================================
+// RESPONSIVE ADJUSTMENTS
+// ============================================================================
+
+@media (max-width: 768px) {
+  .review-layout {
+    flex-direction: column;
+
+    .review-sidebar {
+      flex: 1;
+    }
+  }
+
+  .logic-row-mapping {
+    flex-direction: column;
+    align-items: stretch;
+
+    .operand-select,
+    .attribute-select,
+    .operator-select,
+    .value-input {
+      width: 100%;
+    }
+  }
+
+  .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-stats {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+// ============================================================================
+// HELPER UTILITIES
+// ============================================================================
+
+.logic-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: nowrap;
+}
+
+.alias-input-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.empty-state-text {
+  padding: 20px;
+  text-align: center;
+  opacity: 0.6;
+  font-size: 13px;
+}
+
+.character-count {
+  font-size: 12px;
+  text-align: right;
+
+  .dark & {
+    color: #777;
+  }
+
+  .light & {
+    color: #888;
+  }
+}
+
+// ============================================================================
+// STEP 2 SCOPE - STYLING FIXES
+// Add these styles to your existing SCSS file
+// ============================================================================
+
+// ============================================================================
+// INFO CALLOUT (STEP 2)
+// ============================================================================
+.info-callout {
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+
+  &.dark {
+    background: rgba(91, 155, 213, 0.12);
+    border-left: 4px solid #5b9bd5;
+    color: #e0e0e0;
+
+    strong {
+      color: #5b9bd5;
+      font-weight: 600;
+    }
+  }
+
+  &.light {
+    background: rgba(25, 118, 210, 0.08);
+    border-left: 4px solid #1976d2;
+    color: #333;
+
+    strong {
+      color: #1976d2;
+      font-weight: 600;
+    }
+  }
+}
+
+// ============================================================================
+// SUBSECTION TITLES & HELP TEXT
+// ============================================================================
+.subsection-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 32px 0 12px 0;
+
+  .dark & {
+    color: #e0e0e0;
+  }
+
+  .light & {
+    color: #222;
+  }
+}
+
+.subsection-help {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .dark & {
+    color: #999;
+  }
+
+  .light & {
+    color: #666;
+  }
+
+  .help-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+  }
+}
+
+// ============================================================================
+// MODEL FIELDS TREE VIEW (DYNAMIC)
+// ============================================================================
+.fields-tree-section {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+
+  &.dark {
+    background: #252525;
+    border-color: #444;
+  }
+
+  &.light {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+}
+
+.fields-tree-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  padding-bottom: 12px;
+  border-bottom: 1px solid;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .dark & {
+    color: #5b9bd5;
+    border-bottom-color: #383838;
+  }
+
+  .light & {
+    color: #1976d2;
+    border-bottom-color: #e0e0e0;
+  }
+}
+
+.tree-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+
+  .tree-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  .dark & {
+    color: #ccc;
+    background: rgba(255, 255, 255, 0.03);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  .light & {
+    color: #555;
+    background: rgba(0, 0, 0, 0.02);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+}
+
+// ============================================================================
+// CODE SYSTEMS SECTION (FIXED - NO DUPLICATE CHECKBOXES)
+// ============================================================================
+.code-systems-section {
+  margin: 24px 0;
+
+  .field-label {
+    font-size: 14px;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 12px;
+
+    .dark & {
+      color: #bbb;
+    }
+
+    .light & {
+      color: #666;
+    }
+  }
+}
+
+// Selected Code Systems Chips
+.selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  min-height: 48px;
+
+  &.dark {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed #444;
+  }
+
+  &.light {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px dashed #ccc;
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid;
+  transition: all 0.2s ease;
+
+  .chip-close {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  .dark & {
+    background: #3d3d3d;
+    color: #fff;
+    border-color: #555;
+
+    .chip-close {
+      color: #aaa;
+
+      &:hover {
+        color: #ff5252;
+      }
+    }
+  }
+
+  .light & {
+    background: #e3f2fd;
+    color: #1565c0;
+    border-color: #90caf9;
+
+    .chip-close {
+      color: #1976d2;
+
+      &:hover {
+        color: #d32f2f;
+      }
+    }
+  }
+}
+
+// CRITICAL FIX: Remove duplicate checkbox styling in mat-option
+// This ensures ONLY the native Material multi-select checkboxes appear
+.code-systems-section {
+  ::ng-deep {
+    // Hide any manually added checkboxes inside options
+    mat-option mat-checkbox {
+      display: none !important;
+    }
+
+    // Ensure Material's native multi-select checkboxes work correctly
+    .mat-pseudo-checkbox {
+      display: inline-flex !important;
+      margin-right: 8px;
+    }
+  }
+}
+
+// ============================================================================
+// SUBSET FILTERS SECTION
+// ============================================================================
+.subset-filters-section {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 24px;
+  margin: 24px 0;
+
+  &.dark {
+    background: #252525;
+    border-color: #444;
+  }
+
+  &.light {
+    background: #f8f9fa;
+    border-color: #ddd;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+
+    .dark & {
+      color: #e0e0e0;
+    }
+
+    .light & {
+      color: #333;
+    }
+  }
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid;
+
+  .dark & {
+    border-bottom-color: #383838;
+  }
+
+  .light & {
+    border-bottom-color: #e0e0e0;
+  }
+}
+
+.filter-constraints {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  line-height: 1.8;
+
+  .dark & {
+    background: rgba(91, 155, 213, 0.08);
+    color: #aaa;
+    border: 1px solid rgba(91, 155, 213, 0.2);
+  }
+
+  .light & {
+    background: rgba(25, 118, 210, 0.05);
+    color: #666;
+    border: 1px solid rgba(25, 118, 210, 0.15);
+  }
+}
+
+.filter-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .filter-field {
+    flex: 1;
+    min-width: 0;
+  }
+
+  button[mat-icon-button] {
+    margin-top: 10px;
+    flex-shrink: 0;
+  }
+}
+
+// ============================================================================
+// FORM ROW LAYOUT
+// ============================================================================
+.form-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+
+  .flex-1 {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .flex-2 {
+    flex: 2;
+    min-width: 0;
+  }
+}
+
+// ============================================================================
+// RESPONSIVE ADJUSTMENTS FOR STEP 2
+// ============================================================================
+@media (max-width: 1024px) {
+  .fields-tree-section {
+    padding: 16px;
+  }
+
+  .tree-items {
+    gap: 8px;
+  }
+
+  .selected-chips {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .subsection-title {
+    font-size: 15px;
+    margin: 24px 0 10px 0;
+  }
+
+  .filter-row {
+    flex-direction: column;
+    gap: 0;
+
+    .filter-field {
+      width: 100%;
+    }
+
+    button[mat-icon-button] {
+      align-self: flex-end;
+      margin-top: 8px;
+    }
+  }
+
+  .selected-chips {
+    min-height: auto;
+    padding: 10px;
+  }
+
+  .chip {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+}
+
+// ============================================================================
+// DARK/LIGHT THEME CONSISTENCY FIXES
+// ============================================================================
+
+// Ensure all mat-form-fields in Step 2 have proper theming
+.step-content {
+  ::ng-deep {
+    .mat-mdc-form-field {
+      width: 100%;
+    }
+
+    // Fix hint text color
+    .mat-mdc-form-field-hint {
+      .dark & {
+        color: #777 !important;
+      }
+
+      .light & {
+        color: #888 !important;
+      }
+    }
+
+    // Fix label colors
+    .mat-mdc-floating-label {
+      .dark & {
+        color: #bbb !important;
+      }
+
+      .light & {
+        color: #666 !important;
+      }
+    }
+
+    // Fix dropdown arrow colors
+    .mat-mdc-select-arrow {
+      .dark & {
+        color: rgba(255, 255, 255, 0.7) !important;
+      }
+
+      .light & {
+        color: rgba(0, 0, 0, 0.54) !important;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// ACCESSIBILITY ENHANCEMENTS
+// ============================================================================
+.chip {
+  &:focus-visible {
+    outline: 2px solid;
+    outline-offset: 2px;
+
+    .dark & {
+      outline-color: #5b9bd5;
+    }
+
+    .light & {
+      outline-color: #1976d2;
+    }
+  }
+}
+
+.tree-item {
+  &:focus-visible {
+    outline: 2px solid;
+    outline-offset: -2px;
+
+    .dark & {
+      outline-color: #5b9bd5;
+    }
+
+    .light & {
+      outline-color: #1976d2;
+    }
+  }
+}
+
+// ============================================================================
+// ANIMATION FOR DYNAMIC FIELD UPDATES
+// ============================================================================
+@keyframes fadeInFields {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fields-tree-section {
+  animation: fadeInFields 0.3s ease-out;
+}
+
+.tree-item {
+  animation: fadeInFields 0.2s ease-out backwards;
+
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 0.03}s;
+    }
+  }
+}
+
+// ============================================================================
+// ADD THESE TO: new-normalization-rule-modal.component.scss
+// ============================================================================
+
+// --- Logic Mode Toggle ---
+.logic-mode-toggle {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 12px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+
+  .mode-btn {
+    flex: 1;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-main);
+    background: transparent;
+    transition: all 0.2s ease;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      background: var(--hover-bg);
+      border-color: #436d9d;
+    }
+
+    &.active {
+      background: #436d9d;
+      color: white;
+      border-color: #436d9d;
+      box-shadow: 0 2px 8px rgba(67, 109, 157, 0.25);
+
+      mat-icon {
+        color: white;
+      }
+    }
+  }
+}
+
+// --- Simple Logic Builder ---
+.simple-logic-builder {
+  padding: 20px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+// --- Advanced Logic Assembler Container ---
+.advanced-logic-assembler {
+  padding: 20px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 24px;
+
+  // Ensure rule assembler has full height
+  ::ng-deep app-rule-assembler {
+    display: block;
+    min-height: 500px;
+    height: 600px;
+    margin-bottom: 20px;
+  }
+}
+
+// --- JSON Logic Display ---
+.json-logic-display {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+
+  &.dark {
+    background: #1a1a1a;
+  }
+
+  &.light {
+    background: #f5f5f5;
+  }
+
+  .json-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+
+    strong {
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    button {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #436d9d;
+      }
+
+      &:hover {
+        background: rgba(67, 109, 157, 0.1);
+      }
+    }
+  }
+
+  .json-code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    background: var(--token-bg);
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--bg-color);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+
+      &:hover {
+        background: rgba(67, 109, 157, 0.3);
+      }
+    }
+  }
+}
+
+// --- Full Height Step Content ---
+.step-content-full-height {
+  min-height: 700px;
+  display: flex;
+  flex-direction: column;
+}
+
+// --- Impact Preview Box Updates ---
+.impact-preview-box {
+  &.loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(67, 109, 157, 0.1);
+    border: 1px solid rgba(67, 109, 157, 0.3);
+    border-radius: 8px;
+    color: #436d9d;
+
+    mat-spinner {
+      ::ng-deep circle {
+        stroke: #436d9d;
+      }
+    }
+
+    span {
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+
+  &.success {
+    padding: 16px;
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    border-radius: 8px;
+
+    .preview-success {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        color: #2ecc71;
+        flex-shrink: 0;
+      }
+
+      strong {
+        display: block;
+        font-size: 14px;
+        color: var(--text-main);
+        margin-bottom: 6px;
+      }
+
+      .impact-numbers {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2ecc71;
+      }
+
+      .impact-meta {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+    }
+  }
+
+  &.unavailable {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(149, 165, 166, 0.1);
+    border: 1px solid rgba(149, 165, 166, 0.3);
+    border-radius: 8px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #95a5a6;
+    }
+
+    span {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  }
+
+  &.error {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: 8px;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #f44336;
+    }
+
+    span {
+      font-size: 13px;
+      color: #f44336;
+    }
+  }
+}
+
+// --- Clear Button ---
+.clear-btn {
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--border-color);
+  color: #f44336;
+  font-weight: 600;
+
+  &:hover {
+    background: rgba(244, 67, 54, 0.05);
+    border-color: #f44336;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// --- Message Container Mapping ---
+.message-container-mapping {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .insert-var-btn {
+    align-self: flex-start;
+    height: 36px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    color: #436d9d;
+
+    &:hover {
+      background: rgba(67, 109, 157, 0.05);
+      border-color: #436d9d;
+    }
+  }
+
+  .character-count {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: right;
+  }
+}
+
+// --- Responsive Adjustments ---
+@media (max-width: 1200px) {
+  .advanced-logic-assembler {
+    ::ng-deep app-rule-assembler {
+      height: 500px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .logic-mode-toggle {
+    flex-direction: column;
+
+    .mode-btn {
+      width: 100%;
+    }
+  }
+
+  .advanced-logic-assembler {
+    padding: 12px;
+
+    ::ng-deep app-rule-assembler {
+      height: 400px;
+    }
+  }
+
+  .json-logic-display {
+    .json-code {
+      font-size: 10px;
+      max-height: 150px;
+    }
+  }
+}
+
+// --- Dark Mode Specific ---
+[data-theme='dark'] {
+  .logic-mode-toggle {
+    background: #1a1a1a;
+  }
+
+  .simple-logic-builder,
+  .advanced-logic-assembler {
+    background: #1e1e1e;
+  }
+
+  .json-logic-display {
+    background: #121212;
+
+    .json-code {
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+  }
+}
+
+// --- Light Mode Specific ---
+[data-theme='light'] {
+  .logic-mode-toggle {
+    background: #ffffff;
+  }
+
+  .simple-logic-builder,
+  .advanced-logic-assembler {
+    background: #ffffff;
+  }
+
+  .json-logic-display {
+    background: #fafafa;
+
+    .json-code {
+      background: #ffffff;
+      color: #333333;
+    }
+  }
+}

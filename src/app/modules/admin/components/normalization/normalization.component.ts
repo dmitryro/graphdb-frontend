@@ -62,6 +62,9 @@ import { ViewMappingRuleComponent } from './view-mapping-rule/view-mapping-rule.
 import { ViewMixedMappingComponent } from './view-mixed-mapping/view-mixed-mapping.component';
 import { ViewModelComponent } from './view-model/view-model.component';
 import { ViewRuleComponent } from './view-rule/view-rule.component';
+// In your normalization.component.ts
+import { DEFAULT_RULE_METADATA, getRuleCategory } from './rule-metadata.config';
+
 // Core Date Imports
 import {
   DateAdapter,
@@ -166,6 +169,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   showModelDetail = false; // Add this missing declaration
   selectedMappingData: any = null;
 
+  // Add a property to hold the metadata generated during load
+  private ruleMetadataOptions: any;
   // Rule Detail View State
   showModelRuleDetail = false;
   showMappingRuleDetail = false;
@@ -3143,52 +3148,71 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     });
   }
 
+  /**
+   * Opens the Create New Rule modal with metadata from centralized config
+   * This is the RECOMMENDED approach - uses the centralized configuration
+   */
   addNewRule(): void {
-    // Define the dynamic options based on your application state or constants
-    const metadataOptions = {
-      severities: ['Low', 'Medium', 'High', 'Critical'],
-      scopes: ['Field-level', 'Model-level', 'Source-level', 'System-level'],
-      triggers: ['On Ingestion', 'On Update', 'Manual', 'Immediate', 'Aggregate', 'Scheduled'],
-      logicTypes: [
-        'Value Mapping',
-        'Unit Conversion',
-        'Rename / Alias',
-        'Derived Value',
-        'Default Value',
-        'Null / Ignore',
-      ],
-      availableFields: [
-        'patient_id',
-        'first_name',
-        'last_name',
-        'dob',
-        'gender',
-        'postal_code',
-        'insurance_provider',
-        'height_in',
-        'weight_lb',
-        'temperature_f',
-        'blood_pressure',
-        'heart_rate',
-      ],
-      availableModels: [
-        'Clinical Observation v2',
-        'Patient Demographics v3',
-        'Lab Results v1',
-        'Vital Signs v2',
-        'Insurance Claims v1',
-      ],
-    };
-
+    // PASS THE DYNAMICALLY GENERATED METADATA FROM THE COMPONENT STATE
     this.eventService.publish('nf', 'open_new_normalization_rule_modal', {
       action: 'open_new_normalization_rule_modal',
-      theme: this.getActiveTheme(), // 'dark' or 'light'
+      theme: this.getActiveTheme(),
       mode: 'create',
-      targetModel: 'Clinical Observation v2', // The context for the modal
-      metadataOptions: metadataOptions,
+      targetModel: 'Clinical Observation v2',
+      metadataOptions: this.ruleMetadataOptions,
       defaults: {
         name: '',
         severity: 'Medium',
+        description:
+          'Describe what this transformation does, any assumptions, or when it should be used.',
+      },
+    });
+  }
+
+  /**
+   * Alternative: If you need to customize metadata per context
+   * This allows you to override specific fields while using defaults for others
+   */
+  addNewRuleWithCustomMetadata(contextModel?: string): void {
+    // Start with default metadata
+    const customMetadata = { ...DEFAULT_RULE_METADATA };
+
+    // Customize based on context if needed
+    if (contextModel) {
+      // Example: Filter fields based on selected model
+      customMetadata.availableFields = this.getFieldsForModel(contextModel);
+    }
+
+    this.eventService.publish('nf', 'open_new_normalization_rule_modal', {
+      action: 'open_new_normalization_rule_modal',
+      theme: this.getActiveTheme(),
+      mode: 'create',
+      targetModel: contextModel || 'Clinical Observation v2',
+      metadataOptions: customMetadata,
+      defaults: {
+        name: '',
+        severity: 'Medium',
+        description:
+          'Describe what this transformation does, any assumptions, or when it should be used.',
+      },
+    });
+  }
+
+  /**
+   * Opens modal for a specific rule category
+   * Useful when you want to skip the category selection step
+   */
+  addNewRuleForCategory(category: 'code' | 'model' | 'mapping'): void {
+    this.eventService.publish('nf', 'open_new_normalization_rule_modal', {
+      action: 'open_new_normalization_rule_modal',
+      theme: this.getActiveTheme(),
+      mode: 'create',
+      ruleCategory: category, // Pre-select the category
+      targetModel: 'Clinical Observation v2',
+      metadataOptions: DEFAULT_RULE_METADATA,
+      defaults: {
+        name: '',
+        severity: category === 'code' ? 'Error' : 'Medium',
         description:
           'Describe what this transformation does, any assumptions, or when it should be used.',
       },
@@ -3329,31 +3353,140 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   /**
-   * Specifically handles editing a Normalization Rule (Tab 2)
+   * Handles editing a Normalization Rule (Tab 2)
+   * Updated to use includes() and centralized helper function
    */
   onEditRule(rule: any): void {
     this.activeTabIndex = 2;
     this.selectedRuleData = { ...rule };
-    const category = (rule.category || '').toLowerCase().trim();
 
     // 1. Clear View States
     this.showModelRuleDetail = false;
     this.showMappingRuleDetail = false;
     this.showCodeSetRuleDetail = false;
 
-    // 2. Trigger Specific Edit Signals
-    if (category === 'mapping') {
-      this.eventService.publish('nf', 'open_edit_mapping_rule', { ruleData: rule });
-      this.updateBreadcrumbPath('Edit Mapping Rule', 'View Mapping Rule', 'VIEW_MAPPING_RULE');
-    } else if (category === 'code set') {
-      this.eventService.publish('nf', 'open_edit_code_set_rule', { ruleData: rule });
-      this.updateBreadcrumbPath('Edit Code Set Rule', 'View Code Set Rule', 'VIEW_CODE_SET_RULE');
-    } else {
-      this.eventService.publish('nf', 'open_edit_rule', { ruleData: rule });
-      this.updateBreadcrumbPath('Edit Model Rule', 'View Model Rule', 'VIEW_MODEL_RULE');
+    // 2. Get normalized rule category using helper function
+    const ruleCategory = getRuleCategory(rule);
+
+    // 3. Trigger Specific Edit Signals
+    switch (ruleCategory) {
+      case 'mapping':
+        this.eventService.publish('nf', 'open_edit_mapping_rule', {
+          ruleData: rule,
+          metadataOptions: DEFAULT_RULE_METADATA,
+        });
+        this.updateBreadcrumbPath('Edit Mapping Rule', 'View Mapping Rule', 'VIEW_MAPPING_RULE');
+        break;
+
+      case 'code':
+        this.eventService.publish('nf', 'open_edit_code_set_rule', {
+          ruleData: rule,
+          metadataOptions: DEFAULT_RULE_METADATA,
+        });
+        this.updateBreadcrumbPath('Edit Code Set Rule', 'View Code Set Rule', 'VIEW_CODE_SET_RULE');
+        break;
+
+      case 'model':
+      default:
+        this.eventService.publish('nf', 'open_edit_rule', {
+          ruleData: rule,
+          metadataOptions: DEFAULT_RULE_METADATA,
+        });
+        this.updateBreadcrumbPath('Edit Model Rule', 'View Model Rule', 'VIEW_MODEL_RULE');
+        break;
     }
 
     this.cdr.detectChanges();
+  }
+
+  /**
+   * Helper method to get fields for a specific model
+   * This is just an example - implement based on your data model
+   */
+  private getFieldsForModel(modelName: string): string[] {
+    // In a real application, this might fetch from a service or store
+    const modelFieldMap: Record<string, string[]> = {
+      'Clinical Observation v2': [
+        'patient_id',
+        'observation_date',
+        'observation_type',
+        'value',
+        'unit',
+        'reference_range',
+      ],
+      'Patient Demographics v3': [
+        'patient_id',
+        'first_name',
+        'last_name',
+        'dob',
+        'gender',
+        'postal_code',
+      ],
+      'Vital Signs v2': [
+        'patient_id',
+        'vital_sign_type',
+        'value',
+        'unit',
+        'measurement_date',
+        'height_in',
+        'weight_lb',
+        'temperature_f',
+        'blood_pressure',
+        'heart_rate',
+      ],
+    };
+
+    return modelFieldMap[modelName] || DEFAULT_RULE_METADATA.availableFields;
+  }
+
+  /**
+   * Example: Handle rule creation from different contexts
+   */
+  onCreateRuleFromCodeSet(codeSetId: string, codeSetName: string): void {
+    this.eventService.publish('nf', 'open_new_normalization_rule_modal', {
+      action: 'open_new_normalization_rule_modal',
+      theme: this.getActiveTheme(),
+      mode: 'create',
+      ruleCategory: 'code', // Pre-select Code Rule
+      metadataOptions: DEFAULT_RULE_METADATA,
+      context: {
+        codeSetId: codeSetId,
+        codeSetName: codeSetName,
+      },
+      defaults: {
+        name: `${codeSetName} Validation Rule`,
+        severity: 'Error',
+        description: `Validation rule for ${codeSetName}`,
+      },
+    });
+  }
+
+  /**
+   * Example: Handle rule creation from model context
+   */
+  onCreateRuleFromModel(modelId: string, modelName: string): void {
+    // Get model-specific fields
+    const modelFields = this.getFieldsForModel(modelName);
+
+    // Create custom metadata with model-specific fields
+    const customMetadata = {
+      ...DEFAULT_RULE_METADATA,
+      availableFields: modelFields,
+    };
+
+    this.eventService.publish('nf', 'open_new_normalization_rule_modal', {
+      action: 'open_new_normalization_rule_modal',
+      theme: this.getActiveTheme(),
+      mode: 'create',
+      ruleCategory: 'model', // Pre-select Model Rule
+      targetModel: modelName,
+      metadataOptions: customMetadata,
+      defaults: {
+        name: `${modelName} Transformation`,
+        severity: 'Medium',
+        description: `Transformation rule for ${modelName}`,
+      },
+    });
   }
 
   /**
@@ -3757,19 +3890,18 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.originalMappingData = [...baseMappingData, ...mixedMappingData];
 
-    // 3. Rules Data - UPDATED WITH CATEGORIES AND 15 EXTRA RECORDS
+    // 3. Rules Data
     this.originalRuleData = Array.from({ length: 50 }, (_, index) => {
       const severity = ruleSeverities[index % 4];
       const scope = ruleScopes[index % 3];
       const trigger = ruleTriggers[index % 3];
-      const category = ruleCategories[index % 3]; // Cycles through Model, Code Set, Mapping
+      const category = ruleCategories[index % 3];
       const status = index % 10 === 0 ? 'Draft' : index % 12 === 0 ? 'Archived' : 'Active';
       const day = Math.max(1, 28 - (index % 27))
         .toString()
         .padStart(2, '0');
       const dateString = `2026-01-${day}`;
 
-      // Specific naming logic based on Category
       let ruleName = `Normalization_Rule_${100 + index}`;
       if (index === 0) ruleName = 'Required Field Missing';
       else if (category === 'Code Set') ruleName = `Code_Validation_${index}`;
@@ -3906,6 +4038,192 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.ruleDataSource.data = [...this.originalRuleData];
     this.versionDataSource.data = [...this.versionHistory];
     this.codeDataSource.data = [...this.originalCodeData];
+    // Model-to-Fields mapping (mock data - replace with API call)
+    const modelFieldsMap: Record<string, string[]> = {
+      'Encounter.Diagnosis': [
+        'diagnosis_code',
+        'procedure_code',
+        'medication_name',
+        'dosage',
+        'frequency',
+        'prescriber_id',
+      ],
+      Patient: [
+        'patient_id',
+        'first_name',
+        'last_name',
+        'date_of_birth',
+        'gender',
+        'address',
+        'phone_number',
+      ],
+      Medication: [
+        'drug_code',
+        'drug_name',
+        'dosage_form',
+        'strength',
+        'route',
+        'frequency',
+        'start_date',
+        'end_date',
+      ],
+      Procedure: [
+        'procedure_code',
+        'procedure_name',
+        'performed_date',
+        'provider_id',
+        'status',
+        'location',
+      ],
+      Observation: [
+        'observation_code',
+        'observation_name',
+        'value',
+        'unit',
+        'effective_date',
+        'status',
+      ],
+    };
+
+    // --- CONSTRUCT THE METADATA OBJECT DYNAMICALLY ---
+    this.ruleMetadataOptions = {
+      modelFieldsMap: modelFieldsMap,
+      severities: ['Low', 'Medium', 'High', 'Critical'],
+      scopes: ['Field-level', 'Model-level', 'Source-level', 'System-level'],
+      triggers: ['On Ingestion', 'On Update', 'Manual', 'Immediate', 'Aggregate', 'Scheduled'],
+      availableModels: this.originalModelData.map(m => m.name).slice(0, 7),
+      logicTypes: [
+        'Value Mapping',
+        'Unit Conversion',
+        'Rename / Alias',
+        'Derived Value',
+        'Default Value',
+        'Null / Ignore',
+      ],
+      availableFields: [
+        'patient_id',
+        'first_name',
+        'last_name',
+        'dob',
+        'gender',
+        'postal_code',
+        'insurance_provider',
+        'height_in',
+        'weight_lb',
+        'temperature_f',
+        'blood_pressure',
+        'heart_rate',
+        'diagnosis_code',
+        'procedure_code',
+        'medication_name',
+        'dosage',
+        'frequency',
+        'prescriber_id',
+      ],
+
+      // The Step 0 Governance keys
+      ruleIntents: ['Validate', 'Normalize', 'Detect', 'Enrich', 'Protect'],
+      owningTeamsRoles: [
+        'Data Engineering',
+        'Clinical Informatics',
+        'Terminology Services',
+        'Compliance',
+        'Product Management',
+      ],
+      intendedAudiences: ['Engineering', 'Clinical', 'Compliance / Audit', 'System (Internal)'],
+      lifecycleIntents: ['Transient', 'Long-lived', 'Infrastructure-critical'],
+
+      codeRuleOperands: [
+        'Unmapped code count',
+        'Coverage %',
+        'Has multiple target codes',
+        'Has conflicting code system',
+        'Attribute is empty',
+        'Crosswalk missing',
+      ],
+      codeRuleOperators: ['=', '≠', '>', '≥', '<', '≤', 'contains', 'missing', 'present'],
+      codeRuleVariables: [
+        '{code_set_name}',
+        '{code_set_id}',
+        '{code}',
+        '{code_value}',
+        '{code_system}',
+        '{target_code}',
+        '{target_code_system}',
+        '{mapping_name}',
+        '{mapping_version}',
+        '{rule_name}',
+        '{severity}',
+      ],
+      codeRuleAppliesTo: ['Entire Code Set', 'Single Code', 'Subset'],
+      codeRuleRunTiming: [
+        'On import / ingest',
+        'On mapping save',
+        'On code override save',
+        'On publish / promote mapping',
+      ],
+      availableAttributes: [
+        'status',
+        'effective_date',
+        'expiration_date',
+        'provider_specialty',
+        'diagnosis_priority',
+        'modifier',
+        'coding_system_version',
+        'billable',
+        'age_range',
+        'gender_restriction',
+      ],
+      mappingRuleAppliesTo: ['All mappings in scope', 'Single mapping', 'Subset of mappings'],
+      mappingRuleLogicTypes: [
+        'Coverage Check',
+        'Mapping Conflict',
+        'Required Mapping',
+        'Model Constraint',
+        'Cardinality Violation',
+        'Cross-reference Integrity',
+      ],
+      mappingRuleRunTiming: [
+        'On mapping save',
+        'On override save',
+        'On publish / promote mapping',
+        'On ingest',
+      ],
+      mappingRuleOperands: [
+        'Model field',
+        'Code / code system',
+        'Unmapped mapping',
+        'Coverage %',
+        'Unmapped source code count',
+        'Has multiple target codes',
+        'Has conflicting target code system',
+        'Mapping overridden',
+        'Target model field missing',
+        'Crosswalk missing',
+      ],
+      mappingRuleVariables: [
+        '{rule_name}',
+        '{severity}',
+        '{source_code_value}',
+        '{source_code_system}',
+        '{target_model_name}',
+        '{target_field_name}',
+        '{target_code_value}',
+        '{mapping_version}',
+      ],
+      codeSystemsAvailable: [
+        'ICD-10',
+        'ICD-9',
+        'CPT',
+        'HCPCS',
+        'SNOMED CT',
+        'LOINC',
+        'RxNorm',
+        'NDC',
+        'CVX',
+        'CDT',
+      ],
+    };
 
     // Apply initial governance filters
     this.applyMappingFilter();
@@ -3915,10 +4233,8 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.applyCodeFilter();
   }
 
-  // 1. Add a method to generate mock dependencies based on a model
   private getModelDependencies(model: any, index: number) {
     return {
-      // Related Models: Use actual names from your local model list for consistency
       relatedModels: [
         {
           id: this.originalModelData[(index + 1) % 10]?.id || 'm-1',
@@ -3933,7 +4249,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
           references: 7 + (index % 3),
         },
       ],
-      // Upstream (Source systems/schemas)
       upstream: [
         {
           sourceName: index % 2 === 0 ? 'Epic_Raw_ADT' : 'Quest_LIMS_v2',
@@ -3948,7 +4263,6 @@ export class NormalizationComponent implements OnInit, AfterViewInit, OnDestroy 
           lastUpdated: 'Dec 18, 2025',
         },
       ],
-      // Downstream (Where this data goes)
       downstream: [
         {
           dependentName: `${model.name}_Export_v1`,

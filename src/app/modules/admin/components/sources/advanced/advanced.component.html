@@ -1,1 +1,291 @@
-<p>advanced.component works!</p>
+<div class="advanced-container" [attr.data-theme]="theme()">
+  <!-- Page Header -->
+  <div class="advanced-header">
+    <div class="header-left">
+      <h1>Sources & Ingest</h1>
+      <h2>Advanced</h2>
+      <p class="subtitle">
+        Configure storage, replication, migration, and recovery for ingestion infrastructure.
+      </p>
+    </div>
+    <div class="header-right">
+      <mat-form-field appearance="fill" class="environment-selector">
+        <mat-select
+          [value]="currentEnvironment()"
+          (selectionChange)="onEnvironmentChange($event.value)">
+          <mat-option *ngFor="let env of environments()" [value]="env.value">
+            {{ env.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="advanced-content">
+    <!-- Storage Backend Section -->
+    <section class="config-section storage-section">
+      <div class="section-header">
+        <div class="section-title-block">
+          <h3>Storage Backend</h3>
+          <p class="section-description">Define how ingested data is persisted and accessed.</p>
+        </div>
+        <div class="section-actions">
+          <span class="status-badge active">Active</span>
+          <button mat-flat-button class="primary-btn" (click)="openChangeBackendModal()">
+            Change backend
+          </button>
+        </div>
+      </div>
+
+      <div class="storage-grid">
+        <!-- Left Column: Embedded + External -->
+        <div class="storage-column">
+          <!-- Embedded Radio -->
+          <div class="storage-radio-row">
+            <mat-radio-button
+              value="embedded"
+              [checked]="currentBackend() === 'embedded'"
+              (change)="onBackendChange('embedded')">
+              <span class="radio-label">Embedded</span>
+              <span class="radio-sublabel">— Sled / RocksDB</span>
+            </mat-radio-button>
+          </div>
+
+          <!-- External Database Radio -->
+          <div class="storage-radio-row">
+            <mat-radio-button
+              value="external"
+              [checked]="currentBackend() === 'external'"
+              (change)="onBackendChange('external')">
+              <span class="radio-label">External Database</span>
+            </mat-radio-button>
+          </div>
+
+          <!-- External Database Details (when selected) -->
+          <div class="storage-details" *ngIf="currentBackend() === 'external'">
+            <div class="detail-line">
+              <span class="detail-label">Connection URI:</span>
+              <span class="detail-value">
+                database.example.com
+                <mat-icon class="detail-icon">link</mat-icon>
+                <mat-icon class="detail-icon">more_horiz</mat-icon>
+              </span>
+            </div>
+            <div class="detail-line">
+              <span class="detail-label">Read / Write Mode:</span>
+              <span class="detail-value">Read/Write</span>
+            </div>
+            <div class="detail-line">
+              <span class="detail-label">Latency:</span>
+              <span class="detail-value">~ 2ms</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Distributed -->
+        <div class="storage-column">
+          <!-- Distributed Radio -->
+          <div class="storage-radio-row">
+            <mat-radio-button
+              value="distributed"
+              [checked]="currentBackend() === 'distributed'"
+              (change)="onBackendChange('distributed')">
+              <span class="radio-label">Distributed</span>
+              <span class="radio-sublabel">— TiKV</span>
+            </mat-radio-button>
+          </div>
+
+          <!-- Distributed Details (when selected) -->
+          <div class="storage-details" *ngIf="currentBackend() === 'distributed'">
+            <div class="detail-line">
+              <span class="detail-label">Connection URI:</span>
+              <span class="detail-value">
+                <mat-icon class="detail-icon">link</mat-icon>
+                database.example.com
+              </span>
+            </div>
+            <div class="detail-line">
+              <span class="detail-label">Username:</span>
+              <span class="detail-value">username.</span>
+              <span class="detail-label">Password:</span>
+              <span class="detail-value password">••••</span>
+            </div>
+            <div class="detail-line">
+              <span class="detail-label">Read / Write:</span>
+              <span class="detail-value">Read/Write</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Replication Section -->
+    <section class="config-section replication-section">
+      <div class="section-header">
+        <div class="section-title-block">
+          <h3>Replication</h3>
+          <p class="section-description">
+            Control how ingested data is synchronized across systems and regions.
+          </p>
+        </div>
+        <div class="section-actions">
+          <span class="status-badge" [class.enabled]="replicationConfig().enabled">
+            {{ replicationStatus() }}
+          </span>
+          <button mat-flat-button class="primary-btn" (click)="editReplicationRules()">
+            Edit replication rules
+          </button>
+        </div>
+      </div>
+
+      <div class="replication-config">
+        <!-- Replication Mode Row -->
+        <div class="replication-row">
+          <span class="replication-label">Replication Mode:</span>
+          <div class="replication-radios">
+            <mat-radio-button
+              value="one-way"
+              [checked]="replicationConfig().mode === 'one-way'"
+              (change)="onReplicationModeChange('one-way')"
+              class="replication-radio">
+              <mat-icon class="radio-icon">check_circle</mat-icon>
+              <span>One-way</span>
+            </mat-radio-button>
+            <mat-radio-button
+              value="bi-directional"
+              [checked]="replicationConfig().mode === 'bi-directional'"
+              (change)="onReplicationModeChange('bi-directional')"
+              class="replication-radio">
+              <mat-icon class="radio-icon">sync</mat-icon>
+              <mat-icon class="radio-icon">check_circle</mat-icon>
+              <span>Bi-directional</span>
+            </mat-radio-button>
+          </div>
+        </div>
+
+        <!-- Multi-Region Row -->
+        <div class="replication-row">
+          <span class="replication-label">
+            <mat-icon class="label-icon">sync</mat-icon>
+            Multi-Region:
+          </span>
+          <span class="region-value">{{ replicationConfig().multiRegion.join(', ') }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two Column Layout for Migration & Backup -->
+    <div class="two-column-layout">
+      <!-- Migration Section -->
+      <section class="config-section migration-section">
+        <div class="section-header-simple">
+          <h3>Migration</h3>
+          <p class="section-description">Move data between storage backends or environments.</p>
+        </div>
+
+        <div class="migration-table">
+          <div class="table-header">
+            <span class="col-source">Source → Target</span>
+            <span class="col-mode">Mode</span>
+            <span class="col-scope">Scope</span>
+            <span class="col-last">Last Migration</span>
+          </div>
+          <div class="table-body">
+            <div class="table-row" *ngFor="let migration of migrations()">
+              <div class="col-source">
+                <span class="source-name">{{ migration.source }}</span>
+                <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+                <span class="target-name">{{ migration.target }}</span>
+              </div>
+              <span class="col-mode">{{ migration.mode }}</span>
+              <span class="col-scope">{{ migration.scope }}</span>
+              <span class="col-last">{{ migration.lastMigration }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-footer-simple">
+          <span class="footer-text">Last Snapshot: {{ backupConfig().lastSnapshot }}</span>
+        </div>
+      </section>
+
+      <!-- Backup & Restore Section -->
+      <section class="config-section backup-section">
+        <div class="section-header-simple">
+          <h3>Backup & Restore</h3>
+          <p class="section-description">Preserve and restore historical ingestion state.</p>
+          <div class="header-actions-inline">
+            <button mat-stroked-button class="secondary-btn" (click)="restoreBackup()">
+              Restore
+            </button>
+            <button mat-stroked-button class="secondary-btn" (click)="viewSnapshots()">
+              View snapshots
+            </button>
+          </div>
+        </div>
+
+        <div class="backup-items">
+          <!-- Snapshots Row -->
+          <div class="backup-row">
+            <div class="backup-row-header">
+              <mat-icon class="backup-icon">save</mat-icon>
+              <span class="backup-label">Snapshots:</span>
+            </div>
+            <div class="backup-row-actions">
+              <button mat-stroked-button class="secondary-btn" (click)="takeSnapshot()">
+                Take Snapshot
+              </button>
+              <button mat-flat-button class="primary-btn" (click)="scheduleSnapshot()">
+                Schedule Snapshot
+              </button>
+            </div>
+          </div>
+
+          <!-- Incremental Backups Row -->
+          <div class="backup-row">
+            <div class="backup-row-header">
+              <mat-icon class="backup-icon">check_circle</mat-icon>
+              <span class="backup-label">Incremental Backups:</span>
+            </div>
+            <span class="backup-value">Backups{{ backupConfig().incrementalInterval }}</span>
+          </div>
+
+          <!-- Time-Travel Restore Row -->
+          <div class="backup-row restore-row">
+            <div class="backup-row-header">
+              <mat-icon class="backup-icon">history</mat-icon>
+              <span class="backup-label">Time-Travel Restore:</span>
+            </div>
+            <div class="restore-controls">
+              <div class="date-input-wrapper">
+                <input
+                  matInput
+                  [matDatepicker]="picker"
+                  [(ngModel)]="backupConfig().restoreDate"
+                  [value]="formatDate(backupConfig().restoreDate)"
+                  readonly
+                  class="date-input" />
+                <mat-icon class="calendar-icon" (click)="picker.open()">event</mat-icon>
+                <mat-datepicker #picker></mat-datepicker>
+              </div>
+              <div class="dry-run-wrapper">
+                <mat-checkbox [(ngModel)]="backupConfig().dryRun"> Dry-run </mat-checkbox>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-footer-simple">
+          <span class="footer-text">Last Snapshot: {{ backupConfig().lastSnapshot }}</span>
+          <div class="footer-actions">
+            <button mat-flat-button class="primary-btn" (click)="restoreBackup()">Restore</button>
+            <button mat-stroked-button class="secondary-btn" (click)="viewSnapshots()">
+              View snapshots
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

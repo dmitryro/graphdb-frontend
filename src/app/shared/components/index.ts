@@ -7,12 +7,14 @@ import { NewGoldenRecordModalComponent } from './new-golden-record-modal//new-go
 import { NewMappingModalComponent } from './new-mapping-modal/new-mapping-modal.component';
 import { NewModelModalComponent } from './new-model-modal/new-model-modal.component';
 import { NewNormalizationRuleModalComponent } from './new-normalization-rule-modal/new-normalization-rule-modal.component';
+import { RuleAssemblerComponent } from './rule-assembler/rule-assembler.component';
 import { RuleModalComponent } from './rule-modal/rule-modal.component';
 import { SearchComponent } from './search/search.component';
 import { SourceModalComponent } from './source-modal/source-modal.component';
 import { VersionHistoryModalComponent } from './version-history-modal/version-history-modal.component';
 
 export const components: any[] = [
+  RuleAssemblerComponent,
   AddNewCodeModalComponent,
   NewNormalizationRuleModalComponent,
   RuleModalComponent,
@@ -37,6 +39,7 @@ export * from './new-golden-record-modal//new-golden-record-modal.component';
 export * from './new-mapping-modal/new-mapping-modal.component';
 export * from './new-model-modal/new-model-modal.component';
 export * from './new-normalization-rule-modal/new-normalization-rule-modal.component';
+export * from './rule-assembler/rule-assembler.component';
 export * from './rule-modal/rule-modal.component';
 export * from './search/search.component';
 export * from './source-modal/source-modal.component';
